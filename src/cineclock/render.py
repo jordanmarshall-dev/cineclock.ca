@@ -5,6 +5,7 @@ import os
 import re
 import struct
 from functools import cache
+from importlib import metadata
 from pathlib import Path
 
 from jinja2 import Environment, PackageLoader, select_autoescape
@@ -40,6 +41,11 @@ def asset_version(name: str) -> str:
 
 
 env.globals["asset_version"] = asset_version
+
+try:
+    env.globals["version"] = metadata.version("cineclock")
+except metadata.PackageNotFoundError:
+    env.globals["version"] = "dev"
 
 # Link previews need full URLs, not the relative ones the pages use.
 env.globals["site_url"] = os.environ.get("CINECLOCK_URL", "https://yogzoth.github.io/cineclock/")

@@ -847,3 +847,9 @@ def test_film_page_poster_opens_big(conn):
     page = pages(conn, NOW)["films/alien-1979/index.html"]
     assert '<a class="poster-zoom" href="https://image.tmdb.org/t/p/w780/a.jpg"' in page
     assert '<dialog class="poster-dialog"' in page
+
+
+def test_date_strip_names_the_month_once_it_changes():
+    today = date(2026, 10, 18)
+    assert short_day(date(2026, 10, 20), today) == "Tue 20"
+    assert short_day(date(2026, 11, 1), today) == "Sun Nov 1"

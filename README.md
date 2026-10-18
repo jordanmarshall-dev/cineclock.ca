@@ -7,6 +7,8 @@ Vancouver showtimes for film lovers. Indie and rep cinemas in one place.
 
 **Live site: https://yogzoth.github.io/cineclock/**
 
+Version 2.0. See what changed in the [changelog](CHANGELOG.md).
+
 <img src="docs/screenshot.png" alt="cineclock on a phone" width="320">
 
 ## What it does
@@ -22,6 +24,7 @@ Five theatres so far: the Rio, the Park, the Cinematheque, VIFF Centre (both scr
 - **Tags** from what each theatre's listing says: 70mm, 35mm, 16mm, IMAX, Q&A, Intro, Live music, Festival, Shorts, Preview and more. A film with only one screening gets a star on its date instead of a badge
 - **Letterboxd:** connect a profile or upload your Letterboxd export to see what's on your watchlist and what you've seen, with a "From your watchlist" row and a calendar feed of watchlist screenings
 - **Link previews:** sharing a page shows a proper card with the film's backdrop or the theatre's photo
+- **Tap a poster** on a film page to see it full size
 
 Still to come: add a single screening to your calendar, and Google sign-in to save showtimes.
 

@@ -277,19 +277,17 @@ a:focus-visible {
   padding: 0.125rem 0.5rem;
   border: 1px solid transparent;
   border-radius: 999px;
-  font-size: 0.625rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  line-height: 1.6;
-  text-transform: uppercase;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.5;
   white-space: nowrap;
 }
 
+/* Same pill as on the cards: events are a purple wash, film formats a purple outline. */
 .tag .icon { color: inherit; }
 .tag-rare { background: var(--accent); color: var(--white); }
 .tag-format { border-color: var(--accent); color: var(--accent-text); }
-.tag-event { background: var(--raised); color: var(--bright); }
-.tag-event .icon { color: var(--accent-text); }
+.tag-event { background: var(--accent-wash); color: var(--accent-text); }
 .tag-personal { border-color: #3fb27f; color: #6fd3a4; }
 
 /* Theatre pills: the theatre's own logo, sized so wide and tall logos read alike. */

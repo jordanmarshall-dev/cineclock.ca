@@ -25,4 +25,7 @@ def short_day(day: date, today: date) -> str:
         return "Today"
     if day == today + timedelta(days=1):
         return "Tomorrow"
+    # Past this month the strip needs the month too, or "Sun 1" could be any month.
+    if (day.year, day.month) != (today.year, today.month):
+        return f"{day:%a} {day:%b} {day.day}"
     return f"{day:%a} {day.day}"

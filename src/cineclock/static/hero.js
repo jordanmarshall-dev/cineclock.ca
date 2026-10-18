@@ -76,6 +76,12 @@
   });
   track.addEventListener("dragstart", (e) => e.preventDefault());
 
+  // Left and right arrow keys move between highlights when the hero has focus.
+  hero.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowLeft") show(pos - 1);
+    else if (e.key === "ArrowRight") show(pos + 1);
+  });
+
   show(1);
   place(false);
   addEventListener("resize", () => place(false));

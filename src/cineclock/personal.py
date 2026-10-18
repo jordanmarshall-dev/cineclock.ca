@@ -13,7 +13,6 @@ from datetime import UTC, datetime, timedelta
 
 from cineclock.models import Screening
 from cineclock.profiles import Profile
-from cineclock.render import logo_size
 from cineclock.timefmt import clock
 
 
@@ -50,28 +49,18 @@ def profile_json(profile: Profile, film_list, now: datetime) -> dict:
     return {"user": profile.user, "updated": now.isoformat(), "films": films}
 
 
-def films_index(film_list, now: datetime, when) -> list[dict]:
-    """Enough about each film playing to match an export and draw a shelf card."""
-    index = []
-    for page in film_list:
-        logos = []
-        for v in page.venues:
-            if v.mark:
-                w, h = logo_size(f"logos/{v.mark}", 900 * v.mark_scale**2, 12 * v.mark_scale)
-                logos.append({"name": v.name, "src": f"static/logos/{v.mark}", "w": w, "h": h})
-        index.append(
-            {
-                "slug": page.slug,
-                "title": page.title,
-                "year": page.year,
-                "alt": page.film.title if page.film and page.film.title else None,
-                "lb": letterboxd_slug(page.film.letterboxd_url) if page.film else None,
-                "poster": page.poster_url,
-                "next": when(page.next_showing, now),
-                "venues": logos,
-            }
-        )
-    return index
+def films_index(film_list) -> list[dict]:
+    """What the browser needs to match a Letterboxd export to the films playing.
+    The shelf's cards are added by the site build."""
+    return [
+        {
+            "slug": page.slug,
+            "title": page.title,
+            "year": page.year,
+            "alt": page.film.title if page.film and page.film.title else None,
+        }
+        for page in film_list
+    ]
 
 
 def _ics_text(value: str) -> str:

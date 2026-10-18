@@ -563,7 +563,7 @@ def shelf_index(film_list: list[FilmPage], now: datetime) -> list[dict]:
     """films.json: each film's details plus its finished poster card, so the
     watchlist shelf drawn in the browser looks exactly like every other card."""
     parts = env.get_template("_parts.html").module
-    index = personal.films_index(film_list, now, when)
+    index = personal.films_index(film_list)
     for entry, page in zip(index, film_list, strict=True):
         entry["card"] = str(parts.film_card(page, ROOT_MARK, when(page.next_showing, now))).strip()
     return index
@@ -583,8 +583,8 @@ def pages(conn: Connection, now: datetime) -> dict[str, str]:
     debuts = db.venue_debuts(conn)
     common = {"updated": updated_label(now), "venues": VENUES}
 
-    def render(template: str, path: str, **context) -> str:
-        root = "../" * path.count("/")
+    def render(template: str, path: str, root: str | None = None, **context) -> str:
+        root = "../" * path.count("/") if root is None else root
         return env.get_template(template).render(root=root, path=path, **common, **context)
 
     # The Events chip already covers the plain Event tag, so it isn't listed twice.
@@ -657,7 +657,25 @@ def pages(conn: Connection, now: datetime) -> dict[str, str]:
             months=calendar_months(venue_days, now),
             rails=theatre_rails(venue, film_list, now, debuts),
         )
+
+    # GitHub Pages shows 404.html for any missing address, at any depth, so its
+    # links use the full site address instead of relative paths.
+    site_url = env.globals["site_url"]
+    out["404.html"] = render("404.html", "404.html", root=site_url, films=by_next[:6])
+    out["sitemap.xml"] = sitemap(site_url, [p for p in out if p.endswith("index.html")])
     return out
+
+
+def sitemap(site_url: str, paths: list[str]) -> str:
+    """Every page, so search engines find films and theatres, not just the home page."""
+    urls = "".join(
+        f"  <url><loc>{site_url}{p.removesuffix('index.html')}</loc></url>\n" for p in sorted(paths)
+    )
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        f"{urls}</urlset>\n"
+    )
 
 
 def stats(conn: Connection, now: datetime) -> dict:

@@ -13,6 +13,7 @@
 <meta property="og:title" content="{% block og_title %}{{ self.title() }}{% endblock %}">
 <meta property="og:description" content="{{ self.description() }}">
 <meta property="og:url" content="{{ site_url }}{{ path | replace('index.html', '') }}">
+<link rel="canonical" href="{{ site_url }}{{ path | replace('index.html', '') }}">
 <meta property="og:image" content="{% block og_image %}{{ site_url }}static/brand/share.png{% endblock %}">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="{{ root }}static/fonts/instrument-sans.woff2" as="font" type="font/woff2" crossorigin>
@@ -46,7 +47,7 @@
     </p>
     <p>Updated {{ updated }}. Showtimes come from each theatre's website; check there before you go.</p>
     <p>Film details and posters from <a href="https://www.themoviedb.org/">TMDB</a>. This product uses the TMDB API but is not endorsed or certified by TMDB. Ratings from Letterboxd, IMDb, Rotten Tomatoes and Metacritic. Not affiliated with any of them or with the theatres.</p>
-    <p>Made in Vancouver by Jordan Marshall. Inspired by <a href="https://movieclock.app">MovieClock</a>.</p>
+    <p>Made in Vancouver by Jordan Marshall. Inspired by <a href="https://movieclock.app">MovieClock</a>. <a href="https://github.com/yogzoth/cineclock/releases">Version {{ version }}</a>.</p>
   </div>
 </footer>
 <script src="{{ root }}static/me.js?v={{ asset_version('me.js') }}"></script>

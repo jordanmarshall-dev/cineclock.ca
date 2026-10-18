@@ -24,8 +24,9 @@ def test_build_writes_every_page_and_asset(conn, tmp_path):
     out = tmp_path / "site"
     count = build(conn, out, NOW)
 
-    # home, showtimes, films, theatres, about, one film, 5 venues, films.json, Letterboxd page
-    assert count == 1 + 1 + 1 + 1 + 1 + 1 + 5 + 1 + 1
+    # home, showtimes, films, theatres, about, one film, 5 venues, films.json, Letterboxd page,
+    # then the 404 page and the sitemap
+    assert count == 1 + 1 + 1 + 1 + 1 + 1 + 5 + 1 + 1 + 2
     assert "Scream" in (out / "index.html").read_text()
     assert "Scream" in (out / "showtimes/index.html").read_text()
     assert (out / "films/scream/index.html").exists()
@@ -72,3 +73,19 @@ def test_stylesheet_link_changes_when_the_stylesheet_does(conn, tmp_path, monkey
     second = (tmp_path / "b/index.html").read_text()
     assert "static/site.css?v=" in first
     assert "static/site.css?v=changed123" in second and first != second
+
+
+def test_build_adds_a_404_page_and_sitemap(conn, tmp_path):
+    db.sync_venue(
+        conn, "The Rio", [Screening("The Rio", "Scream", NOW + timedelta(days=1), "https://x")], NOW
+    )
+    out = tmp_path / "site"
+    build(conn, out, NOW)
+    missing = (out / "404.html").read_text()
+    assert "This one isn't playing." in missing
+    assert 'href="https://yogzoth.github.io/cineclock/films/"' in missing
+    sitemap = (out / "sitemap.xml").read_text()
+    assert "<loc>https://yogzoth.github.io/cineclock/</loc>" in sitemap
+    assert "<loc>https://yogzoth.github.io/cineclock/films/scream/</loc>" in sitemap
+    home = (out / "index.html").read_text()
+    assert '<link rel="canonical" href="https://yogzoth.github.io/cineclock/">' in home

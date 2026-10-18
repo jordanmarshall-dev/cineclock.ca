@@ -4,7 +4,7 @@ from cineclock import personal
 from cineclock.films import Film, match_key
 from cineclock.models import VANCOUVER, Screening
 from cineclock.profiles import Profile
-from cineclock.site import FilmPage, venue_for, when
+from cineclock.site import FilmPage, venue_for
 
 NOW = datetime(2026, 10, 18, 8, 0, tzinfo=UTC)
 
@@ -40,11 +40,10 @@ def test_profile_json_only_covers_films_playing():
     assert data["films"] == {"jaws": {"w": 1, "s": 1, "old": 1}}
 
 
-def test_films_index_has_what_a_card_needs():
+def test_films_index_has_what_matching_needs():
     show = datetime(2026, 10, 19, 19, 0, tzinfo=VANCOUVER)
-    [entry] = personal.films_index([page("jaws", "jaws", show)], NOW, when)
-    assert entry["lb"] == "jaws" and entry["next"] == "Tomorrow, 7:00 pm"
-    assert entry["venues"][0]["src"] == "static/logos/rio-mark.png"
+    [entry] = personal.films_index([page("jaws", "jaws", show)])
+    assert set(entry) == {"slug", "title", "year", "alt"} and entry["slug"] == "jaws"
 
 
 def test_watchlist_calendar_lists_each_screening():
