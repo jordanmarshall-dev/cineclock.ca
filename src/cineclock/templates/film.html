@@ -14,7 +14,9 @@
 
 <div class="wrap">
   <div class="film-head">
-    {{ poster(page.poster_url, label=page.title) }}
+    {% if page.poster_url %}
+    <a class="poster-zoom" href="{{ page.poster_url | large_poster }}" aria-label="View the poster for {{ page.title }} larger">{{ poster(page.poster_url, label=page.title) }}</a>
+    {% else %}{{ poster(None, label=page.title) }}{% endif %}
     <div>
       <h1 class="film-title">{{ page.title }}</h1>
       <p class="film-sub">
@@ -60,4 +62,27 @@
   </div>
   {% endfor %}
 </div>
+<dialog class="poster-dialog" aria-label="Poster">
+  <img alt="Poster for {{ page.title }}">
+</dialog>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Tapping the poster opens it big, like Letterboxd. Without JavaScript the
+  // link still opens the image on its own. Any tap or Escape closes it.
+  (() => {
+    const link = document.querySelector(".poster-zoom");
+    const dialog = document.querySelector(".poster-dialog");
+    if (!link || !dialog.showModal) return;
+    const img = dialog.querySelector("img");
+    link.addEventListener("click", (e) => {
+      e.preventDefault();
+      img.src = link.href;
+      img.onerror = () => (img.src = link.querySelector("img")?.src || "");
+      dialog.showModal();
+    });
+    dialog.addEventListener("click", () => dialog.close());
+  })();
+</script>
 {% endblock %}

@@ -25,6 +25,8 @@ env.filters["runtime"] = lambda minutes: (
     f"{minutes // 60}h {minutes % 60:02d}m" if minutes >= 60 else f"{minutes}m"
 )
 env.filters["room_label"] = lambda s: room_label(s.venue, s.room)
+# TMDB serves the same poster at several widths; the popup on a film page uses a bigger one.
+env.filters["large_poster"] = lambda url: (url or "").replace("/t/p/w500/", "/t/p/w780/")
 
 
 def asset_version(name: str) -> str:

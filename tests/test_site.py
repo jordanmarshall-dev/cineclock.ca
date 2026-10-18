@@ -839,3 +839,11 @@ def test_the_event_tag_is_not_a_second_events_chip(conn):
     page = pages(conn, NOW)["films/index.html"]
     assert page.count('data-value="event"') == 1
     assert 'data-tags="one-screening event"' in page
+
+
+def test_film_page_poster_opens_big(conn):
+    save(conn, show("Alien", at(19, 19), year=1979))
+    db.save_film(conn, film("Alien", 1979, 1, poster_url="https://image.tmdb.org/t/p/w500/a.jpg"))
+    page = pages(conn, NOW)["films/alien-1979/index.html"]
+    assert '<a class="poster-zoom" href="https://image.tmdb.org/t/p/w780/a.jpg"' in page
+    assert '<dialog class="poster-dialog"' in page
