@@ -749,3 +749,30 @@ def test_home_has_a_letterboxd_button(conn):
     save(conn, show("Jaws", at(19, 19)))
     home = pages(conn, NOW)["index.html"]
     assert 'class="lb-button" href="me/"' in home
+
+
+def test_link_previews_have_a_title_blurb_and_picture(conn):
+    save(
+        conn, show("Alien", at(19, 19), year=1979), show("Alien", at(21, 19), "The Park", year=1979)
+    )
+    db.save_film(
+        conn, film("Alien", 1979, 1, backdrop_url="https://img/alien.jpg", letterboxd_rating=4.3)
+    )
+    built = pages(conn, NOW)
+    home = built["index.html"]
+    assert (
+        '<meta property="og:image" content="https://yogzoth.github.io/cineclock/static/brand/share.png">'
+        in home
+    )
+    assert '<meta property="og:url" content="https://yogzoth.github.io/cineclock/">' in home
+    assert (
+        "The Rio, The Park" in home and 'name="twitter:card" content="summary_large_image"' in home
+    )
+
+    film_page = built["films/alien-1979/index.html"]
+    assert '<meta property="og:title" content="Alien (1979) · ★ 4.3">' in film_page
+    assert '<meta property="og:image" content="https://img/alien.jpg">' in film_page
+    assert 'content="Oct 19 to Oct 21 at The Rio and The Park.' in film_page
+
+    rio = built["theatres/rio/index.html"]
+    assert "static/theatres/rio.jpg" in rio

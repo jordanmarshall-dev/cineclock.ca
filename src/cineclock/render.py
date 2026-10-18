@@ -1,6 +1,7 @@
 """The one Jinja setup, shared by the web app and the static site build."""
 
 import hashlib
+import os
 import re
 import struct
 from functools import cache
@@ -37,6 +38,9 @@ def asset_version(name: str) -> str:
 
 
 env.globals["asset_version"] = asset_version
+
+# Link previews need full URLs, not the relative ones the pages use.
+env.globals["site_url"] = os.environ.get("CINECLOCK_URL", "https://yogzoth.github.io/cineclock/")
 
 
 def has_asset(name: str) -> bool:

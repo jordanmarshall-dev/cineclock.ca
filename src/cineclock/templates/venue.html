@@ -2,7 +2,8 @@
 {% from "_parts.html" import day_sections, date_tools, icon, tag_list, rail %}
 
 {% block title %}{{ venue.name }} showtimes{% endblock %}
-{% block description %}What's playing at {{ venue.name }}, {{ venue.address }}.{% endblock %}
+{% block description %}{{ venue.blurb }} Showtimes and what's on now.{% endblock %}
+{% block og_image %}{% if has_asset("theatres/" ~ venue.slug ~ ".jpg") %}{{ site_url }}static/theatres/{{ venue.slug }}.jpg{% else %}{{ site_url }}static/brand/share.png{% endif %}{% endblock %}
 
 {% block main %}
 {% set SPEC_ICONS = {"Seats": "seat", "Screen": "screen", "Projection": "projector", "Sound": "speaker"} %}

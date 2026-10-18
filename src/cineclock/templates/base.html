@@ -6,7 +6,15 @@
 <meta name="theme-color" content="#14181c">
 <link rel="manifest" href="{{ root }}static/brand/manifest.webmanifest">
 <title>{% block title %}cineclock{% endblock %}</title>
-<meta name="description" content="{% block description %}Support local cinemas. Showtimes at Vancouver's repertory and independent cinemas.{% endblock %}">
+<meta name="description" content="{% block description %}Every showtime at Vancouver's independent cinemas in one place: {% for v in venues %}{% if loop.last %}and {% endif %}{{ v.name }}{% if not loop.last %}, {% endif %}{% endfor %}.{% endblock %}">
+{# Link previews (Discord, iMessage, Slack): title, blurb, a big picture. #}
+<meta property="og:site_name" content="cineclock">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{% block og_title %}{{ self.title() }}{% endblock %}">
+<meta property="og:description" content="{{ self.description() }}">
+<meta property="og:url" content="{{ site_url }}{{ path | replace('index.html', '') }}">
+<meta property="og:image" content="{% block og_image %}{{ site_url }}static/brand/share.png{% endblock %}">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="{{ root }}static/fonts/instrument-sans.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="icon" type="image/png" sizes="32x32" href="{{ root }}static/brand/favicon-32.png">
 <link rel="apple-touch-icon" href="{{ root }}static/brand/apple-touch-icon.png">

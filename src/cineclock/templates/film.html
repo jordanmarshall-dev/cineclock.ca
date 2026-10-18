@@ -2,7 +2,9 @@
 {% from "_parts.html" import poster, showtime, tag_list, venue_label, source_mark, icon, RARE %}
 
 {% block title %}{{ page.title }}{% if page.year %} ({{ page.year }}){% endif %} showtimes in Vancouver{% endblock %}
-{% block description %}{% if film and film.overview %}{{ film.overview | truncate(160) }}{% else %}Showtimes for {{ page.title }} in Vancouver.{% endif %}{% endblock %}
+{% block description %}{{ page.date_range }} at {% for v in page.venues %}{% if loop.last and not loop.first %} and {% elif not loop.first %}, {% endif %}{{ v.name }}{% endfor %}.{% if film and film.overview %} {{ film.overview | truncate(140) }}{% endif %}{% endblock %}
+{% block og_title %}{{ page.title }}{% if page.year %} ({{ page.year }}){% endif %}{% if film and film.letterboxd_rating %} · ★ {{ "%.1f" | format(film.letterboxd_rating) }}{% endif %}{% endblock %}
+{% block og_image %}{% if film and film.backdrop_url %}{{ film.backdrop_url }}{% elif page.poster_url and page.poster_url.startswith('http') %}{{ page.poster_url }}{% else %}{{ site_url }}static/brand/share.png{% endif %}{% endblock %}
 {% block body_class %}{% if film and film.backdrop_url %}has-backdrop{% endif %}{% endblock %}
 
 {% block main %}
