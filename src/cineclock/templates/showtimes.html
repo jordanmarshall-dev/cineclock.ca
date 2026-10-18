@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_parts.html" import day_sections, date_strip, filter_bar, icon %}
+{% from "_parts.html" import day_sections, date_tools, filter_bar, icon %}
 
 {% block title %}Showtimes in Vancouver{% endblock %}
 
@@ -7,29 +7,7 @@
 <div class="wrap">
   <h1 class="page-title">Showtimes</h1>
   {{ filter_bar(venues, filter_tags, genres) }}
-  <div class="date-tools">
-    {% if months %}
-    <details class="cal-pop">
-      <summary aria-label="Pick a date">{{ icon("calendar", 18) }}</summary>
-      <div class="cal-panel">
-        {% for m in months %}
-        <div class="cal-month">
-          <p class="cal-title">{{ m.title }}</p>
-          <div class="cal-grid" role="grid">
-            {% for d in ["S", "M", "T", "W", "T", "F", "S"] %}<span class="cal-dow">{{ d }}</span>{% endfor %}
-            {% for week in m.weeks %}{% for d in week %}
-              {%- if not d %}<span></span>
-              {%- elif d.anchor %}<a href="#{{ d.anchor }}" class="cal-day has-shows{% if d.today %} today{% endif %}" aria-label="{{ d.date.strftime('%A %B') }} {{ d.date.day }}">{{ d.date.day }}</a>
-              {%- else %}<span class="cal-day{% if d.today %} today{% endif %}">{{ d.date.day }}</span>{% endif %}
-            {%- endfor %}{% endfor %}
-          </div>
-        </div>
-        {% endfor %}
-      </div>
-    </details>
-    {% endif %}
-    {{ date_strip(days) }}
-  </div>
+  {{ date_tools(days, months) }}
   {% if days %}
     {{ day_sections(days, root) }}
   {% else %}
@@ -38,13 +16,4 @@
 </div>
 {% endblock %}
 
-{% block scripts %}<script src="{{ root }}static/filters.js?v={{ asset_version('filters.js') }}"></script>
-<script>
-  // Close the calendar after picking a day, or when tapping anywhere else.
-  (() => {
-    const pop = document.querySelector(".cal-pop");
-    if (!pop) return;
-    pop.addEventListener("click", (e) => { if (e.target.closest("a")) pop.open = false; });
-    document.addEventListener("click", (e) => { if (!pop.contains(e.target)) pop.open = false; });
-  })();
-</script>{% endblock %}
+{% block scripts %}<script src="{{ root }}static/filters.js?v={{ asset_version('filters.js') }}"></script>{% endblock %}

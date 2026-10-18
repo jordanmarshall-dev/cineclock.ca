@@ -38,21 +38,21 @@
   {% if film and film.overview %}<p class="synopsis">{{ film.overview }}</p>{% endif %}
 
   <h2 class="section-heading">Showtimes</h2>
-  {% for day in days %}
-  <section class="day">
-    <h3 class="day-heading day-bar">{{ icon("calendar", 16) }}{{ day.label }}</h3>
-    {% for group in day.groups %}
-    <div class="venue-group panel">
-      <h4 class="venue-heading"><a href="{{ root }}theatres/{{ group.venue.slug }}/">{{ venue_label(group.venue, root) }}</a></h4>
-      {% for r in group.rows %}
-        {% if r.note and not page.shared_note %}
-          {% if r.note | said_by_tags(r.tags) %}{{ tag_list(r.tags | reject("in", ["One screening", "One day only"]) | list) }}{% else %}<p class="meta showing-note">{{ r.note }}</p>{% endif %}
-        {% endif %}
-        <div class="times">{% for s in r.showtimes %}{{ showtime(s, page.title) }}{% endfor %}</div>
-      {% endfor %}
-    </div>
-    {% endfor %}
-  </section>
-  {% endfor %}
+  <ul class="showings">
+    {% for day in days %}{% for group in day.groups %}
+    <li class="showing panel">
+      <p class="showing-when">{{ icon("calendar", 15) }}{{ day.label }}</p>
+      <a class="showing-venue" href="{{ root }}theatres/{{ group.venue.slug }}/">{{ venue_label(group.venue, root) }}</a>
+      <div class="showing-times">
+        {% for r in group.rows %}
+          {% if r.note and not page.shared_note %}
+            {% if r.note | said_by_tags(r.tags) %}{{ tag_list(r.tags | reject("in", ["One screening", "One day only"]) | list) }}{% else %}<p class="meta showing-note">{{ r.note }}</p>{% endif %}
+          {% endif %}
+          <div class="times">{% for s in r.showtimes %}{{ showtime(s, page.title) }}{% endfor %}</div>
+        {% endfor %}
+      </div>
+    </li>
+    {% endfor %}{% endfor %}
+  </ul>
 </div>
 {% endblock %}

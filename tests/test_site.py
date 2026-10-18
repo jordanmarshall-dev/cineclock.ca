@@ -458,7 +458,7 @@ def test_badge_falls_back_to_initials_without_a_logo(conn, monkeypatch, tmp_path
     import cineclock.render as render
 
     # A static folder with the stylesheet but no logo files
-    for name in ("site.css", "filters.js"):
+    for name in ("site.css", "filters.js", "calendar.js"):
         shutil.copy(render.STATIC / name, tmp_path / name)
     monkeypatch.setattr(render, "STATIC", tmp_path)
     save(conn, show("Musk", at(18, 12)))
@@ -632,3 +632,21 @@ def test_theatre_page_frames_the_inside_photo_beside_the_specs(conn):
     assert 'class="room-photo"' in page and "static/rooms/rio-main.jpg" in page
     viff = pages(conn, NOW)["theatres/viff-centre/index.html"]
     assert "static/rooms/viff-lochmaddy.jpg" in viff and "static/rooms/viff-main.jpg" in viff
+
+
+def test_theatre_page_has_the_date_picker(conn):
+    save(conn, show("Jaws", at(19, 19)), show("Jaws", at(20, 19)))
+    page = pages(conn, NOW)["theatres/rio/index.html"]
+    assert 'class="cal-pop"' in page and "static/calendar.js" in page
+
+
+def test_film_without_a_poster_shows_its_title_in_the_frame(conn):
+    save(conn, show("Obscure Thing", at(19, 19)))
+    page = pages(conn, NOW)["films/index.html"]
+    assert '<span class="poster-fallback" aria-hidden="true">Obscure Thing</span>' in page
+
+
+def test_film_page_lists_a_row_per_day_and_theatre(conn):
+    save(conn, show("Jaws", at(19, 19)), show("Jaws", at(19, 21)), show("Jaws", at(20, 19)))
+    page = pages(conn, NOW)["films/jaws/index.html"]
+    assert page.count('class="showing panel"') == 2

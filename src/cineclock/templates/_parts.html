@@ -1,5 +1,6 @@
 {% macro poster(url, href=None, label="") -%}
 {% if href %}<a class="poster" href="{{ href }}" tabindex="-1" aria-hidden="true">{% else %}<div class="poster">{% endif %}
+  <span class="poster-fallback" aria-hidden="true">{{ label }}</span>
   {%- if url %}<img src="{{ url }}" alt="{{ label }}" loading="lazy" onerror="this.hidden = true">{% endif -%}
 {% if href %}</a>{% else %}</div>{% endif %}
 {%- endmacro %}
@@ -119,6 +120,36 @@
   {% endfor %}
 </section>
 {% endfor %}
+{%- endmacro %}
+
+{# Jump to a day: a calendar button with a month view, then a strip of day chips. #}
+{% macro date_tools(days, months) -%}
+{% if days %}
+<div class="date-tools">
+  {% if months %}
+  <details class="cal-pop">
+    <summary aria-label="Pick a date">{{ icon("calendar", 18) }}</summary>
+    <div class="cal-panel">
+      {% for m in months %}
+      <div class="cal-month">
+        <p class="cal-title">{{ m.title }}</p>
+        <div class="cal-grid">
+          {% for d in ["S", "M", "T", "W", "T", "F", "S"] %}<span class="cal-dow">{{ d }}</span>{% endfor %}
+          {% for week in m.weeks %}{% for d in week %}
+            {%- if not d %}<span></span>
+            {%- elif d.anchor %}<a href="#{{ d.anchor }}" class="cal-day has-shows{% if d.today %} today{% endif %}" aria-label="{{ d.date.strftime('%A %B') }} {{ d.date.day }}">{{ d.date.day }}</a>
+            {%- else %}<span class="cal-day{% if d.today %} today{% endif %}">{{ d.date.day }}</span>{% endif %}
+          {%- endfor %}{% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </details>
+  {% endif %}
+  {{ date_strip(days) }}
+</div>
+<script src="{{ root }}static/calendar.js?v={{ asset_version('calendar.js') }}" defer></script>
+{% endif %}
 {%- endmacro %}
 
 {% macro date_strip(days) -%}

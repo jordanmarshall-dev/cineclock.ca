@@ -476,6 +476,7 @@ def pages(conn: Connection, now: datetime) -> dict[str, str]:
     for venue in VENUES:
         path = f"theatres/{venue.slug}/index.html"
         mine = [s for s in screenings if s.venue == venue.name]
+        venue_days = group_days(mine, page_of, films, now)
         out[path] = render(
             "venue.html",
             path,
@@ -486,7 +487,8 @@ def pages(conn: Connection, now: datetime) -> dict[str, str]:
                 t for t in sort_tags({t for s in mine for t in tags_for(s)}) if kind(t) != "rare"
             ],
             current="theatres",
-            days=group_days(mine, page_of, films, now),
+            days=venue_days,
+            months=calendar_months(venue_days, now),
         )
     return out
 
