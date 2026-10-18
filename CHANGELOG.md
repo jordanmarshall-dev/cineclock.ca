@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.0.1 (October 18, 2026)
+
+- Film pages use the theatre's own description when TMDB has no synopsis, so one-off events like Vampyr × Applied Silence still say what they are.
+- The README screenshots are taken from the live data by a Screenshots workflow in GitHub Actions.
+
 ## 2.0.0 (October 18, 2026)
 
 A redesign around one idea: every film looks the same everywhere, so you always know where to look.
