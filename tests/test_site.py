@@ -291,7 +291,8 @@ def test_past_screenings_are_left_out(conn):
 def rail_titles(conn, now=NOW):
     screenings = db.upcoming(conn, now)
     page_of = film_pages(screenings, db.films_by_key(conn))
-    return {r.title: r for r in rails(list({id(p): p for p in page_of.values()}.values()), now)}
+    film_list = list({id(p): p for p in page_of.values()}.values())
+    return {r.title: r for r in rails(film_list, now, db.venue_debuts(conn))}
 
 
 @pytest.mark.parametrize(
@@ -320,13 +321,22 @@ def test_just_added_skips_the_first_run(conn):
     assert [c.page.title for c in rail_titles(conn, later)["Just added"].cards] == ["New"]
 
 
+def test_a_new_theatre_does_not_fill_just_added(conn):
+    save(conn, show("Old", at(20, 19)))
+    later = NOW + timedelta(days=2)
+    db.sync_venue(conn, "The Rio", [show("Old", at(20, 19)), show("New", at(22, 19))], later)
+    db.sync_venue(conn, "The Dunbar", [show("Dunbar debut", at(23, 19), venue="The Dunbar")], later)
+    titles = [c.page.title for c in rail_titles(conn, later)["Just added"].cards]
+    assert titles == ["New"]
+
+
 def test_highly_rated_needs_enough_ratings(conn):
     save(conn, show("Classic", at(18, 19), year=1970), show("Obscure", at(18, 20), year=2020))
     db.save_film(conn, film("Classic", 1970, 1, letterboxd_rating=4.1, letterboxd_count=50_000))
     db.save_film(conn, film("Obscure", 2020, 2, letterboxd_rating=4.9, letterboxd_count=12))
     found = rail_titles(conn)
     assert [c.page.title for c in found["Highly rated"].cards] == ["Classic"]
-    assert found["Highly rated"].cards[0].why == "4.1 on Letterboxd"
+    assert found["Highly rated"].cards[0].why is None
     assert found["Highly rated"].cards[0].next_label == "Today, 7:00 pm"
     assert found["Highly rated"].more == "films/?sort=rated"
 
@@ -386,10 +396,12 @@ def test_rows_carry_tags_and_filter_data(conn):
     assert 'data-value="on-film"' in page
 
 
-def test_one_screening_tag_only_when_it_plays_once(conn):
+def test_a_single_screening_highlights_its_time_instead_of_a_badge(conn):
     save(conn, show("Twice", at(18, 19)), show("Twice", at(19, 19)), show("Once", at(18, 21)))
     page = pages(conn, NOW)["showtimes/index.html"]
-    assert page.count("tag-one-screening") == 1
+    assert "tag-one-screening" not in page
+    assert page.count("time time-rare") == 1
+    assert page.count('data-tags="one-screening"') == 1
 
 
 def test_film_page_shows_tags(conn):
@@ -397,7 +409,8 @@ def test_film_page_shows_tags(conn):
         conn, Screening("The Cinematheque", "Vertigo", at(19, 19), "https://x", film_format="35mm")
     )
     page = pages(conn, NOW)["films/vertigo/index.html"]
-    assert ">35mm<" in page and ">One screening<" in page
+    assert ">35mm<" in page and ">One screening<" not in page
+    assert "time time-rare" in page
 
 
 def test_every_rail_has_a_see_all_link(conn):
@@ -412,7 +425,7 @@ def test_next_label_for_later_days(conn):
     assert card.next_label == "Oct 24, 8:15 pm"
 
 
-def test_home_cards_show_year_reason_next_showing_and_theatres(conn):
+def test_home_cards_show_year_score_next_showing_and_theatres(conn):
     save(
         conn,
         show("Classic", at(18, 19), year=1970),
@@ -421,7 +434,7 @@ def test_home_cards_show_year_reason_next_showing_and_theatres(conn):
     db.save_film(conn, film("Classic", 1970, 1, letterboxd_rating=4.1, letterboxd_count=50_000))
     home = pages(conn, NOW)["index.html"]
     assert '<span class="year">1970</span>' in home
-    assert '<span class="card-why">4.1 on Letterboxd</span>' in home
+    assert 'title="4.1 on Letterboxd"' in home
     assert '<span class="card-next">Today, 7:00 pm</span>' in plain(home)
     assert 'title="The Rio"' in home and 'title="The Cinematheque"' in home
 
@@ -429,8 +442,9 @@ def test_home_cards_show_year_reason_next_showing_and_theatres(conn):
 def test_films_page_lists_each_film_once_with_dates(conn):
     save(conn, show("Musk", at(18, 12)), show("Musk", at(25, 12)), show("Pulse", at(19, 20)))
     page = pages(conn, NOW)["films/index.html"]
-    assert page.count('class="film-item panel"') == 2
+    assert page.count('<li class="card"') == 2
     assert "Oct 18 to Oct 25" in page
+    assert 'class="card-next rare" title="One screening">' in page
     assert "Oct 19 only" in page
     assert 'data-sort-screenings="2"' in page
 
@@ -461,7 +475,7 @@ def test_badge_falls_back_to_initials_without_a_logo(conn, monkeypatch, tmp_path
     import cineclock.render as render
 
     # A static folder with the stylesheet but no logo files
-    for name in ("site.css", "filters.js", "calendar.js", "me.js"):
+    for name in ("site.css", "filters.js", "calendar.js", "me.js", "hero.js"):
         shutil.copy(render.STATIC / name, tmp_path / name)
     monkeypatch.setattr(render, "STATIC", tmp_path)
     save(conn, show("Musk", at(18, 12)))
@@ -473,8 +487,11 @@ def test_ratings_show_on_listings_without_toggles(conn):
     save(conn, show("The Thing", at(18, 20), year=1982))
     db.save_film(conn, film("The Thing", 1982, 1091, imdb_rating=8.2, metacritic=57))
     page = pages(conn, NOW)["showtimes/index.html"]
-    assert 'class="rating rating-imdb"' in page and 'class="rating rating-metacritic"' in page
-    assert "rating-letterboxd" not in page
+    # Listings carry only the Letterboxd score; the film page has the rest.
+    assert "rating-imdb" not in page and "rating-metacritic" not in page
+    assert "lb-rating" not in page
+    film_page = pages(conn, NOW)["films/the-thing-1982/index.html"]
+    assert "IMDb" in film_page
     assert "rating-switches" not in page
 
 
@@ -604,6 +621,31 @@ def test_spotlight_prefers_tonights_best_rated_film_with_art(conn):
     db.save_film(conn, film("Later", None, 3, backdrop_url="https://b/l", letterboxd_rating=4.9))
     page_of = film_pages(db.upcoming(conn, NOW), db.films_by_key(conn))
     assert spotlight(list({id(p): p for p in page_of.values()}.values()), NOW).title == "Alien"
+
+
+def test_hero_has_three_highlights_all_with_art(conn):
+    from cineclock.site import highlights
+
+    save(
+        conn,
+        show("Alien", at(18, 21)),
+        show("Vertigo", at(22, 19), note="35mm"),
+        show("Jaws", at(20, 19)),
+        show("Jaws", at(21, 19)),
+        show("No Art", at(19, 19), note="35mm"),
+        show("Far Off", NOW + timedelta(days=30)),
+    )
+    for i, title in enumerate(["Alien", "Vertigo", "Jaws", "Far Off"]):
+        db.save_film(conn, film(title, None, i, backdrop_url=f"https://b/{i}", letterboxd_rating=4))
+    page_of = film_pages(db.upcoming(conn, NOW), db.films_by_key(conn))
+    slides = highlights(list({id(p): p for p in page_of.values()}.values()), NOW)
+    assert [(s.page.title, s.label) for s in slides] == [
+        ("Alien", "Tonight"),
+        ("Vertigo", "35mm"),
+        ("Jaws", "Coming up"),
+    ]
+    home = pages(conn, NOW)["index.html"]
+    assert home.count('class="spotlight"') == 3 and "hero.js" in home
 
 
 def test_a_note_every_showing_shares_moves_up_top(conn):

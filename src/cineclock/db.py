@@ -211,6 +211,15 @@ def upcoming(conn: sqlite3.Connection, now: datetime) -> list[Screening]:
     return [_from_row(row) for row in rows]
 
 
+def venue_debuts(conn: sqlite3.Connection) -> dict[str, datetime]:
+    """When each theatre was first scraped, from every screening ever stored."""
+    rows = conn.execute(
+        "SELECT venue, MIN(first_seen) AS debut FROM screenings "
+        "WHERE first_seen IS NOT NULL GROUP BY venue"
+    )
+    return {row["venue"]: datetime.fromisoformat(row["debut"]) for row in rows}
+
+
 FILM_FIELDS = [f.name for f in fields(Film)]
 
 

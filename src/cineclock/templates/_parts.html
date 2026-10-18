@@ -26,7 +26,12 @@
 {%- endif %}
 {%- endmacro %}
 
-{# The compact ratings line under a film's title. #}
+{# Just the Letterboxd average, for cards and rows. The film page has the full spread. #}
+{% macro lb_rating(film, root) -%}
+{% if film and film.letterboxd_rating %}<span class="lb-rating" title="{{ "%.1f" | format(film.letterboxd_rating) }} on Letterboxd">{{ source_mark("letterboxd", root) }}<b>{{ "%.1f" | format(film.letterboxd_rating) }}</b></span>{% endif %}
+{%- endmacro %}
+
+{# Every ratings source, for the film page. #}
 {% macro ratings(film, root) -%}
 {% if film and (film.letterboxd_rating or film.imdb_rating or film.rt_score is not none or film.metacritic is not none) %}
 <p class="ratings">
@@ -75,12 +80,16 @@
   "7.1 sound": "speaker", "Curved screen": "screen",
 } %}
 
+{# One screening and One day only aren't drawn as badges; the date or time they describe is highlighted instead. #}
+{% set RARE = ["One screening", "One day only"] %}
+
 {% macro tag_list(tags) -%}
+{% set tags = tags | reject("in", RARE) | list %}
 {% if tags %}<p class="tags">{% for t in tags %}<span class="tag tag-{{ t | tagkind }} tag-{{ t | tagslug }}">{{ icon(TAG_ICONS.get(t, "screen"), 12) }}{{ t }}</span>{% endfor %}</p>{% endif %}
 {%- endmacro %}
 
-{% macro showtime(s, label=None) -%}
-<a class="time" href="{{ s.url }}" aria-label="Tickets for {{ label or s.title }}, {{ s.local_start.strftime('%A %B') }} {{ s.local_start.day }} at {{ s.starts_at | clock }}{% if s | room_label %}, {{ s | room_label }}{% endif %}">
+{% macro showtime(s, label=None, rare=False) -%}
+<a class="time{% if rare %} time-rare{% endif %}" href="{{ s.url }}" aria-label="Tickets for {{ label or s.title }}, {{ s.local_start.strftime('%A %B') }} {{ s.local_start.day }} at {{ s.starts_at | clock }}{% if s | room_label %}, {{ s | room_label }}{% endif %}">
   {{- icon("ticket", 16) }}<span class="time-text">{{ s.starts_at | clock }}{% if s | room_label %}<small>{{ s | room_label }}</small>{% endif %}</span>
 </a>
 {%- endmacro %}
@@ -94,12 +103,12 @@
       {% if r.year %}<span class="year">{{ r.year }}</span>{% endif %}
     </p>
     {% if r.note and not (r.note | said_by_tags(r.tags)) %}<p class="meta">{{ r.note }}</p>{% elif r.page.film and r.page.film.director %}<p class="meta">{{ r.page.film.director }}</p>{% endif %}
-    {{ ratings(r.page.film, root) }}
+    {% if r.page.film and r.page.film.letterboxd_rating %}<p class="ratings">{{ lb_rating(r.page.film, root) }}</p>{% endif %}
     {{ tag_list(r.tags) }}
     <p class="tags personal" hidden></p>
   </div>
   <div class="times">
-    {% for s in r.showtimes %}{{ showtime(s, r.title) }}{% endfor %}
+    {% set rare = r.page.tags | select("in", RARE) | list %}{% for s in r.showtimes %}{{ showtime(s, r.title, rare) }}{% endfor %}
   </div>
 </li>
 {%- endmacro %}
@@ -158,6 +167,26 @@
 {% endif %}
 {%- endmacro %}
 
+{# The poster card: home rails and the Films grid share it, so a film looks the same everywhere.
+   Theatre logos sit over the poster's corner; below it, title, Letterboxd score and when it's on. #}
+{% macro film_card(p, root, when, why=None, attrs="") -%}
+{% set rare = p.tags | select("in", RARE) | list %}
+<li class="card" data-film="{{ p.slug }}" {{ attrs | safe }}>
+  <a href="{{ root }}films/{{ p.slug }}/">
+    <span class="card-art">
+      {{ poster(p.poster_url, label=p.title) }}
+      <span class="card-venues">{% for v in p.venues %}{{ venue_badge(v, root) }}{% endfor %}</span>
+    </span>
+    <span class="card-title">{{ p.title }}{% if p.year %} <span class="year">{{ p.year }}</span>{% endif %}</span>
+    {% if why %}<span class="card-why">{% if why in TAG_ICONS %}{{ icon(TAG_ICONS[why], 11) }}{% endif %}{{ why }}</span>{% endif %}
+    <span class="card-meta">
+      {{- lb_rating(p.film, root) -}}
+      <span class="card-next{% if rare %} rare{% endif %}"{% if rare %} title="{{ rare[0] }}"{% endif %}>{{ icon("star" if rare else "calendar", 12) }}{{ when }}</span>
+    </span>
+  </a>
+</li>
+{%- endmacro %}
+
 {% macro rail(r, root) -%}
 <section class="rail" aria-labelledby="rail-{{ r.title | tagslug }}">
   <div class="rail-head">
@@ -165,19 +194,7 @@
     <a class="see-all" href="{{ root }}{{ r.more }}" aria-label="See all: {{ r.title }}">{{ icon("chevron", 22) }}</a>
   </div>
   <ul class="rail-cards">
-    {% for c in r.cards %}
-    <li class="card" data-film="{{ c.page.slug }}">
-      <a href="{{ root }}films/{{ c.page.slug }}/">
-        <span class="card-art">
-          {{ poster(c.page.poster_url, label=c.page.title) }}
-          <span class="card-venues">{% for v in c.page.venues %}{{ venue_badge(v, root) }}{% endfor %}</span>
-        </span>
-        <span class="card-title">{{ c.page.title }}{% if c.page.year %} <span class="year">{{ c.page.year }}</span>{% endif %}</span>
-        {% if c.why %}<span class="card-why">{% if c.why in TAG_ICONS %}{{ icon(TAG_ICONS[c.why], 11) }}{% endif %}{{ c.why }}</span>{% endif %}
-        <span class="card-next">{{ icon("calendar", 12) }}{{ c.next_label }}</span>
-      </a>
-    </li>
-    {% endfor %}
+    {% for c in r.cards %}{{ film_card(c.page, root, c.next_label, c.why) }}{% endfor %}
   </ul>
 </section>
 {%- endmacro %}

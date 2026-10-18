@@ -23,6 +23,7 @@ from cineclock.timefmt import clock, day_label, short_day
 from cineclock.venues import BY_NAME, VENUES, Room, Venue, order, shown_specs
 
 RAIL_LENGTH = 15
+RARE = ("One screening", "One day only")
 # Below this many Letterboxd ratings, an average says little.
 MIN_RATINGS_FOR_TOP = 1000
 
@@ -310,16 +311,50 @@ def spotlight(film_list: list[FilmPage], now: datetime) -> FilmPage | None:
     return min(with_art, key=lambda p: p.next_showing.starts_at) if with_art else None
 
 
-def spotlight_context(page: FilmPage | None, now: datetime) -> dict:
-    if not page:
-        return {"spotlight": None}
+@dataclass
+class Slide:
+    page: FilmPage
+    label: str
+    when: str
+
+
+def highlights(film_list: list[FilmPage], now: datetime, count: int = 3) -> list[Slide]:
+    """The home page hero: tonight's pick, then the standout things coming up in the
+    next two weeks (events, film prints, one-offs), best rated first. Only films
+    with a backdrop image, so every slide has full art."""
+    first = spotlight(film_list, now)
+    if not first:
+        return []
     today = now.astimezone(VANCOUVER).date()
-    on_today = page.next_showing.local_start.date() == today
-    return {
-        "spotlight": page,
-        "spotlight_label": "Tonight" if on_today else "Up next",
-        "spotlight_when": when(page.next_showing, now),
-    }
+    soon = today + timedelta(days=14)
+
+    def standout(p: FilmPage) -> str | None:
+        tags = p.tags
+        return next(
+            (t for t in tags if t in EVENTS),
+            next((t for t in tags if t in ON_FILM), next((t for t in tags if t in RARE), None)),
+        )
+
+    rest = sorted(
+        (
+            p
+            for p in film_list
+            if p is not first
+            and p.film
+            and p.film.backdrop_url
+            and p.next_showing.local_start.date() <= soon
+        ),
+        key=lambda p: (
+            standout(p) is None,
+            -(p.film.letterboxd_rating or 0),
+            p.next_showing.starts_at,
+        ),
+    )
+    on_today = first.next_showing.local_start.date() == today
+    slides = [Slide(first, "Tonight" if on_today else "Up next", when(first.next_showing, now))]
+    for p in rest[: count - 1]:
+        slides.append(Slide(p, standout(p) or "Coming up", when(p.next_showing, now)))
+    return slides
 
 
 def last_day(s: Screening, now: datetime) -> str:
@@ -333,7 +368,13 @@ def last_day(s: Screening, now: datetime) -> str:
     return f"{day:%a} {day.day}"
 
 
-def rails(film_list: list[FilmPage], now: datetime) -> list[Rail]:
+# A scrape takes a few minutes, so anything first seen this close to a theatre's debut is baseline.
+DEBUT_GRACE = timedelta(hours=1)
+
+
+def rails(
+    film_list: list[FilmPage], now: datetime, debuts: dict[str, datetime] | None = None
+) -> list[Rail]:
     today = now.astimezone(VANCOUVER).date()
     soonest = lambda p: p.next_showing.starts_at  # noqa: E731
 
@@ -350,12 +391,25 @@ def rails(film_list: list[FilmPage], now: datetime) -> list[Rail]:
         key=soonest,
     )
 
-    # Films that appeared in the last two weeks, newest first. Everything seen on
-    # the very first run is the baseline, not news, so it doesn't count.
-    added = [p.added for p in film_list if p.added]
-    since = max(min(added), now - timedelta(days=14)) if added else now
+    # Films that appeared in the last two weeks, newest first. A theatre's first
+    # scrape is its baseline, not news, so a newly added theatre doesn't fill the rail.
+    if debuts is None:
+        debuts = {}
+        for p in film_list:
+            for s in p.screenings:
+                if s.first_seen and (s.venue not in debuts or s.first_seen < debuts[s.venue]):
+                    debuts[s.venue] = s.first_seen
+
+    def is_new(p: FilmPage) -> bool:
+        seen = [s for s in p.screenings if s.first_seen]
+        if not seen:
+            return False
+        first = min(seen, key=lambda s: s.first_seen)
+        debut = debuts.get(first.venue, first.first_seen)
+        return first.first_seen > max(debut + DEBUT_GRACE, now - timedelta(days=14))
+
     just_added = sorted(
-        (p for p in film_list if p.added and p.added > since),
+        (p for p in film_list if is_new(p)),
         key=lambda p: (-p.added.timestamp(), soonest(p)),
     )
 
@@ -419,7 +473,8 @@ def rails(film_list: list[FilmPage], now: datetime) -> list[Rail]:
         ),
         Rail(
             "Highly rated",
-            cards(top, lambda p: f"{p.film.letterboxd_rating:.1f} on Letterboxd"),
+            # The card already shows the Letterboxd score.
+            cards(top),
             "films/?sort=rated",
         ),
         Rail(
@@ -462,8 +517,8 @@ def pages(conn: Connection, now: datetime) -> dict[str, str]:
         "index.html": render(
             "index.html",
             "index.html",
-            rails=rails(film_list, now),
-            **spotlight_context(spotlight(film_list, now), now),
+            rails=rails(film_list, now, db.venue_debuts(conn)),
+            slides=highlights(film_list, now),
         ),
         "showtimes/index.html": render(
             "showtimes.html",

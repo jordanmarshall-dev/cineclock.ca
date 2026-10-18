@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_parts.html" import poster, venue_badge, ratings, tag_list, filter_bar, icon %}
+{% from "_parts.html" import film_card, filter_bar, RARE %}
 
 {% block title %}Films playing in Vancouver{% endblock %}
 
@@ -10,33 +10,11 @@
   {{ filter_bar(venues, filter_tags, genres, root, sorting=True) }}
 
   {% if films %}
-  <ul class="film-list" data-sortable>
+  <ul class="film-grid" data-sortable>
     {% for p in films %}
     {% set lb = p.film.letterboxd_rating if p.film and p.film.letterboxd_rating and (p.film.letterboxd_count or 0) >= 1000 else -1 %}
-    <li class="film-item panel" data-item data-film="{{ p.slug }}"
-        data-venues="{{ p.venues | map(attribute='slug') | join(' ') }}"
-        data-tags="{{ p.tags | filter_slugs | join(' ') }}"
-        data-genres="{{ p.genres | map('tagslug') | join(' ') }}"
-        data-title="{{ p.title | lower }}{% for s in p.screenings %} {{ s.title | lower }}{% endfor %}"
-        data-sort-next="{{ p.next_showing.starts_at.timestamp() | int }}"
-        data-sort-leaving="{{ p.last_showing.starts_at.timestamp() | int }}"
-        data-sort-added="{{ (p.added.timestamp() | int) if p.added else 0 }}"
-        data-sort-rated="{{ lb }}"
-        data-sort-popular="{{ (p.film.letterboxd_count or 0) if p.film else 0 }}"
-        data-sort-screenings="{{ p.screenings | length }}">
-      <a class="film-link" href="{{ root }}films/{{ p.slug }}/">
-        {{ poster(p.poster_url, label=p.title) }}
-        <span class="film-info">
-          <span class="row-title">{{ p.title }}{% if p.year %} <span class="year">{{ p.year }}</span>{% endif %}</span>
-          {% if p.film and p.film.director %}<span class="meta">{{ p.film.director }}</span>{% endif %}
-          <span class="film-dates"><span>{{ icon("calendar") }}{{ p.date_range }}</span><span class="film-count">{{ icon("ticket") }}{{ p.screenings | length }} {{ "screening" if p.screenings | length == 1 else "screenings" }}</span></span>
-          {{ ratings(p.film, root) }}
-          {{ tag_list(p.tags) }}
-          <p class="tags personal" hidden></p>
-          <span class="card-venues">{% for v in p.venues %}{{ venue_badge(v, root) }}{% endfor %}</span>
-        </span>
-      </a>
-    </li>
+    {% set attrs %}data-item data-venues="{{ p.venues | map(attribute='slug') | join(' ') }}" data-tags="{{ p.tags | filter_slugs | join(' ') }}" data-genres="{{ p.genres | map('tagslug') | join(' ') }}" data-title="{{ p.title | lower }}{% for s in p.screenings %} {{ s.title | lower }}{% endfor %}" data-sort-next="{{ p.next_showing.starts_at.timestamp() | int }}" data-sort-leaving="{{ p.last_showing.starts_at.timestamp() | int }}" data-sort-added="{{ (p.added.timestamp() | int) if p.added else 0 }}" data-sort-rated="{{ lb }}" data-sort-popular="{{ (p.film.letterboxd_count or 0) if p.film else 0 }}" data-sort-screenings="{{ p.screenings | length }}"{% endset %}
+    {{ film_card(p, root, p.date_range, p.tags | reject("in", RARE) | first, attrs) }}
     {% endfor %}
   </ul>
   {% else %}

@@ -1,26 +1,37 @@
 {% extends "base.html" %}
-{% from "_parts.html" import rail, icon, tag_list, venue_badge %}
+{% from "_parts.html" import rail, icon, venue_badge, lb_rating, TAG_ICONS %}
 
 {% block title %}cineclock: Support local cinemas{% endblock %}
 
 {% block main %}
 <div class="wrap">
   <p class="tagline">Support local cinemas.</p>
-  {% if spotlight %}
-  {% set p = spotlight %}
-  <a class="spotlight" href="{{ root }}films/{{ p.slug }}/">
-    <img class="spotlight-art" src="{{ p.film.backdrop_url }}" alt="" onerror="this.hidden = true">
-    <span class="spotlight-body">
-      <span class="eyebrow">{{ spotlight_label }}</span>
-      <span class="spotlight-title">{{ p.title }}{% if p.year %} <span class="year">{{ p.year }}</span>{% endif %}</span>
-      <span class="spotlight-meta">
-        {%- for v in p.venues %}{{ venue_badge(v, root) }}{% endfor -%}
-        <span>{{ icon("calendar", 14) }}{{ spotlight_when }}</span>
-        {%- if p.film.director %}<span>{{ icon("clapper", 14) }}{{ p.film.director }}</span>{% endif -%}
-      </span>
-      {{ tag_list(p.tags[:3]) }}
-    </span>
-  </a>
+  {% if slides %}
+  <section class="hero" aria-roledescription="carousel" aria-label="Highlights">
+    <div class="hero-track">
+      {% for sl in slides %}
+      {% set p = sl.page %}
+      <a class="spotlight" href="{{ root }}films/{{ p.slug }}/" aria-roledescription="slide" aria-label="{{ loop.index }} of {{ slides | length }}: {{ p.title }}">
+        <img class="spotlight-art" src="{{ p.film.backdrop_url }}" alt=""{% if not loop.first %} loading="lazy"{% endif %} onerror="this.hidden = true">
+        <span class="spotlight-body">
+          <span class="eyebrow">{% if sl.label in TAG_ICONS %}{{ icon(TAG_ICONS[sl.label], 12) }}{% endif %}{{ sl.label }}</span>
+          <span class="spotlight-title">{{ p.title }}{% if p.year %} <span class="year">{{ p.year }}</span>{% endif %}</span>
+          <span class="spotlight-meta">
+            {%- for v in p.venues %}{{ venue_badge(v, root) }}{% endfor -%}
+            <span>{{ icon("calendar", 14) }}{{ sl.when }}</span>
+            {%- if p.film.director %}<span>{{ icon("clapper", 14) }}{{ p.film.director }}</span>{% endif -%}
+            {{- lb_rating(p.film, root) -}}
+          </span>
+        </span>
+      </a>
+      {% endfor %}
+    </div>
+    {% if slides | length > 1 %}
+    <button type="button" class="hero-arrow prev" aria-label="Previous" hidden>{{ icon("chevron", 20) }}</button>
+    <button type="button" class="hero-arrow next" aria-label="Next" hidden>{{ icon("chevron", 20) }}</button>
+    <div class="hero-dots" hidden>{% for sl in slides %}<button type="button" aria-label="Show {{ sl.page.title }}"></button>{% endfor %}</div>
+    {% endif %}
+  </section>
   {% endif %}
   <nav class="quick-filters" aria-label="Browse">
     <a href="{{ root }}showtimes/">{{ icon("ticket", 14) }}All showings</a>
@@ -38,3 +49,5 @@
   {% endif %}
 </div>
 {% endblock %}
+
+{% block scripts %}<script src="{{ root }}static/hero.js?v={{ asset_version('hero.js') }}"></script>{% endblock %}

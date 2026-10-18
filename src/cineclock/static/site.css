@@ -328,6 +328,8 @@ a:focus-visible {
 }
 
 .ratings b { color: var(--bright); font-weight: 600; }
+.ratings .lb-rating { font-size: 0.8125rem; }
+.ratings .lb-rating .source-logo { height: 0.875rem; }
 
 .rating {
   display: inline-flex;
@@ -376,6 +378,9 @@ a:focus-visible {
 
 .time:hover { border-color: var(--accent); }
 .time .icon { color: var(--accent-text); }
+
+/* The only chance to see it: the booking button itself stands out. */
+.time-rare { border-color: var(--accent); background: var(--accent-wash); }
 .time-text { display: flex; flex-direction: column; }
 
 .time small {
@@ -725,17 +730,92 @@ a:focus-visible {
 
 .tagline { margin: 1.25rem 0 0; }
 
-/* Spotlight: tonight's pick across the top, art fading into the page. */
-.spotlight {
+/* Hero: a few highlights, each a full-width slide with its art fading into the
+   page. Without the script it's a sideways scroll; with it, a looping carousel. */
+.hero {
   position: relative;
-  display: block;
-  height: 15rem;
   margin-top: 0.875rem;
   overflow: hidden;
   border-radius: var(--radius);
+}
+
+.hero-track {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.hero-track::-webkit-scrollbar { display: none; }
+
+.hero.is-carousel .hero-track {
+  overflow: visible;
+  touch-action: pan-y;
+  transition: transform 320ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.spotlight {
+  position: relative;
+  display: block;
+  flex: 0 0 100%;
+  height: 15rem;
+  overflow: hidden;
   background: var(--panel);
   color: var(--white);
   text-decoration: none;
+  scroll-snap-align: start;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.spotlight-art { pointer-events: none; }
+
+.hero-dots {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.875rem;
+  z-index: 2;
+  display: flex;
+  gap: 0.375rem;
+}
+
+.hero-dots button {
+  width: 0.4375rem;
+  height: 0.4375rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+}
+
+.hero-dots button[aria-current="true"] { width: 1.125rem; background: var(--white); }
+
+.hero-arrow {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin-top: -1.125rem;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(20, 24, 28, 0.7);
+  color: var(--white);
+  cursor: pointer;
+}
+
+.hero-arrow.prev { left: 0.75rem; }
+.hero-arrow.prev .icon { transform: scaleX(-1); }
+.hero-arrow.next { right: 0.75rem; }
+
+@media (hover: hover) {
+  .hero-arrow:not([hidden]) { display: flex; opacity: 0; transition: opacity 150ms; }
+  .hero:hover .hero-arrow,
+  .hero-arrow:focus-visible { opacity: 1; }
 }
 
 .spotlight-art {
@@ -766,6 +846,10 @@ a:focus-visible {
 }
 
 .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3125rem;
+  justify-self: start;
   color: var(--accent-text);
   font-size: 0.6875rem;
   font-weight: 700;
@@ -931,11 +1015,33 @@ a:focus-visible {
   text-overflow: ellipsis;
 }
 
+.card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  margin-top: 0.25rem;
+}
+
+.lb-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3125rem;
+  color: var(--bright);
+  font-size: 0.75rem;
+}
+
+.lb-rating b { font-weight: 600; }
+.lb-rating .source-logo { height: 0.6875rem; }
+
+/* A film that plays once (or on one day) has its date picked out in purple
+   rather than carrying a separate badge. */
+.card-next.rare { color: var(--accent-text); font-weight: 600; }
+.card-next.rare .icon { fill: currentColor; }
+
 .card-next {
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  margin-top: 0.1875rem;
   overflow: hidden;
   font-size: 0.6875rem;
   line-height: 1.3;
@@ -960,43 +1066,16 @@ a:focus-visible {
 
 .all-showtimes a:hover { background: var(--line); }
 
-/* 7. Films list */
+/* 7. Films list: the same poster cards as the home rails, in a grid. */
 
-.film-list {
+.film-grid {
   display: grid;
-  gap: 0.75rem;
-  margin: 1rem 0 0;
+  grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
+  gap: 1.25rem 0.75rem;
+  margin: 1.25rem 0 0;
   padding: 0;
   list-style: none;
 }
-
-.film-link {
-  display: grid;
-  grid-template-columns: 5.75rem 1fr;
-  gap: 0.875rem;
-  padding: 0.875rem;
-  text-decoration: none;
-}
-
-.film-link:hover .row-title { text-decoration: underline; text-underline-offset: 3px; }
-
-.film-info > * { display: block; }
-.film-info .ratings,
-.film-info .tags,
-.film-info .card-venues { display: flex; }
-
-.film-dates {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.125rem 0.875rem;
-  margin-top: 0.125rem;
-  color: var(--bright);
-  font-size: 0.8125rem;
-  font-weight: 500;
-}
-
-.film-dates > span { display: inline-flex; align-items: center; gap: 0.3125rem; }
-.film-count { color: var(--text); font-weight: 400; }
 
 /* 8. Film page */
 
@@ -1408,8 +1487,8 @@ a:focus-visible {
 
 @media (min-width: 40rem) {
   :root { --gutter: 1.5rem; }
-  .row,
-  .film-link { grid-template-columns: 7rem 1fr; gap: 1.25rem; }
+  .row { grid-template-columns: 7rem 1fr; gap: 1.25rem; }
+  .film-grid { grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); gap: 1.5rem 1rem; }
   .rail-cards { grid-auto-columns: 8.5rem; gap: 1rem; }
   .spotlight { height: 20rem; }
   .spotlight-body { right: 1.75rem; bottom: 1.5rem; left: 1.75rem; }
@@ -1434,8 +1513,8 @@ a:focus-visible {
 
 @media (min-width: 64rem) {
   .rail-cards { grid-auto-columns: 9.5rem; }
+  .film-grid { grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); }
   .spotlight { height: 24rem; }
-  .film-list { grid-template-columns: repeat(2, 1fr); }
   .theatre-cards { grid-template-columns: repeat(3, 1fr); }
   .day-bar { margin-right: 0; margin-left: 0; padding-right: 0; padding-left: 0; }
 

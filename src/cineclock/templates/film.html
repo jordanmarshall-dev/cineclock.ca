@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_parts.html" import poster, showtime, tag_list, venue_label, source_mark, icon %}
+{% from "_parts.html" import poster, showtime, tag_list, venue_label, source_mark, icon, RARE %}
 
 {% block title %}{{ page.title }}{% if page.year %} ({{ page.year }}){% endif %} showtimes in Vancouver{% endblock %}
 {% block description %}{% if film and film.overview %}{{ film.overview | truncate(160) }}{% else %}Showtimes for {{ page.title }} in Vancouver.{% endif %}{% endblock %}
@@ -49,9 +49,9 @@
       <p class="showing-when">{{ icon("calendar", 15) }}{{ day.label }}</p>
       {% for r in rows %}
         {% if r.note and not page.shared_note %}
-          {% if r.note | said_by_tags(r.tags) %}{{ tag_list(r.tags | reject("in", ["One screening", "One day only"]) | list) }}{% else %}<p class="meta showing-note">{{ r.note }}</p>{% endif %}
+          {% if r.note | said_by_tags(r.tags) %}{{ tag_list(r.tags) }}{% else %}<p class="meta showing-note">{{ r.note }}</p>{% endif %}
         {% endif %}
-        <div class="times">{% for s in r.showtimes %}{{ showtime(s, page.title) }}{% endfor %}</div>
+        <div class="times">{% for s in r.showtimes %}{{ showtime(s, page.title, page.tags | select("in", RARE) | list) }}{% endfor %}</div>
       {% endfor %}
     </div>
     {% endfor %}
