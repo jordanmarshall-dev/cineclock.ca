@@ -9,7 +9,11 @@ Vancouver showtimes for film lovers. Indie and rep cinemas in one place.
 
 Version 2.0. See what changed in the [changelog](CHANGELOG.md).
 
-<img src="docs/screenshot.png" alt="cineclock on a phone" width="320">
+<p>
+  <img src="docs/home.png" alt="The cineclock home page on a phone: a spotlight of tonight's pick, shortcuts, and a row of posters" width="250">
+  <img src="docs/films.png" alt="The Films page: a grid of posters, each with the title, year, score and dates" width="250">
+  <img src="docs/film.png" alt="A film page: backdrop, poster, scores from four sources and showtimes" width="250">
+</p>
 
 ## What it does
 
@@ -52,6 +56,8 @@ python -m cineclock.scrape
 ## How it's deployed
 
 The live site is plain files on GitHub Pages, so it costs nothing and never sleeps. A GitHub Actions workflow runs on every push to `main` and every 4 hours: it runs the tests, scrapes the venues, builds the page with `python -m cineclock.build`, and publishes it. The database is kept between runs in the Actions cache, so past screenings stay as history.
+
+The screenshots above are taken the same way: a manual Screenshots workflow builds the site from that database, photographs it in a phone-sized browser with Playwright (`tools/screenshots.py`) and commits the pictures.
 
 ## How it's built
 
