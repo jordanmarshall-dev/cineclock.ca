@@ -50,7 +50,6 @@
     const me = window.cineclockMe;
     const $ = (id) => document.getElementById(id);
     const say = (text) => ($("me-message").textContent = text);
-    const synced = {{ synced | tojson }};
 
     async function fill(films, id, test) {
       const list = await me.cards(films, test);
@@ -78,21 +77,20 @@
       }
     }
 
-    // Letterboxd won't let a browser read profiles from another site, so the
-    // nightly build reads them; only the usernames it syncs work here.
-    $("me-user-form").addEventListener("submit", (e) => {
+    $("me-user-form").addEventListener("submit", async (e) => {
       e.preventDefault();
       const user = e.target.user.value.trim().toLowerCase().replace(/^@/, "").replace(/^.*letterboxd\.com\//, "").replace(/\/.*$/, "");
-      if (!synced.includes(user)) {
-        const ask = `https://github.com/yogzoth/cineclock/issues/new?title=${encodeURIComponent(`Sync Letterboxd user ${user}`)}`;
-        $("me-message").innerHTML = "";
-        $("me-message").append(
-          `cineclock doesn't follow ${user} yet; profiles are read once a day by the site itself. `,
-          Object.assign(document.createElement("a"), { href: ask, textContent: "Ask to add it" }),
-          "."
-        );
+      if (!user) return;
+      say("Connecting...");
+      try {
+        await me.load({ user });
+      } catch (err) {
+        say(err.message === "missing"
+          ? `There's no public Letterboxd profile called ${user}.`
+          : "Letterboxd didn't answer. Try again in a minute.");
         return;
       }
+      say("");
       me.save({ user }) ? refresh() : say("Your browser blocked saving this.");
     });
 

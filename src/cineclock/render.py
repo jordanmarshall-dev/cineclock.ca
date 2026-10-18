@@ -14,6 +14,8 @@ from cineclock.tags import filter_slugs, kind, said_by_tags, slug
 from cineclock.timefmt import clock
 from cineclock.venues import room_label
 
+RELAY_URL = ""
+
 STATIC = Path(__file__).parent / "static"
 
 env = Environment(loader=PackageLoader("cineclock"), autoescape=select_autoescape())
@@ -46,6 +48,10 @@ try:
     env.globals["version"] = metadata.version("cineclock")
 except metadata.PackageNotFoundError:
     env.globals["version"] = "dev"
+
+# The Letterboxd relay (relay/worker.js on Cloudflare). Empty means only synced
+# profiles can connect.
+env.globals["relay_url"] = os.environ.get("CINECLOCK_RELAY", RELAY_URL)
 
 # Link previews need full URLs, not the relative ones the pages use.
 env.globals["site_url"] = os.environ.get("CINECLOCK_URL", "https://yogzoth.github.io/cineclock/")

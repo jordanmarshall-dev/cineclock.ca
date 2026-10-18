@@ -1,12 +1,14 @@
 // Personal touches from a visitor's Letterboxd, all in their own browser.
 //
-// A connected visitor is remembered in localStorage as { user: "yogzoth" }, a
-// profile the site syncs (me/<user>.json). Every film on a page carries
-// data-film="<slug>"; we mark the ones that match, then tell the filters
-// (which listen for "cineclock:personal").
+// A connected visitor is remembered in localStorage as { user: "yogzoth" }.
+// Profiles the site syncs daily load from me/<user>.json; anyone else is read
+// through the relay (relay/worker.js), since Letterboxd won't let a browser read
+// profiles itself. Every film on a page carries data-film="<slug>"; we mark the
+// ones that match, then tell the filters (which listen for "cineclock:personal").
 (() => {
   const root = document.body.dataset.root || "";
   const KEY = "cineclock.letterboxd";
+  const RELAY = document.body.dataset.relay || "";
 
   const ICONS = {
     bookmark: '<path d="M6.5 3.5h11a1 1 0 0 1 1 1v16l-6.5-4.5-6.5 4.5v-16a1 1 0 0 1 1-1z"/>',
@@ -40,10 +42,41 @@
     return response.json();
   }
 
+  // A film's place in a member's lists, in the same short keys the build uses:
+  // w watchlist, s seen, r rating out of 10, d last diary date, old seen before
+  // the diary feed reaches back.
+  function statuses(profile, index) {
+    const watchlist = new Set(profile.watchlist);
+    const films = {};
+    for (const film of index) {
+      const lb = film.lb;
+      if (!lb) continue;
+      const found = {};
+      if (watchlist.has(lb)) found.w = 1;
+      if (lb in profile.watched) {
+        found.s = 1;
+        if (profile.watched[lb]) found.r = profile.watched[lb];
+        if (profile.diary[lb]) found.d = profile.diary[lb];
+        else if (profile.diary_since) found.old = 1;
+      }
+      if (Object.keys(found).length) films[film.slug] = found;
+    }
+    return films;
+  }
+
   async function load(value = saved()) {
     if (!value) return null;
-    const data = await getJSON(`me/${encodeURIComponent(value.user)}.json`);
-    return { user: value.user, films: data.films, updated: data.updated };
+    try {
+      const data = await getJSON(`me/${encodeURIComponent(value.user)}.json`);
+      return { user: value.user, films: data.films, updated: data.updated };
+    } catch (e) {
+      if (!RELAY) throw e;
+    }
+    const response = await fetch(`${RELAY}/profile/${encodeURIComponent(value.user)}`);
+    if (response.status === 404) throw new Error("missing");
+    if (!response.ok) throw new Error("relay");
+    const profile = await response.json();
+    return { user: profile.user, films: statuses(profile, await getJSON("films.json")) };
   }
 
   // The finished cards (from films.json) for the films that pass a test.

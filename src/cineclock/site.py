@@ -570,7 +570,13 @@ def shelf_index(film_list: list[FilmPage], now: datetime) -> list[dict]:
     """films.json: each film's finished poster card, so the Letterboxd rows drawn
     in the browser look exactly like every other card."""
     parts = env.get_template("_parts.html").module
-    index = [{"slug": page.slug} for page in film_list]
+    index = [
+        {
+            "slug": page.slug,
+            "lb": personal.letterboxd_slug(page.film.letterboxd_url) if page.film else None,
+        }
+        for page in film_list
+    ]
     for entry, page in zip(index, film_list, strict=True):
         entry["card"] = str(parts.film_card(page, ROOT_MARK, when(page.next_showing, now))).strip()
     return index
@@ -636,15 +642,13 @@ def pages(conn: Connection, now: datetime) -> dict[str, str]:
 
     out["theatres/index.html"] = render("theatres.html", "theatres/index.html", current="theatres")
     out["films.json"] = json.dumps(shelf_index(film_list, now), separators=(",", ":"))
-    synced = []
     for user in profiles.SYNCED:
         stored = db.load_profile(conn, user)
         if not stored:
             continue
-        synced.append(user)
         data = personal.profile_json(stored[0], film_list, now)
         out[f"me/{user}.json"] = json.dumps(data, separators=(",", ":"))
-    out["me/index.html"] = render("me.html", "me/index.html", synced=synced)
+    out["me/index.html"] = render("me.html", "me/index.html")
     out["about/index.html"] = render("about.html", "about/index.html")
     for venue in VENUES:
         path = f"theatres/{venue.slug}/index.html"
