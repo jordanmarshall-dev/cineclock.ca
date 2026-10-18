@@ -12,9 +12,12 @@
 </span>
 {%- endmacro %}
 
-{# The theatre's logo stands in for its name; the name shows only when there's no logo file. #}
+{# Theatre headings (Showtimes, film pages) use the theatre's full logo, as on its
+   own page, sized to a matching area so wide and tall logos read alike. #}
 {% macro venue_label(v, root) -%}
-{%- if v.mark and has_asset("logos/" ~ v.mark) %}{{ venue_badge(v, root, scale=1.6) }}{% else %}<span>{{ v.name }}</span>{% endif -%}
+{%- if v.full_logo and has_asset("logos/" ~ v.full_logo) -%}
+{% set w, h = logo_size("logos/" ~ v.full_logo, 5200, 26) %}<img class="venue-heading-logo" src="{{ root }}static/logos/{{ v.full_logo }}" alt="{{ v.name }}" width="{{ w }}" height="{{ h }}">
+{%- elif v.mark and has_asset("logos/" ~ v.mark) %}{{ venue_badge(v, root, scale=1.6) }}{% else %}<span>{{ v.name }}</span>{% endif -%}
 {%- endmacro %}
 
 {% macro source_mark(source, root) -%}
