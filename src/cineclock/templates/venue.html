@@ -25,7 +25,7 @@
        room features (7.1, Curved) aren't on any screening, so they stay plain. #}
     {% set links = {} %}
     {% for t in listed %}{% set _ = links.update({t: root ~ "films/?venue=" ~ venue.slug ~ "&tag=" ~ ("event" if t == "Event" else t | tagslug)}) %}{% endfor %}
-    <div class="theatre-offers">{{ tag_list(listed + (venue.offers | reject("in", listed) | list), links) }}</div>
+    <div class="theatre-offers">{{ tag_list(venue.offers + (listed | reject("in", venue.offers) | list), links) }}</div>
   </div>
   <p class="venue-blurb">{{ venue.blurb }}</p>
 
@@ -36,7 +36,7 @@
 
   {# Tickets and the rooms' specs fold away, so the films are a short scroll down. #}
   <div class="folds">
-  {% set pr = venue.prices %}
+  {% set pr = prices.get(venue.name) %}
   {% if pr and (pr.tickets or pr.deals) %}
   <details class="fold">
     <summary>{{ icon("ticket", 18) }}<span class="fold-title">Tickets</span>
@@ -50,7 +50,7 @@
       </dl>
       {% endfor %}
       {% if pr.note %}<p class="meta fold-note">{{ pr.note }}</p>{% endif %}
-      <p class="meta fold-note">From {{ venue.name }}'s own website, checked {{ pr.checked }}. Prices change, so check before you go.</p>
+      <p class="meta fold-note">{% if pr.origin %}{{ pr.origin }}{% else %}From {{ venue.name }}'s own website, checked {{ pr.checked }}. Prices change, so check before you go.{% endif %}</p>
       <ul class="links">{% for text, url in pr.sources %}<li><a href="{{ url }}">{{ icon("external") }}{{ text }}</a></li>{% endfor %}</ul>
     </div>
   </details>

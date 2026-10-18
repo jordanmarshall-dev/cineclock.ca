@@ -6,6 +6,7 @@ place, and ones the venue no longer lists (cancelled or moved) are removed.
 Past screenings are never touched, so they stay as history.
 """
 
+import json
 import sqlite3
 from dataclasses import asdict, dataclass, fields
 from datetime import UTC, date, datetime
@@ -33,6 +34,13 @@ CREATE TABLE IF NOT EXISTS screenings (
     UNIQUE (venue, title, starts_at)
 );
 CREATE INDEX IF NOT EXISTS screenings_starts_at ON screenings (starts_at);
+
+-- Each theatre's ticket prices as last read from its website (prices.py).
+CREATE TABLE IF NOT EXISTS prices (
+    venue TEXT PRIMARY KEY,
+    data TEXT NOT NULL,
+    fetched_at TEXT NOT NULL
+);
 
 -- Details looked up for each venue title and year. Kept separately from
 -- screenings so lookups happen once a week per film, not on every scrape.
@@ -298,3 +306,19 @@ def load_profile(conn: sqlite3.Connection, user: str) -> tuple[Profile, datetime
         if row["last_watched"]:
             profile.diary[row["slug"]] = date.fromisoformat(row["last_watched"])
     return profile, datetime.fromisoformat(head["fetched_at"])
+
+
+def save_prices(conn: sqlite3.Connection, venue: str, data: dict, now: datetime) -> None:
+    with conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO prices VALUES (?, ?, ?)",
+            (venue, json.dumps(data), _utc_text(now)),
+        )
+
+
+def load_prices(conn: sqlite3.Connection) -> dict[str, tuple[dict, datetime]]:
+    rows = conn.execute("SELECT venue, data, fetched_at FROM prices")
+    return {
+        row["venue"]: (json.loads(row["data"]), datetime.fromisoformat(row["fetched_at"]))
+        for row in rows
+    }

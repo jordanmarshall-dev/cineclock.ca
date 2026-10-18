@@ -894,8 +894,10 @@ def test_theatre_pages_fold_away_prices_and_specs(conn):
     assert "<dt>Adult</dt><dd>$17 / $15</dd>" in viff
     assert '<span class="fold-title">Tech specs</span>' in viff and "2 rooms" in viff
     assert 'href="https://viff.org/ticket-info/"' in viff and ">https://" not in viff
-    # No published prices for the Dunbar, so no Tickets fold there.
-    assert "Tickets</span>" not in built["theatres/dunbar/index.html"]
+    # The Dunbar's prices come from local guides, and the page says so.
+    dunbar = plain(built["theatres/dunbar/index.html"])
+    assert "<dt>Cheap Tuesday<small>All day, everyone</small></dt><dd>$8.50</dd>" in dunbar
+    assert "not by the Dunbar itself" in dunbar and "own website" not in dunbar
 
 
 def test_theatre_tags_link_to_films_at_that_theatre(conn):

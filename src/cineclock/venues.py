@@ -55,6 +55,8 @@ class Prices:
     note: str = ""
     checked: str = ""  # "Oct 18, 2026"
     sources: tuple[tuple[str, str], ...] = ()  # (link text, url)
+    # Where the prices come from, when it isn't the theatre's own website.
+    origin: str = ""
 
 
 @dataclass(frozen=True)
@@ -174,6 +176,34 @@ VIFF_PRICES = Prices(
     note="Prices are before GST.",
     checked=CHECKED,
     sources=(("VIFF ticket info", "https://viff.org/ticket-info/"),),
+)
+
+# The Dunbar's ticketing site blocks automated visits and it has no other site, so
+# these are as reported in Nov 2024. The two articles disagree on Tuesdays ($8.50
+# in both texts, $9.50 in one table); the texts agree, so $8.50.
+DUNBAR_PRICES = Prices(
+    tickets=(
+        Price("Evening", "$12.99"),
+        Price("Matinee", "$11.99"),
+        Price("Student", "$11.99", "With ID"),
+        Price("Senior or child", "$9.99", "65 and over, or 3 to 13"),
+        Price("Cheap Tuesday", "$8.50", "All day, everyone"),
+    ),
+    note="3D is $3 more.",
+    checked="Nov 2024",
+    origin="Reported by local guides in November 2024, not by the Dunbar itself, so they"
+    " may be out of date. Check at the box office.",
+    sources=(
+        (
+            "The Best Vancouver",
+            "https://www.thebestvancouver.com/guide-to-dunbar-theatre-vancouver/",
+        ),
+        (
+            "Vancouver Is Awesome",
+            "https://www.vancouverisawesome.com/events-and-entertainment/"
+            "cheapest-day-go-see-movie-vancouver-bc-6442307",
+        ),
+    ),
 )
 
 VENUES = [
@@ -330,6 +360,7 @@ VENUES = [
         name="The Dunbar",
         short="Dunbar",
         slug="dunbar",
+        prices=DUNBAR_PRICES,
         neighbourhood="Dunbar-Southlands",
         address="4555 Dunbar Street, Vancouver, BC",
         website="https://ticketing.uswest.veezi.com/sessions/?siteToken=sap55z6c6aj6b96yshhtj7vyw4",

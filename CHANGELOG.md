@@ -2,6 +2,8 @@
 
 ## 2.0.1 (October 18, 2026)
 
+- Prices refresh themselves: once a month the update re-reads VIFF's, the Rio's and the Cinematheque's price pages and updates the numbers and the date checked, keeping the last good prices if a page changes. The Dunbar shows prices reported by local guides in 2024, labelled as such.
+- Theatre pills: tags on screenings there are filled and open Films filtered to that theatre and tag; room features (7.1, Curved) are hollow outlines and come first, all on one scrolling row.
 - Theatre pages have a Tickets section with prices and memberships, copied from each theatre's own site and dated, and the room specs move into a Tech specs section. Both stay folded until tapped.
 - Theatre headings on Showtimes and film pages use each theatre's full logo.
 - One-word tags: Music (was Live music), Atmos (was Dolby Atmos), and the theatre pills 7.1 and Curved.

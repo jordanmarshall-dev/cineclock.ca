@@ -1453,6 +1453,9 @@ a:focus-visible {
 }
 .theatre-offers .tags::-webkit-scrollbar { display: none; }
 .theatre-offers .tag { flex: none; }
+/* On a theatre page, filled pills are links to its films; hollow ones are room features. */
+.theatre-offers .tag-link { border-color: transparent; background: var(--accent-wash); color: var(--accent-text); }
+.theatre-offers span.tag { border-color: var(--line); background: none; color: var(--text); }
 .tag-link { text-decoration: none; }
 .tag-link:hover { border-color: var(--accent-text); color: var(--white); }
 

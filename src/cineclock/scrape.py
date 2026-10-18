@@ -3,7 +3,7 @@
 import os
 from datetime import UTC, datetime, timedelta
 
-from cineclock import db, profiles
+from cineclock import db, prices, profiles
 from cineclock.enrich import enrich
 from cineclock.scrapers import cinematheque, dunbar, make_client, park, rio, viff
 
@@ -54,6 +54,26 @@ def sync_profiles(conn, client, now, pause: float = 1.0) -> None:
         )
 
 
+def refresh_prices(conn, client, now) -> None:
+    """Re-read each theatre's price page once its saved prices are a month old."""
+    stored = db.load_prices(conn)
+    for venue in prices.SOURCES:
+        if venue in stored and now - stored[venue][1] < prices.REFRESH:
+            print(f"{venue} prices: up to date")
+            continue
+        try:
+            found = prices.fetch(client, venue, now)
+        except Exception as error:
+            print(f"{venue} prices: failed ({error})")
+            continue
+        if not found:
+            # The page changed shape; keep the last good prices and say so in the log.
+            print(f"{venue} prices: couldn't read the page, keeping the last prices")
+            continue
+        db.save_prices(conn, venue, prices.to_json(found), now)
+        print(f"{venue} prices: updated")
+
+
 def main():
     conn = db.connect(os.environ.get("CINECLOCK_DB", "cineclock.db"))
     now = datetime.now(UTC)
@@ -69,6 +89,7 @@ def main():
         else:
             print("Film details: skipped (no TMDB_API_KEY)")
         sync_profiles(conn, client, now)
+        refresh_prices(conn, client, now)
     conn.close()
 
 

@@ -14,7 +14,7 @@ from dataclasses import dataclass, field, replace
 from datetime import date, datetime, timedelta
 from sqlite3 import Connection
 
-from cineclock import db, personal, profiles
+from cineclock import db, personal, prices, profiles
 from cineclock.films import Film, match_key, slugify
 from cineclock.models import VANCOUVER, Screening
 from cineclock.render import env
@@ -588,6 +588,9 @@ def pages(conn: Connection, now: datetime) -> dict[str, str]:
     film_list = list({id(p): p for p in page_of.values()}.values())
     days = group_days(screenings, page_of, films, now)
     debuts = db.venue_debuts(conn)
+    venue_prices = prices.current(
+        {venue: prices.from_json(data) for venue, (data, _) in db.load_prices(conn).items()}
+    )
     common = {"updated": updated_label(now), "venues": VENUES}
 
     def render(template: str, path: str, root: str | None = None, **context) -> str:
@@ -660,6 +663,7 @@ def pages(conn: Connection, now: datetime) -> dict[str, str]:
             days=venue_days,
             months=calendar_months(venue_days, now),
             rails=theatre_rails(venue, film_list, now, debuts),
+            prices=venue_prices,
         )
 
     # GitHub Pages shows 404.html for any missing address, at any depth, so its
