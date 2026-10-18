@@ -42,7 +42,11 @@ def test_clean_title(raw, title, note):
         ("TONY (Matt Johnson, 2026 / 106 mins / 14A) A 19-year-old...", 2026),
         ("MUSK (Alex Gibney, 2026 / PG / 235 mins)", 2026),
         ("STALKER (Andrei Tarkovsky, 1979 / 161 mins / PG)", 1979),
+        # Real Rio line with no comma before the year
+        ("SCREAM (Wes Craven 1996 /  111 min / 14A)", 1996),
         ("Doors at 7. (Ages 19+) No credits here.", None),
+        ("(15 Year Anniversary)", None),
+        ("Tickets $15 (subject to availability) / 2026 season", None),
         ("", None),
     ],
 )

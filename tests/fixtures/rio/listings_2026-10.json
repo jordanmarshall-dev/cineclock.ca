@@ -1,0 +1,54 @@
+[
+  {
+    "id": 350958,
+    "event": {
+      "id": 350954,
+      "title": "Musk",
+      "link": "https://riotheatre.ca/movie/musk/"
+    },
+    "start_time": "2026-10-18T12:30:00-07:00",
+    "end_time": "2026-10-18T12:30:00-07:00",
+    "extra": "",
+    "premiere": false,
+    "tickets_link": "https://riotheatretickets.ca/events/45537-musk"
+  },
+  {
+    "id": 350064,
+    "event": {
+      "id": 349809,
+      "title": "Melody Mangler Presents: Dreadful Delights",
+      "link": "https://riotheatre.ca/event/dreadful-delights/"
+    },
+    "start_time": "2026-10-18T20:00:00-07:00",
+    "end_time": "2026-10-18T20:00:00-07:00",
+    "extra": "",
+    "premiere": false,
+    "tickets_link": "https://riotheatretickets.ca/events/43076-melody-mangler-presents-dreadful-delights"
+  },
+  {
+    "id": 350916,
+    "event": {
+      "id": 350910,
+      "title": "Traces of Home (With Filmmakers Dr. Gabor Maté & Colette Ghunim Q&A)",
+      "link": "https://riotheatre.ca/movie/traces-of-home/"
+    },
+    "start_time": "2026-10-25T10:30:00-07:00",
+    "end_time": "2026-10-25T10:30:00-07:00",
+    "extra": "",
+    "premiere": false,
+    "tickets_link": "https://riotheatretickets.ca/events/45504-traces-of-home-with-filmmakers-dr-gabor-mate-colette-ghunim-q-a"
+  },
+  {
+    "id": 350992,
+    "event": {
+      "id": 220104,
+      "title": "Scream (30th Anniversary Screening)",
+      "link": "https://riotheatre.ca/movie/scream/"
+    },
+    "start_time": "2026-10-26T21:30:00-07:00",
+    "end_time": "2026-10-26T21:30:00-07:00",
+    "extra": "",
+    "premiere": false,
+    "tickets_link": "https://riotheatretickets.ca/events/45570-scream-30th-anniversary-screening"
+  }
+]

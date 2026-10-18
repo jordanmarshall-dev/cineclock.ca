@@ -35,6 +35,17 @@ def test_parse_listings_empty():
     assert rio.parse_listings([]) == []
 
 
+def test_parse_live_listings(fixture_json):
+    # Real response from Oct 2026, including a Q&A note and a live event
+    screenings = rio.parse_listings(fixture_json("rio/listings_2026-10.json"))
+    assert [(s.title, s.note) for s in screenings] == [
+        ("Musk", None),
+        ("Traces of Home", "With Filmmakers Dr. Gabor Maté & Colette Ghunim Q&A"),
+        ("Scream", "30th Anniversary Screening"),
+    ]
+    assert screenings[0].local_start.strftime("%a %b %d %H:%M") == "Sun Oct 18 12:30"
+
+
 def test_parse_film_page(fixture_text):
     details = rio.parse_film_page(fixture_text("rio/movie_musk.html"))
     assert details.year == 2026
@@ -42,6 +53,12 @@ def test_parse_film_page(fixture_text):
         "https://riotheatre.ca/wp-content/uploads/2026/10/"
         "EP_Musk_Cineplex_Traditional_Screen_768x1280-scaled.jpg"
     )
+
+
+def test_parse_film_page_with_comma_free_credits(fixture_text):
+    details = rio.parse_film_page(fixture_text("rio/movie_scream.html"))
+    assert details.year == 1996
+    assert details.poster_url.endswith(".jpg")
 
 
 def test_parse_film_page_without_details():
