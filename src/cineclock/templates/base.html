@@ -7,7 +7,7 @@
 <title>{% block title %}cineclock{% endblock %}</title>
 <meta name="description" content="{% block description %}Showtimes at Vancouver's repertory and independent cinemas.{% endblock %}">
 <link rel="preload" href="{{ root }}static/fonts/instrument-sans.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="{{ root }}static/site.css">
+<link rel="stylesheet" href="{{ root }}static/site.css?v={{ asset_version('site.css') }}">
 </head>
 <body class="{% block body_class %}{% endblock %}">
 <header class="site-header">

@@ -59,3 +59,16 @@ def test_no_page_links_outside_the_site_root(conn, tmp_path):
     for page in out.rglob("*.html"):
         html = page.read_text()
         assert 'href="/' not in html and 'src="/' not in html, page
+
+
+def test_stylesheet_link_changes_when_the_stylesheet_does(conn, tmp_path, monkeypatch):
+    import cineclock.render as render
+
+    build(conn, tmp_path / "a", NOW)
+    first = (tmp_path / "a/index.html").read_text()
+    monkeypatch.setattr(render, "asset_version", lambda name: "changed123")
+    render.env.globals["asset_version"] = render.asset_version
+    build(conn, tmp_path / "b", NOW)
+    second = (tmp_path / "b/index.html").read_text()
+    assert "static/site.css?v=" in first
+    assert "static/site.css?v=changed123" in second and first != second
