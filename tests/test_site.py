@@ -357,7 +357,7 @@ def test_on_film_rail(conn):
 
 
 def test_empty_rails_are_left_out(conn):
-    save(conn, show("Musk", at(22, 12)))
+    save(conn, show("Musk", at(22, 12), year=2026))
     assert set(rail_titles(conn)) == {"This week"}
 
 
@@ -570,7 +570,7 @@ def test_home_has_the_tagline(conn):
 
 
 def test_several_showings_on_one_day_are_not_flagged(conn):
-    save(conn, show("Jaws", at(19, 14)), show("Jaws", at(19, 19)))
+    save(conn, show("Jaws", at(19, 14), year=1975), show("Jaws", at(19, 19), year=1975))
     [p] = {id(x): x for x in film_pages(db.upcoming(conn, NOW), {}).values()}.values()
     assert p.tags == []
 
@@ -811,3 +811,17 @@ def test_a_festival_series_tags_its_screenings(conn):
     )  # fmt: skip
     page = plain(pages(conn, NOW)["films/index.html"])
     assert 'class="card-tag" title="Festival">Festival<' in page
+
+
+def test_a_bare_listing_gets_the_general_event_tag(conn):
+    save(
+        conn, show("Mystery Night", at(19, 19)), show("Jaws", at(20, 19)), show("Jaws", at(21, 19))
+    )
+    db.save_film(conn, film("Jaws", None, 1, letterboxd_rating=4.0))
+    pages_by = {
+        p.title: p for p in film_pages(db.upcoming(conn, NOW), db.films_by_key(conn)).values()
+    }
+    assert pages_by["Mystery Night"].tags == ["One screening", "Special event"]
+    assert pages_by["Jaws"].tags == []
+    page = plain(pages(conn, NOW)["films/index.html"])
+    assert 'class="card-tag" title="Special event">Special event<' in page

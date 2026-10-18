@@ -90,8 +90,24 @@ class FilmPage:
 
     @property
     def tags(self) -> list[str]:
-        return sort_tags(
-            [t for s in self.screenings for t in tags_for(s)] + rarity(self.screenings)
+        found = [t for s in self.screenings for t in tags_for(s)]
+        # No year, no score and nothing the listing says: that's almost always a
+        # one-off event rather than a film, so it gets the general event tag.
+        if not found and not self.year and not self.has_score:
+            found = ["Special event"]
+        return sort_tags(found + rarity(self.screenings))
+
+    @property
+    def has_score(self) -> bool:
+        f = self.film
+        return bool(
+            f
+            and (
+                f.letterboxd_rating
+                or f.imdb_rating
+                or f.rt_score is not None
+                or f.metacritic is not None
+            )
         )
 
     @property
