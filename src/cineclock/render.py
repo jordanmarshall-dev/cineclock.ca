@@ -1,6 +1,9 @@
 """The one Jinja setup, shared by the web app and the static site build."""
 
 import hashlib
+import re
+import struct
+from functools import cache
 from pathlib import Path
 
 from jinja2 import Environment, PackageLoader, select_autoescape
@@ -35,3 +38,32 @@ def has_asset(name: str) -> bool:
 
 
 env.globals["has_asset"] = has_asset
+
+
+@cache
+def image_size(name: str) -> tuple[float, float] | None:
+    """Pixel size of a PNG (from its header) or an SVG (from its viewBox)."""
+    path = STATIC / name
+    if not path.exists():
+        return None
+    if path.suffix == ".svg":
+        box = re.search(r'viewBox="[\d.]+ [\d.]+ ([\d.]+) ([\d.]+)"', path.read_text())
+        return (float(box[1]), float(box[2])) if box else None
+    width, height = struct.unpack(">II", path.read_bytes()[16:24])
+    return float(width), float(height)
+
+
+def logo_size(name: str, area: float, min_height: float) -> tuple[int, int]:
+    """Width and height that give every logo the same area on screen.
+
+    Theatre logos range from nearly square to seven times wider than tall.
+    Fixing the height makes the wide ones huge; fixing the width makes the
+    square ones huge. Matching the area keeps them looking about the same size.
+    """
+    width, height = image_size(name) or (3.0, 1.0)
+    ratio = width / height
+    h = max((area / ratio) ** 0.5, min_height)
+    return round(h * ratio), round(h)
+
+
+env.globals["logo_size"] = logo_size

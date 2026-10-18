@@ -7,8 +7,13 @@
 {# A theatre pill: the theatre's own compact logo, or its initials if the file is missing. #}
 {% macro venue_badge(v, root) -%}
 <span class="venue-pill" title="{{ v.name }}">
-  {%- if v.mark and has_asset("logos/" ~ v.mark) %}<img src="{{ root }}static/logos/{{ v.mark }}" alt="{{ v.name }}">{% else %}<span class="monogram" role="img" aria-label="{{ v.name }}">{{ v.monogram }}</span>{% endif -%}
+  {%- if v.mark and has_asset("logos/" ~ v.mark) %}{% set w, h = logo_size("logos/" ~ v.mark, 900, 12) %}<img src="{{ root }}static/logos/{{ v.mark }}" alt="{{ v.name }}" width="{{ w }}" height="{{ h }}">{% else %}<span class="monogram" role="img" aria-label="{{ v.name }}">{{ v.monogram }}</span>{% endif -%}
 </span>
+{%- endmacro %}
+
+{# The theatre's logo stands in for its name; the name shows only when there's no logo file. #}
+{% macro venue_label(v, root) -%}
+{%- if v.mark and has_asset("logos/" ~ v.mark) %}{{ venue_badge(v, root) }}{% else %}<span>{{ v.name }}</span>{% endif -%}
 {%- endmacro %}
 
 {# A room pill, only for rooms other than the theatre's main one. #}
@@ -71,7 +76,7 @@
   <h2 class="day-heading" id="{{ day.anchor }}-h">{{ day.label }}</h2>
   {% for group in day.groups %}
     <div class="venue-group" data-group>
-    {% if show_venues %}<h3 class="venue-heading"><a href="{{ root }}theatres/{{ group.venue.slug }}/">{{ venue_badge(group.venue, root) }}{{ group.venue.name }}</a></h3>{% endif %}
+    {% if show_venues %}<h3 class="venue-heading"><a href="{{ root }}theatres/{{ group.venue.slug }}/">{{ venue_label(group.venue, root) }}</a></h3>{% endif %}
     <ul class="rows">
       {% for r in group.rows %}{{ row(r, root, group.venue.slug) }}{% endfor %}
     </ul>

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_parts.html" import poster, showtime, tag_list, venue_badge, source_mark %}
+{% from "_parts.html" import poster, showtime, tag_list, venue_badge, venue_label, source_mark %}
 
 {% block title %}{{ page.title }}{% if page.year %} ({{ page.year }}){% endif %} showtimes in Vancouver{% endblock %}
 {% block description %}{% if film and film.overview %}{{ film.overview | truncate(160) }}{% else %}Showtimes for {{ page.title }} in Vancouver.{% endif %}{% endblock %}
@@ -41,7 +41,7 @@
     <h3 class="day-heading">{{ day.label }}</h3>
     {% for group in day.groups %}
       <div class="showtime-venue">
-        <h4><a href="{{ root }}theatres/{{ group.venue.slug }}/">{{ venue_badge(group.venue, root) }}<span>{{ group.venue.name }}</span></a></h4>
+        <h4><a href="{{ root }}theatres/{{ group.venue.slug }}/">{{ venue_label(group.venue, root) }}</a></h4>
         {% for r in group.rows %}
           {% if r.note %}<p class="meta">{{ r.note }}</p>{% endif %}
           <div class="times">{% for s in r.showtimes %}{{ showtime(s, page.title) }}{% endfor %}</div>

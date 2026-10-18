@@ -489,3 +489,21 @@ def test_viff_page_has_a_room_picker(conn):
 def test_theatre_page_uses_its_full_logo(conn):
     page = pages(conn, NOW)["theatres/park/index.html"]
     assert 'class="theatre-full-logo" src="../../static/logos/park-full.png"' in page
+
+
+def test_theatre_logos_get_about_the_same_area():
+    from cineclock.render import logo_size
+
+    sizes = [logo_size(f"logos/{v.mark}", 900, 12) for v in VENUES]
+    areas = [w * h for w, h in sizes]
+    # Wide logos would drop below the minimum height, so allow some spread
+    assert max(areas) / min(areas) < 1.3
+    assert all(h >= 12 for _, h in sizes)
+
+
+def test_showtimes_use_the_logo_as_the_theatre_name(conn):
+    save(conn, show("Musk", at(18, 12)))
+    page = pages(conn, NOW)["showtimes/index.html"]
+    heading = page.split('class="venue-heading"')[1].split("</h3>")[0]
+    assert 'alt="The Rio"' in heading
+    assert ">The Rio<" not in heading
