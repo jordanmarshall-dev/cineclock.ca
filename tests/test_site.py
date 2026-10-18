@@ -244,7 +244,7 @@ def test_unmatched_film_page_still_has_showtimes(conn):
     save(conn, show("SFMF Series 2", at(18, 13), "The Cinematheque"))
     page = pages(conn, NOW)["films/sfmf-series-2/index.html"]
     assert "1:00 pm" in page
-    assert "Letterboxd</a>" not in page
+    assert "Letterboxd</a>" not in page.split("<main>")[1].split("</main>")[0]
 
 
 def test_venue_page_lists_only_its_shows(conn):
@@ -264,7 +264,10 @@ def test_empty_venue_page_points_to_its_website(conn):
 def test_titles_are_escaped(conn):
     save(conn, show("<script>alert(1)</script>", at(18, 12)))
     built = pages(conn, NOW)
-    assert all("<script>alert(1)</script>" not in html for html in built.values())
+    pages_only = [html for path, html in built.items() if path.endswith(".html")]
+    assert all("<script>alert(1)</script>" not in html for html in pages_only)
+    # films.json is data, not a page; the browser escapes it before showing it
+    assert '"<script>alert(1)</script>"' in built["films.json"]
 
 
 def test_stats(conn):
@@ -458,7 +461,7 @@ def test_badge_falls_back_to_initials_without_a_logo(conn, monkeypatch, tmp_path
     import cineclock.render as render
 
     # A static folder with the stylesheet but no logo files
-    for name in ("site.css", "filters.js", "calendar.js"):
+    for name in ("site.css", "filters.js", "calendar.js", "me.js"):
         shutil.copy(render.STATIC / name, tmp_path / name)
     monkeypatch.setattr(render, "STATIC", tmp_path)
     save(conn, show("Musk", at(18, 12)))

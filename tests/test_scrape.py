@@ -70,3 +70,25 @@ def test_old_combined_viff_rows_move_to_the_right_screen(monkeypatch):
         ],
     )
     assert [s.venue for s in db.upcoming(conn, NOW)] == ["VIFF Lochmaddy"]
+
+
+def test_profiles_sync_once_a_day_and_keep_the_last_copy_on_failure(monkeypatch):
+    from cineclock import profiles
+    from cineclock.profiles import Profile
+
+    conn = db.connect(":memory:")
+    calls = []
+
+    def fetch(client, user, pause):
+        calls.append(user)
+        if len(calls) == 2:
+            raise RuntimeError("letterboxd down")
+        return Profile(user, watchlist={"jaws"})
+
+    monkeypatch.setattr(profiles, "SYNCED", ["me"])
+    monkeypatch.setattr(profiles, "fetch", fetch)
+    scrape.sync_profiles(conn, None, NOW)
+    scrape.sync_profiles(conn, None, NOW + timedelta(hours=2))  # too soon, skipped
+    scrape.sync_profiles(conn, None, NOW + timedelta(days=1))  # fails
+    assert calls == ["me", "me"]
+    assert db.load_profile(conn, "me")[0].watchlist == {"jaws"}

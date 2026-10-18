@@ -26,7 +26,10 @@
     <a href="{{ root }}showtimes/">{{ icon("ticket", 14) }}All showings</a>
     <a href="{{ root }}films/?tag=on-film">{{ icon("film", 14) }}On film</a>
     <a href="{{ root }}films/?tag=event">{{ icon("mic", 14) }}Special events</a>
+    <a href="{{ root }}films/?tag=watchlist" class="quick-personal" data-needs-me hidden>{{ icon("bookmark", 14) }}My watchlist</a>
+    <a href="{{ root }}me/" class="quick-personal" data-needs-no-me>{{ icon("bookmark", 14) }}Connect Letterboxd</a>
   </nav>
+  <div id="mine-rail"></div>
   {% if rails %}
     {% for r in rails %}{{ rail(r, root) }}{% endfor %}
     <p class="all-showtimes"><a href="{{ root }}showtimes/">{{ icon("calendar", 16) }}All showtimes, day by day</a></p>

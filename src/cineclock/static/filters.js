@@ -123,6 +123,8 @@
     });
   }
   form.addEventListener("submit", (e) => e.preventDefault());
+  // Letterboxd marks (me.js) arrive after the page loads; filter again when they do.
+  document.addEventListener("cineclock:personal", apply);
   reorder();
   apply();
 })();

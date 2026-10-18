@@ -5,6 +5,10 @@ Letterboxd has no API, so we read the same public pages a browser would:
   /<user>/films/page/N/      films they've marked watched, with their star rating
   /<user>/rss/               their latest diary entries, with the date watched
 
+Letterboxd blocks the watched list past its first page (and the full diary),
+so a synced profile knows the whole watchlist but only recent watches. An
+uploaded export in the browser fills in the rest.
+
 Films are identified by Letterboxd's own slug ("santa-sangre"), which the
 site already stores for every matched film, so matching is exact rather than
 a guess on title and year.
@@ -20,6 +24,9 @@ import httpx
 from bs4 import BeautifulSoup
 
 BASE = "https://letterboxd.com"
+# Members whose lists the site reads on each update. Anyone else can upload
+# their Letterboxd export in the browser instead.
+SYNCED = ["yogzoth"]
 MAX_PAGES = 60  # 60 pages of watched films is over 4,000; a safety stop, not a limit we expect
 LB_NS = "{https://letterboxd.com}"
 
@@ -75,7 +82,12 @@ def parse_rss(feed: str) -> dict[str, date]:
 def fetch_grid(client: httpx.Client, path: str, pause: float) -> dict[str, int | None]:
     films: dict[str, int | None] = {}
     for number in range(1, MAX_PAGES + 1):
-        response = client.get(f"{BASE}/{path}/page/{number}/")
+        response = client.get(f"{BASE}/{path}/page/{number}/" if number > 1 else f"{BASE}/{path}/")
+        if response.status_code == 403 and number > 1:
+            # Letterboxd blocks deeper pages of some lists (the watched list past
+            # page one). Keep what we have rather than lose the lot.
+            print(f"Letterboxd {path}: stopped at page {number} (blocked)")
+            break
         response.raise_for_status()
         page, more = parse_grid(response.text)
         films.update(page)
@@ -93,4 +105,7 @@ def fetch(client: httpx.Client, user: str, pause: float = 1.0) -> Profile:
     response.raise_for_status()
     profile.diary = parse_rss(response.text)
     profile.diary_since = min(profile.diary.values(), default=None)
+    # Films in the diary feed are watched even if the watched list didn't reach them.
+    for slug in profile.diary:
+        profile.watched.setdefault(slug, None)
     return profile

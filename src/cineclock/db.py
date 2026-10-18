@@ -8,10 +8,11 @@ Past screenings are never touched, so they stay as history.
 
 import sqlite3
 from dataclasses import asdict, dataclass, fields
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
 from cineclock.films import Film
 from cineclock.models import Screening
+from cineclock.profiles import Profile
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS screenings (
@@ -52,6 +53,23 @@ CREATE TABLE IF NOT EXISTS films (
     imdb_rating REAL,
     rt_score INTEGER,
     metacritic INTEGER
+);
+
+-- A synced Letterboxd member's films, one row per film they've listed or watched.
+CREATE TABLE IF NOT EXISTS profile_films (
+    user TEXT NOT NULL,
+    slug TEXT NOT NULL,
+    watchlist INTEGER NOT NULL DEFAULT 0,
+    watched INTEGER NOT NULL DEFAULT 0,
+    rating INTEGER,
+    last_watched TEXT,
+    PRIMARY KEY (user, slug)
+);
+
+CREATE TABLE IF NOT EXISTS profiles (
+    user TEXT PRIMARY KEY,
+    fetched_at TEXT NOT NULL,
+    diary_since TEXT
 );
 """
 
@@ -217,3 +235,45 @@ def save_film(conn: sqlite3.Connection, film: Film) -> None:
 def films_by_key(conn: sqlite3.Connection) -> dict[str, Film]:
     rows = conn.execute("SELECT match_key FROM films").fetchall()
     return {row["match_key"]: get_film(conn, row["match_key"]) for row in rows}
+
+
+def save_profile(conn: sqlite3.Connection, profile: Profile, now: datetime) -> None:
+    """Replace everything stored for this member with a fresh read."""
+    slugs = profile.watchlist | set(profile.watched)
+    rows = [
+        (
+            profile.user,
+            slug,
+            int(slug in profile.watchlist),
+            int(slug in profile.watched),
+            profile.watched.get(slug),
+            profile.diary[slug].isoformat() if slug in profile.diary else None,
+        )
+        for slug in sorted(slugs)
+    ]
+    since = profile.diary_since.isoformat() if profile.diary_since else None
+    with conn:
+        conn.execute("DELETE FROM profile_films WHERE user = ?", (profile.user,))
+        conn.executemany("INSERT INTO profile_films VALUES (?, ?, ?, ?, ?, ?)", rows)
+        conn.execute(
+            "INSERT OR REPLACE INTO profiles VALUES (?, ?, ?)",
+            (profile.user, _utc_text(now), since),
+        )
+
+
+def load_profile(conn: sqlite3.Connection, user: str) -> tuple[Profile, datetime] | None:
+    """The stored profile and when it was read, or None if never synced."""
+    head = conn.execute("SELECT * FROM profiles WHERE user = ?", (user,)).fetchone()
+    if not head:
+        return None
+    profile = Profile(user)
+    if head["diary_since"]:
+        profile.diary_since = date.fromisoformat(head["diary_since"])
+    for row in conn.execute("SELECT * FROM profile_films WHERE user = ?", (user,)):
+        if row["watchlist"]:
+            profile.watchlist.add(row["slug"])
+        if row["watched"]:
+            profile.watched[row["slug"]] = row["rating"]
+        if row["last_watched"]:
+            profile.diary[row["slug"]] = date.fromisoformat(row["last_watched"])
+    return profile, datetime.fromisoformat(head["fetched_at"])

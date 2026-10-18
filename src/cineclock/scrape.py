@@ -1,9 +1,9 @@
 """Scrape every venue, save the results, then look up film details: python -m cineclock.scrape"""
 
 import os
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
-from cineclock import db
+from cineclock import db, profiles
 from cineclock.enrich import enrich
 from cineclock.scrapers import cinematheque, dunbar, make_client, park, rio, viff
 
@@ -31,6 +31,29 @@ def run_scrapers(conn, client, now) -> None:
             print(f"{venue}: {result.added} new, {result.kept} kept, {result.removed} removed")
 
 
+# Letterboxd lists change slowly, and reading them is ~50 page loads, so once a day is plenty.
+PROFILE_REFRESH = timedelta(hours=20)
+
+
+def sync_profiles(conn, client, now, pause: float = 1.0) -> None:
+    for user in profiles.SYNCED:
+        stored = db.load_profile(conn, user)
+        if stored and now - stored[1] < PROFILE_REFRESH:
+            print(f"Letterboxd {user}: up to date")
+            continue
+        try:
+            profile = profiles.fetch(client, user, pause)
+        except Exception as error:
+            # Keep the last good copy; the site carries on with it.
+            print(f"Letterboxd {user}: failed ({error})")
+            continue
+        db.save_profile(conn, profile, now)
+        print(
+            f"Letterboxd {user}: {len(profile.watchlist)} on watchlist, "
+            f"{len(profile.watched)} watched"
+        )
+
+
 def main():
     conn = db.connect(os.environ.get("CINECLOCK_DB", "cineclock.db"))
     now = datetime.now(UTC)
@@ -45,6 +68,7 @@ def main():
             )
         else:
             print("Film details: skipped (no TMDB_API_KEY)")
+        sync_profiles(conn, client, now)
     conn.close()
 
 

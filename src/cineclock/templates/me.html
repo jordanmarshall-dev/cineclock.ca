@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% from "_parts.html" import icon %}
+
+{% block title %}Your Letterboxd{% endblock %}
+{% block description %}See which films from your Letterboxd watchlist are playing in Vancouver.{% endblock %}
+
+{% block main %}
+<div class="wrap me-page">
+  <h1 class="page-title">Your Letterboxd</h1>
+  <p class="page-intro">See which films on your watchlist are playing, and which ones you've seen. It all stays in this browser.</p>
+
+  <section class="panel me-card" id="me-connected" hidden>
+    <p class="me-status"><img class="source-logo" src="{{ root }}static/logos/letterboxd.png" alt="">Connected as <b id="me-name"></b></p>
+    <p class="me-summary" id="me-summary"></p>
+    <ul class="links">
+      <li><a href="{{ root }}films/?tag=watchlist">{{ icon("bookmark") }}Your watchlist, playing now</a></li>
+      <li id="me-feed" hidden><a href="#">{{ icon("calendar") }}Add watchlist screenings to your calendar</a></li>
+    </ul>
+    <p class="me-feed-note meta" id="me-feed-note" hidden>Subscribing keeps it current: new watchlist screenings appear in your calendar on their own.</p>
+    <button type="button" class="clear" id="me-disconnect">Disconnect</button>
+  </section>
+
+  <section class="panel me-card" id="me-connect">
+    <h2 class="section-heading">Connect with your username</h2>
+    <form id="me-user-form" class="me-form">
+      <label class="search">{{ icon("search", 16) }}<input name="user" placeholder="Letterboxd username" autocomplete="username" autocapitalize="none" spellcheck="false" required></label>
+      <button type="submit" class="me-button">Connect</button>
+    </form>
+    <p class="meta">Works for profiles the site keeps in sync{% if synced %} (right now: {{ synced | join(", ") }}){% endif %}. For anyone else, use your export below.</p>
+
+    <h2 class="section-heading">Or upload your Letterboxd export</h2>
+    <p class="meta">On Letterboxd, go to Settings, then Data, then Export your data. Choose the zip it sends you, or the CSV files inside it. Nothing is uploaded anywhere; it's read right here.</p>
+    <label class="me-button me-file">{{ icon("bookmark") }}Choose export<input type="file" id="me-file" accept=".zip,.csv" multiple hidden></label>
+  </section>
+
+  <p class="filter-status" id="me-message" aria-live="polite"></p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (() => {
+    const me = window.cineclockMe;
+    const $ = (id) => document.getElementById(id);
+    const say = (text) => ($("me-message").textContent = text);
+
+    async function refresh() {
+      const value = me.saved();
+      $("me-connected").hidden = !value;
+      $("me-connect").hidden = Boolean(value);
+      if (!value) return;
+      try {
+        const data = await me.load(value);
+        const films = Object.values(data.films);
+        const watch = films.filter((f) => f.w).length;
+        const seen = films.filter((f) => f.s).length;
+        $("me-name").textContent = data.label;
+        $("me-summary").textContent =
+          `${watch} film${watch === 1 ? "" : "s"} from your watchlist ${watch === 1 ? "is" : "are"} playing, and ${seen} you've seen.`;
+        if (data.synced) {
+          const feed = new URL(`${me.root}me/${encodeURIComponent(value.user)}/watchlist.ics`, location.href);
+          $("me-feed").querySelector("a").href = feed.href.replace(/^https?:/, "webcal:");
+          $("me-feed").hidden = $("me-feed-note").hidden = false;
+        }
+      } catch (e) {
+        say("Couldn't load your lists. Try connecting again.");
+      }
+    }
+
+    $("me-user-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const user = e.target.user.value.trim().toLowerCase().replace(/^@/, "");
+      try {
+        await me.load({ user });
+      } catch (err) {
+        say(`${user} isn't synced yet. Upload your export instead.`);
+        return;
+      }
+      me.save({ user }) ? location.reload() : say("Your browser blocked saving this.");
+    });
+
+    $("me-file").addEventListener("change", async (e) => {
+      say("Reading your export...");
+      try {
+        const entries = await me.readExport(e.target.files);
+        const ok = me.save({ upload: { name: "your export", entries, at: new Date().toISOString() } });
+        ok ? location.reload() : say("Your export is too big for this browser's storage.");
+      } catch (err) {
+        say(err.message || "That file couldn't be read.");
+      }
+    });
+
+    $("me-disconnect").addEventListener("click", () => {
+      me.save(null);
+      location.reload();
+    });
+
+    refresh();
+  })();
+</script>
+{% endblock %}

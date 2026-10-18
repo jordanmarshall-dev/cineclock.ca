@@ -13,7 +13,7 @@
   <ul class="film-list" data-sortable>
     {% for p in films %}
     {% set lb = p.film.letterboxd_rating if p.film and p.film.letterboxd_rating and (p.film.letterboxd_count or 0) >= 1000 else -1 %}
-    <li class="film-item panel" data-item
+    <li class="film-item panel" data-item data-film="{{ p.slug }}"
         data-venues="{{ p.venues | map(attribute='slug') | join(' ') }}"
         data-tags="{{ p.tags | filter_slugs | join(' ') }}"
         data-genres="{{ p.genres | map('tagslug') | join(' ') }}"
@@ -32,6 +32,7 @@
           <span class="film-dates"><span>{{ icon("calendar") }}{{ p.date_range }}</span><span class="film-count">{{ icon("ticket") }}{{ p.screenings | length }} {{ "screening" if p.screenings | length == 1 else "screenings" }}</span></span>
           {{ ratings(p.film, root) }}
           {{ tag_list(p.tags) }}
+          <p class="tags personal" hidden></p>
           <span class="card-venues">{% for v in p.venues %}{{ venue_badge(v, root) }}{% endfor %}</span>
         </span>
       </a>

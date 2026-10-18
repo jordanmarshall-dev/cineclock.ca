@@ -8,12 +8,13 @@ from memory.
 """
 
 import calendar
+import json
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from sqlite3 import Connection
 
-from cineclock import db
+from cineclock import db, personal, profiles
 from cineclock.films import Film, match_key, slugify
 from cineclock.models import VANCOUVER, Screening
 from cineclock.render import env
@@ -493,6 +494,21 @@ def pages(conn: Connection, now: datetime) -> dict[str, str]:
         )
 
     out["theatres/index.html"] = render("theatres.html", "theatres/index.html", current="theatres")
+    out["films.json"] = json.dumps(
+        personal.films_index(film_list, now, when), separators=(",", ":")
+    )
+    synced = []
+    for user in profiles.SYNCED:
+        stored = db.load_profile(conn, user)
+        if not stored:
+            continue
+        synced.append(user)
+        data = personal.profile_json(stored[0], film_list, now)
+        out[f"me/{user}.json"] = json.dumps(data, separators=(",", ":"))
+        out[f"me/{user}/watchlist.ics"] = personal.watchlist_calendar(
+            stored[0], film_list, venue_for, now
+        )
+    out["me/index.html"] = render("me.html", "me/index.html", synced=synced)
     out["about/index.html"] = render("about.html", "about/index.html")
     for venue in VENUES:
         path = f"theatres/{venue.slug}/index.html"

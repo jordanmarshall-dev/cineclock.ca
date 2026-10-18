@@ -184,3 +184,23 @@ def test_old_viff_lochmaddy_rows_become_a_room_of_viff_centre(tmp_path):
     # The Cure row already existed under VIFF Centre, so the duplicate is dropped
     assert saved == [("VIFF Centre", "Pulse", "viff-lochmaddy"), ("VIFF Centre", "Cure", None)]
     conn.close()
+
+
+def test_profile_round_trip_replaces_the_old_copy(conn):
+    from datetime import date
+
+    from cineclock.profiles import Profile
+
+    first = Profile("me", watchlist={"jaws", "alien"}, watched={"alien": 8})
+    db.save_profile(conn, first, NOW)
+    second = Profile(
+        "me",
+        watchlist={"jaws"},
+        watched={"alien": 9, "heat": None},
+        diary={"heat": date(2026, 10, 1)},
+        diary_since=date(2026, 8, 1),
+    )
+    db.save_profile(conn, second, NOW)
+    loaded, fetched = db.load_profile(conn, "me")
+    assert loaded == second and fetched == NOW
+    assert db.load_profile(conn, "someone-else") is None

@@ -36,9 +36,9 @@ def test_slug_from_link():
 def test_fetch_follows_pages_until_there_is_no_next(fixture_text):
     last = '<ul><li class="griditem"><div data-item-slug="jaws"></div></li></ul>'
     pages = {
-        "/yogzoth/watchlist/page/1/": fixture_text("letterboxd_user/watchlist_page1.html"),
+        "/yogzoth/watchlist/": fixture_text("letterboxd_user/watchlist_page1.html"),
         "/yogzoth/watchlist/page/2/": last,
-        "/yogzoth/films/page/1/": last,
+        "/yogzoth/films/": last,
         "/yogzoth/rss/": fixture_text("letterboxd_user/rss.xml"),
     }
     seen = []
@@ -50,6 +50,18 @@ def test_fetch_follows_pages_until_there_is_no_next(fixture_text):
     with httpx.Client(transport=httpx.MockTransport(handler)) as client:
         profile = profiles.fetch(client, "yogzoth", pause=0)
     assert len(profile.watchlist) == 29
-    assert profile.watched == {"jaws": None}
+    assert profile.watched["jaws"] is None
+    # Diary films count as watched even when the watched list stops early
+    assert "you-can-see-everything" in profile.watched
     assert profile.diary_since == date(2026, 8, 10)
     assert seen.count("/yogzoth/watchlist/page/2/") == 1
+
+
+def test_blocked_later_pages_keep_what_was_read(fixture_text):
+    def handler(request):
+        if request.url.path == "/me/films/page/2/":
+            return httpx.Response(403)
+        return httpx.Response(200, text=fixture_text("letterboxd_user/films_page1.html"))
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        assert len(profiles.fetch_grid(client, "me/films", pause=0)) == 72
