@@ -107,7 +107,7 @@
 {% macro day_sections(days, root, show_venues=True) -%}
 {% for day in days %}
 <section class="day" id="{{ day.anchor }}" data-group aria-labelledby="{{ day.anchor }}-h">
-  <h2 class="day-heading" id="{{ day.anchor }}-h">{{ day.label }}</h2>
+  <h2 class="day-heading day-bar" id="{{ day.anchor }}-h">{{ icon("calendar", 16) }}{{ day.label }}</h2>
   {% for group in day.groups %}
     <div class="venue-group" data-group>
     {% if show_venues %}<h3 class="venue-heading"><a href="{{ root }}theatres/{{ group.venue.slug }}/">{{ venue_label(group.venue, root) }}</a></h3>{% endif %}
