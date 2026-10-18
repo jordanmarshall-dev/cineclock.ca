@@ -79,8 +79,12 @@
   "code": '<path d="M8.5 7L3.5 12l5 5M15.5 7l5 5-5 5"/>',
   "github": '<path d="M9 19c-4.5 1.5-4.5-2.5-6.5-3m13 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/>',
 } %}
-{% macro icon(name, size=14) -%}
-<svg class="icon icon-{{ name }}" viewBox="0 0 24 24" width="{{ size }}" height="{{ size }}" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">{{ ICONS[name] | safe }}</svg>
+{# One scale for every icon: xs in pills and badges, sm beside small text, md in
+   buttons and headings, lg for section and navigation icons. #}
+{% set ICON_SIZES = {"xs": 12, "sm": 14, "md": 16, "lg": 20} %}
+{% macro icon(name, size="sm") -%}
+{%- set px = ICON_SIZES[size] -%}
+<svg class="icon icon-{{ name }}" viewBox="0 0 24 24" width="{{ px }}" height="{{ px }}" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">{{ ICONS[name] | safe }}</svg>
 {%- endmacro %}
 
 {% set TAG_ICONS = {
@@ -98,7 +102,7 @@
 {% macro tag_list(tags, links={}) -%}
 {% set tags = tags | reject("in", RARE) | list %}
 {% if tags %}<p class="tags">{% for t in tags %}
-  {%- set inner %}{{ icon(TAG_ICONS.get(t, "screen"), 12) }}{{ t }}{% endset -%}
+  {%- set inner %}{{ icon(TAG_ICONS.get(t, "screen"), "xs") }}{{ t }}{% endset -%}
   {%- if t in links %}<a class="tag tag-link tag-{{ t | tagkind }} tag-{{ t | tagslug }}" href="{{ links[t] }}">{{ inner }}</a>
   {%- else %}<span class="tag tag-{{ t | tagkind }} tag-{{ t | tagslug }}">{{ inner }}</span>{% endif -%}
 {% endfor %}</p>{% endif %}
@@ -108,7 +112,7 @@
 {# Booking opens in a new tab: the theatres' ticket pages can't be shown inside
    another site, and cineclock stays open for after checkout. #}
 <a class="time{% if rare %} time-rare{% endif %}" href="{{ s.url }}" target="_blank" rel="noopener" aria-label="Tickets for {{ label or s.title }}, {{ s.local_start.strftime('%A %B') }} {{ s.local_start.day }} at {{ s.starts_at | clock }}{% if s | room_label %}, {{ s | room_label }}{% endif %} (opens in a new tab)">
-  {{- icon("ticket", 16) }}<span class="time-text">{{ s.starts_at | clock }}{% if s | room_label %}<small>{{ s | room_label }}</small>{% endif %}</span>
+  {{- icon("ticket", "md") }}<span class="time-text">{{ s.starts_at | clock }}{% if s | room_label %}<small>{{ s | room_label }}</small>{% endif %}</span>
 </a>
 {%- endmacro %}
 
@@ -134,7 +138,7 @@
 {% macro day_sections(days, root, show_venues=True) -%}
 {% for day in days %}
 <section class="day" id="{{ day.anchor }}" data-group aria-labelledby="{{ day.anchor }}-h">
-  <h2 class="day-heading day-bar" id="{{ day.anchor }}-h">{{ icon("calendar", 16) }}{{ day.label }}</h2>
+  <h2 class="day-heading day-bar" id="{{ day.anchor }}-h">{{ icon("calendar", "md") }}{{ day.label }}</h2>
   {% for group in day.groups %}
     <div class="venue-group panel" data-group>
     {% if show_venues %}<h3 class="venue-heading"><a href="{{ root }}theatres/{{ group.venue.slug }}/">{{ venue_label(group.venue, root) }}</a></h3>{% endif %}
@@ -153,7 +157,7 @@
 <div class="date-tools">
   {% if months %}
   <details class="cal-pop">
-    <summary aria-label="Pick a date">{{ icon("calendar", 18) }}</summary>
+    <summary aria-label="Pick a date">{{ icon("calendar", "lg") }}</summary>
     <div class="cal-panel">
       {% for m in months %}
       <div class="cal-month">
@@ -196,7 +200,7 @@
     {% set badge = p.tags | reject("in", RARE) | first %}
     <span class="card-art">
       {{ poster(p.poster_url, label=p.title) }}
-      {%- if badge %}<span class="card-badge" title="{{ badge }}">{{ icon(TAG_ICONS.get(badge, "screen"), 10) }}{{ badge }}</span>{% endif -%}
+      {%- if badge %}<span class="card-badge" title="{{ badge }}">{{ icon(TAG_ICONS.get(badge, "screen"), "xs") }}{{ badge }}</span>{% endif -%}
     </span>
     <span class="card-title" title="{{ p.title }}{% if p.year %} ({{ p.year }}){% endif %}">{{ p.title }}</span>
     {# The score spot is never empty, so no card has a blank line. #}
@@ -204,7 +208,7 @@
     <span class="card-sub"><span class="year">{{ p.year or "" }}</span>
       {%- if score %}{{ score }}{% else %}<span class="card-tag card-unrated">Unrated</span>{% endif -%}
     </span>
-    <span class="card-next{% if rare %} rare{% endif %}"{% if rare %} title="{{ rare[0] }}"{% endif %}>{{ icon("star" if rare else "calendar", 12) }}{{ when }}</span>
+    <span class="card-next{% if rare %} rare{% endif %}"{% if rare %} title="{{ rare[0] }}"{% endif %}>{{ icon("star" if rare else "calendar", "xs") }}{{ when }}</span>
     <span class="card-venues">{% for v in p.venues %}{{ venue_badge(v, root) }}{% endfor %}</span>
   </a>
 </li>
@@ -214,7 +218,7 @@
 <section class="rail" aria-labelledby="rail-{{ r.title | tagslug }}">
   <div class="rail-head">
     <h2 id="rail-{{ r.title | tagslug }}"><a href="{{ root }}{{ r.more }}">{{ r.title }}</a></h2>
-    <a class="see-all" href="{{ root }}{{ r.more }}" aria-label="See all: {{ r.title }}">{{ icon("chevron", 22) }}</a>
+    <a class="see-all" href="{{ root }}{{ r.more }}" aria-label="See all: {{ r.title }}">{{ icon("chevron", "lg") }}</a>
   </div>
   <ul class="rail-cards">
     {% for c in r.cards %}{{ film_card(c.page, root, c.next_label) }}{% endfor %}
@@ -226,7 +230,7 @@
 {% macro filter_bar(venues, filter_tags, genres, root, sorting=False) -%}
 <form class="filters" role="search" hidden>
   <div class="filter-top">
-    <label class="search">{{ icon("search", 16) }}<input type="search" name="q" placeholder="Search films" aria-label="Search films" autocomplete="off"></label>
+    <label class="search">{{ icon("search", "md") }}<input type="search" name="q" placeholder="Search films" aria-label="Search films" autocomplete="off"></label>
     {% if sorting %}
     <select name="sort" aria-label="Sort films">
       <option value="next">Soonest</option>

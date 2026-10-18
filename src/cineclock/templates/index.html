@@ -21,12 +21,12 @@
       <a class="spotlight" href="{{ root }}films/{{ p.slug }}/" aria-roledescription="slide" aria-label="{{ loop.index }} of {{ slides | length }}: {{ p.title }}">
         <img class="spotlight-art" src="{{ p.film.backdrop_url }}" alt=""{% if not loop.first %} loading="lazy"{% endif %} onerror="this.hidden = true">
         <span class="spotlight-body">
-          <span class="eyebrow">{% if sl.label in TAG_ICONS %}{{ icon(TAG_ICONS[sl.label], 12) }}{% endif %}{{ sl.label }}</span>
+          <span class="eyebrow">{% if sl.label in TAG_ICONS %}{{ icon(TAG_ICONS[sl.label], "xs") }}{% endif %}{{ sl.label }}</span>
           <span class="spotlight-title">{{ p.title }}{% if p.year %} <span class="year">{{ p.year }}</span>{% endif %}</span>
           <span class="spotlight-meta">
             {%- for v in p.venues %}{{ venue_badge(v, root) }}{% endfor -%}
-            <span>{{ icon("calendar", 14) }}{{ sl.when }}</span>
-            {%- if p.film.director %}<span>{{ icon("clapper", 14) }}{{ p.film.director }}</span>{% endif -%}
+            <span>{{ icon("calendar", "sm") }}{{ sl.when }}</span>
+            {%- if p.film.director %}<span>{{ icon("clapper", "sm") }}{{ p.film.director }}</span>{% endif -%}
             {{- card_rating(p.film, root) -}}
           </span>
         </span>
@@ -34,21 +34,21 @@
       {% endfor %}
     </div>
     {% if slides | length > 1 %}
-    <button type="button" class="hero-arrow prev" aria-label="Previous" hidden>{{ icon("chevron", 20) }}</button>
-    <button type="button" class="hero-arrow next" aria-label="Next" hidden>{{ icon("chevron", 20) }}</button>
+    <button type="button" class="hero-arrow prev" aria-label="Previous" hidden>{{ icon("chevron", "lg") }}</button>
+    <button type="button" class="hero-arrow next" aria-label="Next" hidden>{{ icon("chevron", "lg") }}</button>
     <div class="hero-dots" hidden>{% for sl in slides %}<button type="button" aria-label="Show {{ sl.page.title }}"></button>{% endfor %}</div>
     {% endif %}
   </section>
   {% endif %}
   <nav class="quick-filters" aria-label="Browse">
-    <a href="{{ root }}showtimes/">{{ icon("ticket", 15) }}Showtimes</a>
-    <a href="{{ root }}films/?tag=on-film">{{ icon("film", 15) }}On film</a>
-    <a href="{{ root }}films/?tag=event">{{ icon("mic", 15) }}Events</a>
+    <a href="{{ root }}showtimes/">{{ icon("ticket", "md") }}Showtimes</a>
+    <a href="{{ root }}films/?tag=on-film">{{ icon("film", "md") }}On film</a>
+    <a href="{{ root }}films/?tag=event">{{ icon("mic", "md") }}Events</a>
   </nav>
   <div id="mine-rail"></div>
   {% if rails %}
     {% for r in rails %}{{ rail(r, root) }}{% endfor %}
-    <p class="all-showtimes"><a href="{{ root }}showtimes/">{{ icon("calendar", 16) }}All showtimes, day by day</a></p>
+    <p class="all-showtimes"><a href="{{ root }}showtimes/">{{ icon("calendar", "md") }}All showtimes, day by day</a></p>
   {% else %}
     <p class="empty">No showtimes saved yet. Run <code>python -m cineclock.scrape</code> to fetch them.</p>
   {% endif %}

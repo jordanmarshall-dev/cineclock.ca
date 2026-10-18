@@ -20,7 +20,7 @@
     {% else %}
       <h1 class="venue-title">{{ venue.name }}</h1>
     {% endif %}
-    <p class="meta">{{ icon("pin", 12) }}{{ venue.neighbourhood }}</p>
+    <p class="meta">{{ icon("pin", "xs") }}{{ venue.neighbourhood }}</p>
     {# Tags on screenings here link to the Films page filtered to this theatre and tag;
        room features (7.1, Curved) aren't on any screening, so they stay plain. #}
     {% set links = {} %}
@@ -39,8 +39,8 @@
   {% set pr = prices.get(venue.name) %}
   {% if pr and (pr.tickets or pr.deals) %}
   <details class="fold">
-    <summary>{{ icon("ticket", 18) }}<span class="fold-title">Tickets</span>
-      <span class="fold-hint">{% if pr.tickets %}{{ pr.tickets[0].label }} {{ pr.tickets[0].amount.split(" / ")[0] }}{% else %}{{ pr.deals[0].amount }}{% endif %}</span>{{ icon("chevron", 18) }}</summary>
+    <summary>{{ icon("ticket", "lg") }}<span class="fold-title">Tickets</span>
+      <span class="fold-hint">{% if pr.tickets %}{{ pr.tickets[0].label }} {{ pr.tickets[0].amount.split(" / ")[0] }}{% else %}{{ pr.deals[0].amount }}{% endif %}</span>{{ icon("chevron", "md") }}</summary>
     <div class="fold-body">
       {% for group, rows in [("Admission", pr.tickets), ("Memberships and packs", pr.deals)] if rows %}
       <h3 class="fold-subhead">{{ group }}</h3>
@@ -58,8 +58,8 @@
   {% if spec_fields %}
   {% set multi = venue.rooms | length > 1 %}
   <details class="fold rooms">
-    <summary>{{ icon("projector", 18) }}<span class="fold-title">Tech specs</span>
-      <span class="fold-hint">{% if multi %}{{ venue.rooms | length }} rooms{% elif venue.rooms[0].specs.get("Seats") %}{{ venue.rooms[0].specs["Seats"] }} seats{% endif %}</span>{{ icon("chevron", 18) }}</summary>
+    <summary>{{ icon("projector", "lg") }}<span class="fold-title">Tech specs</span>
+      <span class="fold-hint">{% if multi %}{{ venue.rooms | length }} rooms{% elif venue.rooms[0].specs.get("Seats") %}{{ venue.rooms[0].specs["Seats"] }} seats{% endif %}</span>{{ icon("chevron", "md") }}</summary>
     <div class="fold-body">
     {# Several rooms swipe sideways, with the next one peeking in so it's clear there's more. #}
     <div class="{{ 'room-swipe' if multi else 'room-single' }}">
