@@ -10,7 +10,7 @@ from memory.
 import calendar
 import json
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date, datetime, timedelta
 from sqlite3 import Connection
 
@@ -23,7 +23,7 @@ from cineclock.timefmt import clock, day_label, short_day
 from cineclock.venues import BY_NAME, VENUES, Room, Venue, order, shown_specs
 
 RAIL_LENGTH = 15
-RARE = ("One screening", "One day only")
+RARE = ("One screening",)
 # Below this many Letterboxd ratings, an average says little.
 MIN_RATINGS_FOR_TOP = 1000
 
@@ -60,12 +60,9 @@ def compact(n: int) -> str:
 
 
 def rarity(screenings: list[Screening]) -> list[str]:
-    """Flags for films you could easily miss: one showing, or several on a single day."""
-    if len(screenings) == 1:
-        return ["One screening"]
-    if len({s.local_start.date() for s in screenings}) == 1:
-        return ["One day only"]
-    return []
+    """Flags a film you could easily miss: a single showing. (Jordan dropped "One day
+    only" for several showings on one day; one clear flag reads better.)"""
+    return ["One screening"] if len(screenings) == 1 else []
 
 
 @dataclass
@@ -495,6 +492,43 @@ def rails(
     return [r for r in found if r.cards]
 
 
+# A topic rail on a theatre page needs at least this many films to be worth a row.
+MIN_THEATRE_RAIL = 3
+
+
+def theatre_rails(
+    venue: Venue, film_list: list[FilmPage], now: datetime, debuts: dict[str, datetime]
+) -> list[Rail]:
+    """Poster rows for a theatre page. "Now playing" always has every film here, so
+    even a two-film theatre gets a full row. Topic rows (Leaving soon, Events and
+    so on) only show when they have enough films and say something new."""
+    here = [
+        replace(p, screenings=[s for s in p.screenings if s.venue == venue.name])
+        for p in film_list
+        if any(s.venue == venue.name for s in p.screenings)
+    ]
+    if not here:
+        return []
+    by_title = {r.title: r for r in rails(here, now, debuts)}
+    everything = sorted(here, key=lambda p: p.next_showing.starts_at)
+    playing = Rail(
+        "Now playing",
+        [Card(p, when(p.next_showing, now)) for p in everything],
+        f"films/?venue={venue.slug}",
+    )
+    found = [playing]
+    for title, sort in [
+        ("Leaving soon", "leaving"),
+        ("Events and guests", "next&tag=event"),
+        ("On film", "next&tag=on-film"),
+        ("Just added", "added"),
+    ]:
+        r = by_title.get(title)
+        if r and MIN_THEATRE_RAIL <= len(r.cards) < len(here) and len(found) < 3:
+            found.append(replace(r, more=f"films/?venue={venue.slug}&sort={sort}"))
+    return found
+
+
 def updated_label(now: datetime) -> str:
     local = now.astimezone(VANCOUVER)
     return f"{local:%a %b} {local.day}, {clock(now)}"
@@ -506,6 +540,7 @@ def pages(conn: Connection, now: datetime) -> dict[str, str]:
     page_of = film_pages(screenings, films)
     film_list = list({id(p): p for p in page_of.values()}.values())
     days = group_days(screenings, page_of, films, now)
+    debuts = db.venue_debuts(conn)
     common = {"updated": updated_label(now), "venues": VENUES}
 
     def render(template: str, path: str, **context) -> str:
@@ -517,7 +552,7 @@ def pages(conn: Connection, now: datetime) -> dict[str, str]:
         "index.html": render(
             "index.html",
             "index.html",
-            rails=rails(film_list, now, db.venue_debuts(conn)),
+            rails=rails(film_list, now, debuts),
             slides=highlights(film_list, now),
         ),
         "showtimes/index.html": render(
@@ -581,6 +616,7 @@ def pages(conn: Connection, now: datetime) -> dict[str, str]:
             current="theatres",
             days=venue_days,
             months=calendar_months(venue_days, now),
+            rails=theatre_rails(venue, film_list, now, debuts),
         )
     return out
 

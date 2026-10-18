@@ -55,7 +55,7 @@ def test_sort_tags_puts_rare_showings_then_formats_first_and_dedupes():
 
 
 def test_each_tag_belongs_to_a_family():
-    tags = ["One day only", "35mm", "Dolby Atmos", "Introduction", "Advance screening"]
+    tags = ["One screening", "35mm", "Dolby Atmos", "Introduction", "Advance screening"]
     assert [kind(t) for t in tags] == ["rare", "format", "format", "event", "event"]
 
 

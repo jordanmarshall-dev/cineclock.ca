@@ -81,7 +81,7 @@
 {%- endmacro %}
 
 {% set TAG_ICONS = {
-  "One screening": "star", "One day only": "star",
+  "One screening": "star",
   "70mm": "film", "35mm": "film", "16mm": "film", "IMAX": "screen", "4K": "screen", "Dolby Atmos": "speaker", "3D": "eye",
   "Filmmaker Q&A": "mic", "Q&A": "mic", "Introduction": "mic", "Live accompaniment": "music", "Festival": "star",
   "Shorts programme": "film", "Special presentation": "star", "Guests": "people",
@@ -89,8 +89,8 @@
   "7.1 sound": "speaker", "Curved screen": "screen",
 } %}
 
-{# One screening and One day only aren't drawn as badges; the date or time they describe is highlighted instead. #}
-{% set RARE = ["One screening", "One day only"] %}
+{# One screening isn't drawn as a badge; the date or time it describes is highlighted instead. #}
+{% set RARE = ["One screening"] %}
 
 {% macro tag_list(tags) -%}
 {% set tags = tags | reject("in", RARE) | list %}

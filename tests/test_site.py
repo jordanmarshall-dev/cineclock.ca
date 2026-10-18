@@ -567,11 +567,8 @@ def test_home_has_the_tagline(conn):
     assert "<title>cineclock: Support local cinemas</title>" in page
 
 
-def test_several_showings_on_one_day_are_flagged():
-    save(conn := db.connect(":memory:"), show("Jaws", at(19, 14)), show("Jaws", at(19, 19)))
-    [p] = {id(x): x for x in film_pages(db.upcoming(conn, NOW), {}).values()}.values()
-    assert p.tags == ["One day only"]
-    save(conn, show("Jaws", at(19, 14)), show("Jaws", at(19, 19)), show("Jaws", at(20, 19)))
+def test_several_showings_on_one_day_are_not_flagged(conn):
+    save(conn, show("Jaws", at(19, 14)), show("Jaws", at(19, 19)))
     [p] = {id(x): x for x in film_pages(db.upcoming(conn, NOW), {}).values()}.values()
     assert p.tags == []
 
@@ -718,3 +715,37 @@ def test_film_page_starts_a_new_block_when_the_theatre_changes(conn):
     page = pages(conn, NOW)["films/jaws/index.html"]
     blocks = page.split('class="venue-group panel"')[1:]
     assert [b.count('class="showing"') for b in blocks] == [1, 1, 2]
+
+
+def test_theatre_rails_always_fill_and_topics_need_enough_films(conn):
+    from cineclock.site import VENUES, theatre_rails
+
+    dunbar = next(v for v in VENUES if v.slug == "dunbar")
+    rio = next(v for v in VENUES if v.slug == "rio")
+    save(
+        conn,
+        show("Small A", at(19, 19), venue="The Dunbar"),
+        show("Small B", at(20, 19), venue="The Dunbar"),
+        *[show(f"Print {i}", at(19 + i, 19), note="35mm") for i in range(3)],
+        show("Long Run", at(19, 21)),
+        show("Long Run", at(28, 21)),
+    )
+    page_of = film_pages(db.upcoming(conn, NOW), db.films_by_key(conn))
+    film_list = list({id(p): p for p in page_of.values()}.values())
+    debuts = db.venue_debuts(conn)
+
+    small = theatre_rails(dunbar, film_list, NOW, debuts)
+    assert [(r.title, len(r.cards)) for r in small] == [("Now playing", 2)]
+    assert small[0].more == "films/?venue=dunbar"
+
+    big = theatre_rails(rio, film_list, NOW, debuts)
+    assert [(r.title, len(r.cards)) for r in big] == [("Now playing", 4), ("On film", 3)]
+    assert big[1].more == "films/?venue=rio&sort=next&tag=on-film"
+    page = pages(conn, NOW)["theatres/rio/index.html"]
+    assert 'class="theatre-rails"' in page and ">Now playing<" in page
+
+
+def test_home_has_a_letterboxd_button(conn):
+    save(conn, show("Jaws", at(19, 19)))
+    home = pages(conn, NOW)["index.html"]
+    assert 'class="lb-button" href="me/"' in home

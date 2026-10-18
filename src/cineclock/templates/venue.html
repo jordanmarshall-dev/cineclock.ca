@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_parts.html" import day_sections, date_tools, icon, tag_list %}
+{% from "_parts.html" import day_sections, date_tools, icon, tag_list, rail %}
 
 {% block title %}{{ venue.name }} showtimes{% endblock %}
 {% block description %}What's playing at {{ venue.name }}, {{ venue.address }}.{% endblock %}
@@ -59,7 +59,9 @@
   <div class="about">{% for para in venue.about %}<p>{{ para }}</p>{% endfor %}</div>
   {% endif %}
 
-  <h2 class="section-heading">Playing here</h2>
+  {% if rails %}<div class="theatre-rails">{% for r in rails %}{{ rail(r, root) }}{% endfor %}</div>{% endif %}
+
+  <h2 class="section-heading">Showtimes</h2>
   {{ date_tools(days, months) }}
   {% if days %}
     {{ day_sections(days, root, show_venues=False) }}

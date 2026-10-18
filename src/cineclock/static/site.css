@@ -728,7 +728,34 @@ a:focus-visible {
 
 /* 6. Home */
 
-.tagline { margin: 1.25rem 0 0; }
+.home-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.tagline { margin: 0; }
+
+/* The way into the Letterboxd features, styled after Letterboxd's own buttons. */
+.lb-button {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--raised);
+  color: var(--white);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.lb-button img { width: auto; height: 0.75rem; }
+.lb-button:hover { border-color: var(--bright); }
 
 /* Hero: a few highlights, each a full-width slide with its art fading into the
    page. Without the script it's a sideways scroll; with it, a looping carousel. */
@@ -902,7 +929,11 @@ a:focus-visible {
 
 /* Shelves */
 .rail { margin-top: 1.5rem; }
-.tagline + .rail,
+/* On a theatre's own page its logo on every poster would just repeat the header. */
+.theatre-rails { margin-top: 1rem; }
+.theatre-rails .card-venues { display: none; }
+
+.home-top + .rail,
 .quick-filters + .rail { margin-top: 0.75rem; }
 
 .rail-head {

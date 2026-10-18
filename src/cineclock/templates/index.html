@@ -5,7 +5,13 @@
 
 {% block main %}
 <div class="wrap">
-  <p class="tagline">Support local cinemas.</p>
+  <div class="home-top">
+    <p class="tagline">Support local cinemas.</p>
+    <a class="lb-button" href="{{ root }}me/">
+      <img src="{{ root }}static/logos/letterboxd.png" alt="" width="32" height="12">
+      <span data-needs-no-me>Connect Letterboxd</span><span data-needs-me hidden>Your Letterboxd</span>
+    </a>
+  </div>
   {% if slides %}
   <section class="hero" aria-roledescription="carousel" aria-label="Highlights">
     <div class="hero-track">
@@ -38,7 +44,6 @@
     <a href="{{ root }}films/?tag=on-film">{{ icon("film", 14) }}On film</a>
     <a href="{{ root }}films/?tag=event">{{ icon("mic", 14) }}Special events</a>
     <a href="{{ root }}films/?tag=watchlist" class="quick-personal" data-needs-me hidden>{{ icon("bookmark", 14) }}My watchlist</a>
-    <a href="{{ root }}me/" class="quick-personal" data-needs-no-me>{{ icon("bookmark", 14) }}Connect Letterboxd</a>
   </nav>
   <div id="mine-rail"></div>
   {% if rails %}

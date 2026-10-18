@@ -42,7 +42,7 @@ PREVIEWS = {
     "Sneak preview": r"sneak preview|preview screening",
 }
 
-RARE = ["One screening", "One day only"]
+RARE = ["One screening"]
 ORDER = RARE + list(FORMATS) + list(EVENTS) + list(PREVIEWS)
 ON_FILM = {"70mm", "35mm", "16mm"}
 
