@@ -170,8 +170,8 @@ def test_links_are_relative_to_each_page(conn):
     save(conn, show("Musk", at(18, 12)))
     built = pages(conn, NOW)
     assert 'href="films/musk/"' in built["index.html"]
-    assert 'href="static/site.css"' in built["index.html"]
-    assert 'href="../../static/site.css"' in built["films/musk/index.html"]
+    assert 'href="static/site.css?v=' in built["index.html"]
+    assert 'href="../../static/site.css?v=' in built["films/musk/index.html"]
     assert 'href="../../venues/rio/"' in built["films/musk/index.html"]
 
 

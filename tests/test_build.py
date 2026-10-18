@@ -66,8 +66,7 @@ def test_stylesheet_link_changes_when_the_stylesheet_does(conn, tmp_path, monkey
 
     build(conn, tmp_path / "a", NOW)
     first = (tmp_path / "a/index.html").read_text()
-    monkeypatch.setattr(render, "asset_version", lambda name: "changed123")
-    render.env.globals["asset_version"] = render.asset_version
+    monkeypatch.setitem(render.env.globals, "asset_version", lambda name: "changed123")
     build(conn, tmp_path / "b", NOW)
     second = (tmp_path / "b/index.html").read_text()
     assert "static/site.css?v=" in first
