@@ -15,6 +15,9 @@ const BASE = "https://letterboxd.com";
 const ALLOWED_ORIGINS = [
   "https://cineclock.ca",
   "https://www.cineclock.ca",
+  // Until GitHub issues the HTTPS certificate for the new domain, the site is on http.
+  "http://cineclock.ca",
+  "http://www.cineclock.ca",
   "https://yogzoth.github.io",
   "http://localhost:8000",
   "http://127.0.0.1:8000",
