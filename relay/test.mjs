@@ -24,7 +24,19 @@ const fake = async (url) => {
   if (url.endsWith("/rss/")) return new Response(page("rss.xml"));
   return new Response("", { status: 404 });
 };
-const profile = await readProfile("yogzoth", fake);
+// Count connections open at once, to stay within Cloudflare's limit of six.
+let open = 0;
+let most = 0;
+const counted = async (url) => {
+  open++;
+  most = Math.max(most, open);
+  const response = await fake(url);
+  const text = await response.text();
+  open--;
+  return new Response(text, { status: response.status });
+};
+const profile = await readProfile("yogzoth", counted);
+assert.ok(most <= 6, `opened ${most} connections at once`);
 assert.equal(profile.watchlist.length, 28);
 assert.equal(Object.keys(profile.watched).length, 87); // diary films count as watched
 assert.equal(profile.diary_since, "2026-08-10");

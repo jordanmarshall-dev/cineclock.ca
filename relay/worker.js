@@ -50,32 +50,38 @@ export function parseRss(feed) {
   return diary;
 }
 
-async function get(fetcher, url) {
+// Cloudflare lets a worker hold six connections open at once, so pages are
+// fetched a few at a time and each one is read in full before the next batch.
+const BATCH = 4;
+
+async function read(fetcher, url) {
   const response = await fetcher(url, { headers: HEADERS });
-  return response;
+  return { status: response.status, ok: response.ok, text: await response.text() };
 }
 
 export async function readProfile(user, fetcher = fetch) {
-  const first = await get(fetcher, `${BASE}/${user}/watchlist/`);
+  const first = await read(fetcher, `${BASE}/${user}/watchlist/`);
   if (first.status === 404) return null;
   if (!first.ok) throw new Error(`Letterboxd answered ${first.status}`);
-  const page1 = parseGrid(await first.text());
+  const page1 = parseGrid(first.text);
   const watchlist = new Set(Object.keys(page1.films));
+
   const last = Math.min(page1.lastPage, MAX_WATCHLIST_PAGES);
-  const rest = [];
-  for (let n = 2; n <= last; n++) rest.push(get(fetcher, `${BASE}/${user}/watchlist/page/${n}/`));
-
-  const watchedResponse = get(fetcher, `${BASE}/${user}/films/`);
-  const rssResponse = get(fetcher, `${BASE}/${user}/rss/`);
-
-  for (const response of await Promise.all(rest)) {
-    if (!response.ok) continue; // keep what we have rather than lose the lot
-    for (const slug of Object.keys(parseGrid(await response.text()).films)) watchlist.add(slug);
+  for (let start = 2; start <= last; start += BATCH) {
+    const batch = [];
+    for (let n = start; n < start + BATCH && n <= last; n++) {
+      batch.push(read(fetcher, `${BASE}/${user}/watchlist/page/${n}/`));
+    }
+    for (const page of await Promise.all(batch)) {
+      if (!page.ok) continue; // keep what we have rather than lose the lot
+      for (const slug of Object.keys(parseGrid(page.text).films)) watchlist.add(slug);
+    }
   }
-  const watchedPage = await watchedResponse;
-  const watched = watchedPage.ok ? parseGrid(await watchedPage.text()).films : {};
-  const rss = await rssResponse;
-  const diary = rss.ok ? parseRss(await rss.text()) : {};
+
+  const watchedPage = await read(fetcher, `${BASE}/${user}/films/`);
+  const watched = watchedPage.ok ? parseGrid(watchedPage.text).films : {};
+  const rss = await read(fetcher, `${BASE}/${user}/rss/`);
+  const diary = rss.ok ? parseRss(rss.text) : {};
 
   // Films in the diary are watched even if the first page of the watched list
   // didn't reach them.
