@@ -5,8 +5,10 @@ import pytest
 
 from cineclock import db
 from cineclock.films import Film, match_key
+from cineclock.listings import choose_poster, compact, film_pages, group_days
 from cineclock.models import VANCOUVER, Screening
-from cineclock.site import choose_poster, compact, film_pages, group_days, pages, rails, stats
+from cineclock.shelves import rails
+from cineclock.site import pages, stats
 from cineclock.timefmt import clock, day_label, short_day
 from cineclock.venues import VENUES, shown_specs
 
@@ -607,7 +609,7 @@ def test_theatre_pills_include_what_is_on_its_schedule(conn):
 
 
 def test_calendar_months_link_days_with_showings():
-    from cineclock.site import calendar_months
+    from cineclock.listings import calendar_months
 
     shows = [show("Jaws", at(18, 19)), show("Jaws", at(31, 19))]
     days = group_days(shows, film_pages(shows, {}), {}, NOW)
@@ -626,7 +628,7 @@ def test_showtimes_page_has_the_calendar(conn):
 
 
 def test_spotlight_prefers_tonights_best_rated_film_with_art(conn):
-    from cineclock.site import spotlight
+    from cineclock.shelves import spotlight
 
     save(conn, show("Jaws", at(18, 19)), show("Alien", at(18, 21)), show("Later", at(19, 19)))
     db.save_film(conn, film("Jaws", None, 1, backdrop_url="https://b/j", letterboxd_rating=4.0))
@@ -637,7 +639,7 @@ def test_spotlight_prefers_tonights_best_rated_film_with_art(conn):
 
 
 def test_hero_has_three_highlights_all_with_art(conn):
-    from cineclock.site import highlights
+    from cineclock.shelves import highlights
 
     save(
         conn,
@@ -725,7 +727,8 @@ def test_film_page_starts_a_new_block_when_the_theatre_changes(conn):
 
 
 def test_theatre_rails_always_fill_and_topics_need_enough_films(conn):
-    from cineclock.site import VENUES, theatre_rails
+    from cineclock.shelves import theatre_rails
+    from cineclock.venues import VENUES
 
     dunbar = next(v for v in VENUES if v.slug == "dunbar")
     rio = next(v for v in VENUES if v.slug == "rio")

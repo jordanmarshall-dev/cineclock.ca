@@ -2,9 +2,9 @@ from datetime import UTC, date, datetime
 
 from cineclock import personal
 from cineclock.films import Film, match_key
+from cineclock.listings import FilmPage
 from cineclock.models import Screening
 from cineclock.profiles import Profile
-from cineclock.site import FilmPage
 
 NOW = datetime(2026, 10, 18, 8, 0, tzinfo=UTC)
 

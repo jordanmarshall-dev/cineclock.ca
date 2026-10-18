@@ -22,7 +22,7 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 
 from cineclock import db
-from cineclock.site import film_pages
+from cineclock.listings import film_pages
 
 ROOT = Path(__file__).resolve().parent.parent
 SITE = ROOT / os.environ.get("CINECLOCK_SITE", "site")
