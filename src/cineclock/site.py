@@ -362,6 +362,7 @@ def pages(conn: Connection, now: datetime) -> dict[str, str]:
         out[path] = render("film.html", path, page=page, film=page.film, days=page_days)
 
     out["theatres/index.html"] = render("theatres.html", "theatres/index.html", current="theatres")
+    out["about/index.html"] = render("about.html", "about/index.html")
     for venue in VENUES:
         path = f"theatres/{venue.slug}/index.html"
         mine = [s for s in screenings if s.venue == venue.name]

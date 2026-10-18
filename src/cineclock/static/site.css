@@ -1049,6 +1049,21 @@ a:focus-visible {
   font-size: 0.8125rem;
 }
 
+.site-footer .footer-links {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.footer-links a { display: inline-flex; color: var(--bright); text-decoration: none; }
+.footer-links a:hover { color: var(--white); }
+
+.about-page .about p:first-child { margin-top: 1.25rem; }
+.about-links .source-logo { height: 0.75rem; }
+
 .site-footer p { margin: 0 0 0.375rem; }
 
 @media (min-width: 40rem) {

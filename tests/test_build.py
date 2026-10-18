@@ -24,7 +24,9 @@ def test_build_writes_every_page_and_asset(conn, tmp_path):
     out = tmp_path / "site"
     count = build(conn, out, NOW)
 
-    assert count == 1 + 1 + 1 + 1 + 1 + 5  # home, showtimes, films, theatres, one film, 5 venues
+    assert (
+        count == 1 + 1 + 1 + 1 + 1 + 1 + 5
+    )  # home, showtimes, films, theatres, about, one film, 5 venues
     assert "Scream" in (out / "index.html").read_text()
     assert "Scream" in (out / "showtimes/index.html").read_text()
     assert (out / "films/scream/index.html").exists()

@@ -534,3 +534,13 @@ def test_several_showings_on_one_day_are_flagged():
     save(conn, show("Jaws", at(19, 14)), show("Jaws", at(19, 19)), show("Jaws", at(20, 19)))
     [p] = {id(x): x for x in film_pages(db.upcoming(conn, NOW), {}).values()}.values()
     assert p.tags == []
+
+
+def test_about_page_and_footer_links(conn):
+    built = pages(conn, NOW)
+    about = built["about/index.html"]
+    assert "Hi, I'm Jordan." in about
+    assert 'href="https://boxd.it/7T1D"' in about
+    assert 'href="https://github.com/yogzoth"' in about
+    home = built["index.html"]
+    assert 'href="about/"' in home and 'href="https://boxd.it/7T1D"' in home
