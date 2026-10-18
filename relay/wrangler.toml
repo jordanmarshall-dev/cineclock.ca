@@ -1,0 +1,6 @@
+# Cloudflare Worker settings for the Letterboxd relay. Cloudflare deploys it
+# from this folder of the repo (Workers & Pages, Import a repository, root
+# directory "relay"), and again on every push that changes it.
+name = "cineclock-relay"
+main = "worker.js"
+compatibility_date = "2026-10-01"
