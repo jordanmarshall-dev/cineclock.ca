@@ -22,6 +22,7 @@
       </p>
       {% if page.genres %}<p class="genres">{% for g in page.genres %}<span class="genre">{{ g }}</span>{% endfor %}</p>{% endif %}
       {{ tag_list(page.tags) }}
+      {% if page.shared_note %}<p class="film-note">{{ page.shared_note }}</p>{% endif %}
     </div>
   </div>
 
@@ -38,16 +39,18 @@
 
   <h2 class="section-heading">Showtimes</h2>
   {% for day in days %}
-    <h3 class="day-heading">{{ day.label }}</h3>
+  <section class="day">
+    <h3 class="day-heading day-bar">{{ icon("calendar", 16) }}{{ day.label }}</h3>
     {% for group in day.groups %}
-      <div class="showtime-venue">
-        <h4><a href="{{ root }}theatres/{{ group.venue.slug }}/">{{ venue_label(group.venue, root) }}</a></h4>
-        {% for r in group.rows %}
-          {% if r.note %}<p class="meta">{{ r.note }}</p>{% endif %}
-          <div class="times">{% for s in r.showtimes %}{{ showtime(s, page.title) }}{% endfor %}</div>
-        {% endfor %}
-      </div>
+    <div class="venue-group panel">
+      <h4 class="venue-heading"><a href="{{ root }}theatres/{{ group.venue.slug }}/">{{ venue_label(group.venue, root) }}</a></h4>
+      {% for r in group.rows %}
+        {% if r.note and not page.shared_note %}<p class="meta showing-note">{{ r.note }}</p>{% endif %}
+        <div class="times">{% for s in r.showtimes %}{{ showtime(s, page.title) }}{% endfor %}</div>
+      {% endfor %}
+    </div>
     {% endfor %}
+  </section>
   {% endfor %}
 </div>
 {% endblock %}

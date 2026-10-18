@@ -6,17 +6,20 @@
 {% block main %}
 <div class="wrap">
   <h1 class="page-title">Theatres</h1>
-  <ul class="theatre-list">
+  <ul class="theatre-cards">
     {% for v in venues %}
+    {% set photo = "theatres/" ~ v.slug ~ ".jpg" %}
     <li>
-      <a class="theatre-item" href="{{ root }}theatres/{{ v.slug }}/">
-        <span class="theatre-logo">
-          {%- if v.full_logo and has_asset("logos/" ~ v.full_logo) %}{% set w, h = logo_size("logos/" ~ v.full_logo, 3000, 16) %}<img src="{{ root }}static/logos/{{ v.full_logo }}" alt="" width="{{ w }}" height="{{ h }}">{% else %}<span>{{ v.monogram }}</span>{% endif -%}
+      <a class="theatre-card panel" href="{{ root }}theatres/{{ v.slug }}/">
+        <span class="theatre-card-art">
+          {%- if has_asset(photo) %}<img src="{{ root }}static/{{ photo }}" alt="" loading="lazy" style="object-position: {{ v.photo_focus }}">{% endif -%}
+          {%- if v.full_logo and has_asset("logos/" ~ v.full_logo) %}<img class="theatre-card-logo" src="{{ root }}static/logos/{{ v.full_logo }}" alt="">{% endif -%}
         </span>
-        <span class="theatre-text">
+        <span class="theatre-card-body">
           <span class="theatre-name">{{ v.name }}</span>
-          <span class="meta">{{ icon("pin", 12) }}{{ v.neighbourhood }}{% if v.rooms | length > 1 %}, {{ v.rooms | length }} rooms{% endif %}</span>
+          <span class="meta">{{ icon("pin", 12) }}{{ v.neighbourhood }}</span>
           <span class="theatre-blurb">{{ v.blurb }}</span>
+          {% if v.offers %}<span class="tags">{% for o in v.offers[:3] %}<span class="tag {{ 'tag-format' if 'mm' in o or o in ('4K', '3D') else 'tag-event' }}">{{ o }}</span>{% endfor %}</span>{% endif %}
         </span>
       </a>
     </li>

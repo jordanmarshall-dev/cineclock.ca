@@ -326,14 +326,6 @@ def test_highly_rated_needs_enough_ratings(conn):
     assert found["Highly rated"].cards[0].why == "4.1 on Letterboxd"
     assert found["Highly rated"].cards[0].next_label == "Today, 7:00 pm"
     assert found["Highly rated"].more == "films/?sort=rated"
-    assert [c.page.title for c in found["Popular"].cards] == ["Classic", "Obscure"]
-    assert found["Popular"].cards[0].why == "50K Letterboxd ratings"
-
-
-def test_most_screenings(conn):
-    save(conn, show("Once", at(19, 19)), *[show("Lots", at(d, 19)) for d in (18, 19, 20)])
-    cards = rail_titles(conn)["Most screenings"].cards
-    assert [(c.page.title, c.why) for c in cards] == [("Lots", "3 screenings")]
 
 
 def test_on_film_rail(conn):
@@ -352,8 +344,8 @@ def test_on_film_rail(conn):
 
 
 def test_empty_rails_are_left_out(conn):
-    save(conn, show("Musk", at(30, 12)))
-    assert set(rail_titles(conn)) == {"Coming up"}
+    save(conn, show("Musk", at(22, 12)))
+    assert set(rail_titles(conn)) == {"This week"}
 
 
 def test_leaving_soon_lists_films_whose_last_showing_is_this_week(conn):
@@ -363,17 +355,20 @@ def test_leaving_soon_lists_films_whose_last_showing_is_this_week(conn):
         show("Stays", at(30, 19)),
         show("Goes Later", at(19, 19)),
         show("Goes Later", at(23, 19)),
+        show("Goes", at(19, 14)),
         show("Goes", at(20, 19)),
+        show("Once", at(19, 19)),
     )
     rail = rail_titles(conn)["Leaving soon"]
+    # A single screening isn't a run that's ending, so "Once" stays out
     assert [c.page.title for c in rail.cards] == ["Goes", "Goes Later"]
-    assert rail.cards[0].why == "Last showing Tue Oct 20"
+    assert rail.cards[0].why == "Ends Tue 20"
     assert rail.more == "films/?sort=leaving"
 
 
-def test_coming_up_skips_what_is_on_today(conn):
+def test_this_week_skips_what_is_on_today(conn):
     save(conn, show("Today", at(18, 19)), show("Later", at(25, 19)), show("Soon", at(19, 19)))
-    assert [c.page.title for c in rail_titles(conn)["Coming up"].cards] == ["Soon", "Later"]
+    assert [c.page.title for c in rail_titles(conn)["This week"].cards] == ["Soon", "Later"]
 
 
 # Tags and filters
@@ -410,7 +405,7 @@ def test_every_rail_has_a_see_all_link(conn):
 
 def test_next_label_for_later_days(conn):
     save(conn, show("Later", at(24, 20, 15)))
-    [card] = rail_titles(conn)["Coming up"].cards
+    [card] = rail_titles(conn)["This week"].cards
     assert card.next_label == "Oct 24, 8:15 pm"
 
 
@@ -431,7 +426,7 @@ def test_home_cards_show_year_reason_next_showing_and_theatres(conn):
 def test_films_page_lists_each_film_once_with_dates(conn):
     save(conn, show("Musk", at(18, 12)), show("Musk", at(25, 12)), show("Pulse", at(19, 20)))
     page = pages(conn, NOW)["films/index.html"]
-    assert page.count('class="film-item"') == 2
+    assert page.count('class="film-item panel"') == 2
     assert "Oct 18 to Oct 25" in page
     assert "Oct 19 only" in page
     assert 'data-sort-screenings="2"' in page
@@ -595,3 +590,43 @@ def test_showtimes_page_has_the_calendar(conn):
     save(conn, show("Jaws", at(19, 19)))
     page = pages(conn, NOW)["showtimes/index.html"]
     assert 'class="cal-pop"' in page and 'href="#d20261019"' in page
+
+
+def test_spotlight_prefers_tonights_best_rated_film_with_art(conn):
+    from cineclock.site import spotlight
+
+    save(conn, show("Jaws", at(18, 19)), show("Alien", at(18, 21)), show("Later", at(19, 19)))
+    db.save_film(conn, film("Jaws", None, 1, backdrop_url="https://b/j", letterboxd_rating=4.0))
+    db.save_film(conn, film("Alien", None, 2, backdrop_url="https://b/a", letterboxd_rating=4.3))
+    db.save_film(conn, film("Later", None, 3, backdrop_url="https://b/l", letterboxd_rating=4.9))
+    page_of = film_pages(db.upcoming(conn, NOW), db.films_by_key(conn))
+    assert spotlight(list({id(p): p for p in page_of.values()}.values()), NOW).title == "Alien"
+
+
+def test_a_note_every_showing_shares_moves_up_top(conn):
+    note = "With Filmmakers Q&A"
+    save(conn, show("Traces", at(25, 10), note=note), show("Traces", at(26, 10), note=note))
+    [p] = {id(x): x for x in film_pages(db.upcoming(conn, NOW), {}).values()}.values()
+    assert p.shared_note == note
+
+
+def test_popular_leaves_out_what_highly_rated_shows(conn):
+    save(conn, show("Classic", at(18, 19), year=1970), show("Blockbuster", at(18, 20), year=2020))
+    db.save_film(conn, film("Classic", 1970, 1, letterboxd_rating=4.1, letterboxd_count=90_000))
+    db.save_film(conn, film("Blockbuster", 2020, 2, letterboxd_rating=3.2, letterboxd_count=50_000))
+    found = rail_titles(conn)
+    assert [c.page.title for c in found["Highly rated"].cards] == ["Classic", "Blockbuster"]
+    # Both are highly rated here, so nothing is left for Popular
+    assert "Popular" not in found
+
+
+def test_most_screenings_needs_a_real_run(conn):
+    save(conn, show("Twice", at(19, 19)), show("Twice", at(20, 19)))
+    save(conn, *[show("Lots", at(d, 19)) for d in (18, 19, 20, 21)])
+    cards = rail_titles(conn)["Most screenings"].cards
+    assert [(c.page.title, c.why) for c in cards] == [("Lots", "4 screenings")]
+
+
+def test_theatre_page_frames_the_inside_photo_beside_the_specs(conn):
+    page = pages(conn, NOW)["theatres/rio/index.html"]
+    assert 'class="room-photo"' in page and "static/theatres/rio-inside.jpg" in page

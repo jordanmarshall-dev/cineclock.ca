@@ -107,6 +107,12 @@ class FilmPage:
         return max(self.screenings, key=lambda s: s.starts_at)
 
     @property
+    def shared_note(self) -> str | None:
+        """The venue's note when every showing has the same one, to show once up top."""
+        notes = {s.note for s in self.screenings}
+        return notes.pop() if len(notes) == 1 else None
+
+    @property
     def date_range(self) -> str:
         """Oct 18 only, or Oct 18 to Nov 2"""
         first = self.next_showing.local_start.date()
@@ -269,15 +275,42 @@ def when(s: Screening, now: datetime) -> str:
     return f"{day:%b} {day.day}, {clock(s.starts_at)}"
 
 
+def spotlight(film_list: list[FilmPage], now: datetime) -> FilmPage | None:
+    """The film to feature at the top of the home page: the best-rated one still
+    to come today with a backdrop image, or failing that the soonest one."""
+    today = now.astimezone(VANCOUVER).date()
+    tonight = [
+        p
+        for p in film_list
+        if p.film and p.film.backdrop_url and p.next_showing.local_start.date() == today
+    ]
+    if tonight:
+        return max(tonight, key=lambda p: p.film.letterboxd_rating or 0)
+    with_art = [p for p in film_list if p.film and p.film.backdrop_url]
+    return min(with_art, key=lambda p: p.next_showing.starts_at) if with_art else None
+
+
+def spotlight_context(page: FilmPage | None, now: datetime) -> dict:
+    if not page:
+        return {"spotlight": None}
+    today = now.astimezone(VANCOUVER).date()
+    on_today = page.next_showing.local_start.date() == today
+    return {
+        "spotlight": page,
+        "spotlight_label": "Tonight" if on_today else "Up next",
+        "spotlight_when": when(page.next_showing, now),
+    }
+
+
 def last_day(s: Screening, now: datetime) -> str:
-    """today, tomorrow, or a weekday and date: "Last showing Tue Oct 20" """
+    """today, tomorrow, or a short date: "Ends Tue 20" """
     today = now.astimezone(VANCOUVER).date()
     day = s.local_start.date()
     if day == today:
         return "today"
     if day == today + timedelta(days=1):
         return "tomorrow"
-    return f"{day:%a %b} {day.day}"
+    return f"{day:%a} {day.day}"
 
 
 def rails(film_list: list[FilmPage], now: datetime) -> list[Rail]:
@@ -288,7 +321,14 @@ def rails(film_list: list[FilmPage], now: datetime) -> list[Rail]:
         (p for p in film_list if any(s.local_start.date() == today for s in p.screenings)),
         key=soonest,
     )
-    coming_up = sorted((p for p in film_list if p not in on_today), key=soonest)
+    this_week = sorted(
+        (
+            p
+            for p in film_list
+            if p not in on_today and p.next_showing.local_start.date() <= today + timedelta(days=7)
+        ),
+        key=soonest,
+    )
 
     # Films that appeared in the last two weeks, newest first. Everything seen on
     # the very first run is the baseline, not news, so it doesn't count.
@@ -299,10 +339,15 @@ def rails(film_list: list[FilmPage], now: datetime) -> list[Rail]:
         key=lambda p: (-p.added.timestamp(), soonest(p)),
     )
 
-    # Films whose last showing is within the week: catch them before they go.
+    # A run that ends this week. One-off screenings already carry their own pill.
     last = lambda p: p.last_showing.starts_at  # noqa: E731
     leaving = sorted(
-        (p for p in film_list if p.last_showing.local_start.date() <= today + timedelta(days=6)),
+        (
+            p
+            for p in film_list
+            if p.last_showing.local_start.date() <= today + timedelta(days=6)
+            and len({s.local_start.date() for s in p.screenings}) > 1
+        ),
         key=last,
     )
     on_film = sorted((p for p in film_list if ON_FILM & set(p.tags)), key=soonest)
@@ -317,12 +362,14 @@ def rails(film_list: list[FilmPage], now: datetime) -> list[Rail]:
         ),
         key=lambda p: -p.film.letterboxd_rating,
     )
+
     popular = sorted(
         (p for p in film_list if p.film and p.film.letterboxd_count),
         key=lambda p: -p.film.letterboxd_count,
     )
+    # Long runs: films with plenty of chances to catch them.
     busiest = sorted(
-        (p for p in film_list if len(p.screenings) > 1),
+        (p for p in film_list if len(p.screenings) >= 4),
         key=lambda p: (-len(p.screenings), soonest(p)),
     )
 
@@ -333,17 +380,22 @@ def rails(film_list: list[FilmPage], now: datetime) -> list[Rail]:
 
     found = [
         Rail("On today", cards(on_today), f"showtimes/#d{today:%Y%m%d}"),
-        Rail("Coming up", cards(coming_up), "films/"),
         Rail(
             "Leaving soon",
-            cards(leaving, lambda p: f"Last showing {last_day(p.last_showing, now)}"),
+            cards(leaving, lambda p: f"Ends {last_day(p.last_showing, now)}"),
             "films/?sort=leaving",
         ),
+        Rail("This week", cards(this_week), "films/"),
         Rail("Just added", cards(just_added), "films/?sort=added"),
         Rail(
             "On film",
-            cards(on_film, lambda p: " and ".join(t for t in p.tags if t.endswith("mm"))),
+            cards(on_film, lambda p: " and ".join(t for t in p.tags if t in ON_FILM)),
             "films/?tag=on-film",
+        ),
+        Rail(
+            "Events and guests",
+            cards(events, lambda p: next(t for t in p.tags if t in EVENTS)),
+            "films/?tag=event",
         ),
         Rail(
             "Highly rated",
@@ -352,19 +404,12 @@ def rails(film_list: list[FilmPage], now: datetime) -> list[Rail]:
         ),
         Rail(
             "Popular",
-            cards(popular, lambda p: f"{compact(p.film.letterboxd_count)} Letterboxd ratings"),
-            "films/?sort=popular",
-        ),
-        Rail(
-            "Events and guests",
+            # Highly rated already shows the acclaimed ones; leave them out here.
             cards(
-                events,
-                lambda p: next(
-                    (s.note for s in p.screenings if s.note),
-                    next(t for t in p.tags if t in EVENTS),
-                ),
+                [p for p in popular if p not in top[:RAIL_LENGTH]],
+                lambda p: f"{compact(p.film.letterboxd_count)} Letterboxd ratings",
             ),
-            "films/?tag=event",
+            "films/?sort=popular",
         ),
         Rail(
             "Most screenings",
@@ -394,7 +439,12 @@ def pages(conn: Connection, now: datetime) -> dict[str, str]:
 
     filter_tags = sort_tags({t for p in film_list for t in p.tags})
     out = {
-        "index.html": render("index.html", "index.html", rails=rails(film_list, now)),
+        "index.html": render(
+            "index.html",
+            "index.html",
+            rails=rails(film_list, now),
+            **spotlight_context(spotlight(film_list, now), now),
+        ),
         "showtimes/index.html": render(
             "showtimes.html",
             "showtimes/index.html",

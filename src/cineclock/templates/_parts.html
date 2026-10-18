@@ -109,7 +109,7 @@
 <section class="day" id="{{ day.anchor }}" data-group aria-labelledby="{{ day.anchor }}-h">
   <h2 class="day-heading day-bar" id="{{ day.anchor }}-h">{{ icon("calendar", 16) }}{{ day.label }}</h2>
   {% for group in day.groups %}
-    <div class="venue-group" data-group>
+    <div class="venue-group panel" data-group>
     {% if show_venues %}<h3 class="venue-heading"><a href="{{ root }}theatres/{{ group.venue.slug }}/">{{ venue_label(group.venue, root) }}</a></h3>{% endif %}
     <ul class="rows">
       {% for r in group.rows %}{{ row(r, root, group.venue.slug) }}{% endfor %}
@@ -143,7 +143,7 @@
           <span class="card-venues">{% for v in c.page.venues %}{{ venue_badge(v, root) }}{% endfor %}</span>
         </span>
         <span class="card-title">{{ c.page.title }}{% if c.page.year %} <span class="year">{{ c.page.year }}</span>{% endif %}</span>
-        {% if c.why %}<span class="card-why">{{ c.why }}</span>{% endif %}
+        {% if c.why %}<span class="card-why">{% if c.why in TAG_ICONS %}{{ icon(TAG_ICONS[c.why], 11) }}{% endif %}{{ c.why }}</span>{% endif %}
         <span class="card-next">{{ icon("clock", 12) }}{{ c.next_label }}</span>
       </a>
     </li>
