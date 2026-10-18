@@ -8,7 +8,7 @@ from pathlib import Path
 
 from jinja2 import Environment, PackageLoader, select_autoescape
 
-from cineclock.tags import filter_slugs, kind, slug
+from cineclock.tags import filter_slugs, kind, said_by_tags, slug
 from cineclock.timefmt import clock
 from cineclock.venues import room_label
 
@@ -19,6 +19,7 @@ env.filters["clock"] = clock
 env.filters["tagslug"] = slug
 env.filters["filter_slugs"] = filter_slugs
 env.filters["tagkind"] = kind
+env.filters["said_by_tags"] = said_by_tags
 env.filters["runtime"] = lambda minutes: (
     f"{minutes // 60}h {minutes % 60:02d}m" if minutes >= 60 else f"{minutes}m"
 )

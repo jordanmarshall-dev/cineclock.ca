@@ -1,6 +1,6 @@
 import pytest
 
-from cineclock.tags import filter_slugs, kind, screening_tags, slug, sort_tags
+from cineclock.tags import filter_slugs, kind, said_by_tags, screening_tags, slug, sort_tags
 
 
 @pytest.mark.parametrize(
@@ -35,8 +35,8 @@ from cineclock.tags import filter_slugs, kind, screening_tags, slug, sort_tags
         ("SFMF Shorts Programme 2", None, None, ["Shorts programme"]),
         ("The Fly", "Special Presentation", None, ["Special presentation"]),
         ("The Fly", "Special guest Jeff Goldblum", None, ["Guests"]),
-        ("Dune: Part Three", "Advance Screening", None, ["Preview"]),
-        ("Dune: Part Three", "Insider Screening", None, ["Preview"]),
+        ("Dune: Part Three", "Advance Screening", None, ["Advance screening"]),
+        ("Dune: Part Three", "Insider Screening", None, ["Insider screening"]),
         ("The Fly", "40th Anniversary Screening", None, []),
         # Words that only look like tags
         ("Alive", None, None, []),
@@ -55,7 +55,7 @@ def test_sort_tags_puts_rare_showings_then_formats_first_and_dedupes():
 
 
 def test_each_tag_belongs_to_a_family():
-    tags = ["One day only", "35mm", "Dolby Atmos", "Introduction", "Preview"]
+    tags = ["One day only", "35mm", "Dolby Atmos", "Introduction", "Advance screening"]
     assert [kind(t) for t in tags] == ["rare", "format", "format", "event", "event"]
 
 
@@ -66,3 +66,18 @@ def test_filter_slugs_add_on_film_and_event():
 
 def test_slug():
     assert slug("One screening") == "one-screening"
+
+
+@pytest.mark.parametrize(
+    "note, tags, expected",
+    [
+        ("Advance Screening", ["Advance screening"], True),
+        ("Presented in 70mm", ["70mm"], True),
+        ("Insider Screening", ["Insider screening", "One screening"], True),
+        ("With Filmmakers Dr. Gabor Maté & Colette Ghunim Q&A", ["Filmmaker Q&A"], False),
+        ("40th Anniversary Screening", [], False),
+        (None, ["70mm"], False),
+    ],
+)
+def test_short_notes_a_pill_already_says(note, tags, expected):
+    assert said_by_tags(note, tags) == expected

@@ -73,7 +73,8 @@
   "One screening": "star", "One day only": "star",
   "70mm": "film", "35mm": "film", "16mm": "film", "IMAX": "screen", "4K": "screen", "Dolby Atmos": "speaker", "3D": "eye",
   "Filmmaker Q&A": "mic", "Q&A": "mic", "Introduction": "mic", "Live accompaniment": "music", "Festival": "star",
-  "Shorts programme": "film", "Special presentation": "star", "Guests": "people", "Preview": "eye",
+  "Shorts programme": "film", "Special presentation": "star", "Guests": "people",
+  "Advance screening": "eye", "Insider screening": "eye", "Sneak preview": "eye",
 } %}
 
 {% macro tag_list(tags) -%}
@@ -94,7 +95,7 @@
       <a href="{{ root }}films/{{ r.page.slug }}/">{{ r.title }}</a>
       {% if r.year %}<span class="year">{{ r.year }}</span>{% endif %}
     </p>
-    {% if r.note %}<p class="meta">{{ r.note }}</p>{% elif r.page.film and r.page.film.director %}<p class="meta">{{ r.page.film.director }}</p>{% endif %}
+    {% if r.note and not (r.note | said_by_tags(r.tags)) %}<p class="meta">{{ r.note }}</p>{% elif r.page.film and r.page.film.director %}<p class="meta">{{ r.page.film.director }}</p>{% endif %}
     {{ ratings(r.page.film, root) }}
     {{ tag_list(r.tags) }}
     <div class="times">
@@ -144,7 +145,7 @@
         </span>
         <span class="card-title">{{ c.page.title }}{% if c.page.year %} <span class="year">{{ c.page.year }}</span>{% endif %}</span>
         {% if c.why %}<span class="card-why">{% if c.why in TAG_ICONS %}{{ icon(TAG_ICONS[c.why], 11) }}{% endif %}{{ c.why }}</span>{% endif %}
-        <span class="card-next">{{ icon("clock", 12) }}{{ c.next_label }}</span>
+        <span class="card-next">{{ icon("calendar", 12) }}{{ c.next_label }}</span>
       </a>
     </li>
     {% endfor %}

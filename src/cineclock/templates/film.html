@@ -22,7 +22,7 @@
       </p>
       {% if page.genres %}<p class="genres">{% for g in page.genres %}<span class="genre">{{ g }}</span>{% endfor %}</p>{% endif %}
       {{ tag_list(page.tags) }}
-      {% if page.shared_note %}<p class="film-note">{{ page.shared_note }}</p>{% endif %}
+      {% if page.shared_note and not (page.shared_note | said_by_tags(page.tags)) %}<p class="film-note">{{ page.shared_note }}</p>{% endif %}
     </div>
   </div>
 
@@ -45,7 +45,9 @@
     <div class="venue-group panel">
       <h4 class="venue-heading"><a href="{{ root }}theatres/{{ group.venue.slug }}/">{{ venue_label(group.venue, root) }}</a></h4>
       {% for r in group.rows %}
-        {% if r.note and not page.shared_note %}<p class="meta showing-note">{{ r.note }}</p>{% endif %}
+        {% if r.note and not page.shared_note %}
+          {% if r.note | said_by_tags(r.tags) %}{{ tag_list(r.tags | reject("in", ["One screening", "One day only"]) | list) }}{% else %}<p class="meta showing-note">{{ r.note }}</p>{% endif %}
+        {% endif %}
         <div class="times">{% for s in r.showtimes %}{{ showtime(s, page.title) }}{% endfor %}</div>
       {% endfor %}
     </div>

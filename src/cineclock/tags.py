@@ -35,10 +35,15 @@ EVENTS = {
     "Special presentation": r"special (presentation|screening|event)",
     "Guests": r"\bguests?\b|in attendance|\bpanel\b",
 }
-PREVIEW = r"advance screening|insider screening|sneak preview|preview screening"
+# Early screenings keep the venue's own wording.
+PREVIEWS = {
+    "Advance screening": r"advance screening",
+    "Insider screening": r"insider screening",
+    "Sneak preview": r"sneak preview|preview screening",
+}
 
 RARE = ["One screening", "One day only"]
-ORDER = RARE + list(FORMATS) + list(EVENTS) + ["Preview"]
+ORDER = RARE + list(FORMATS) + list(EVENTS) + list(PREVIEWS)
 ON_FILM = {"70mm", "35mm", "16mm"}
 
 
@@ -50,9 +55,19 @@ def screening_tags(title: str, note: str | None, film_format: str | None) -> lis
         tags.remove("Q&A")
     if "Filmmaker Q&A" in tags and "Guests" in tags:
         tags.remove("Guests")
-    if re.search(PREVIEW, text):
-        tags.append("Preview")
+    tags += [name for name, pattern in PREVIEWS.items() if re.search(pattern, text)]
     return tags
+
+
+def said_by_tags(note: str | None, tags) -> bool:
+    """True when a short note only says what a tag already shows ("Advance Screening"),
+    so the pill can stand in for it."""
+    if not note or len(note) > 40:
+        return False
+    words = re.sub(r"[^a-z0-9& ]", " ", note.lower()).split()
+    covered = " ".join(t.lower() for t in tags)
+    filler = {"presented", "in", "with", "a", "the", "screening", "screenings"}
+    return bool(tags) and all(w in covered or w in filler for w in words)
 
 
 def kind(tag: str) -> str:

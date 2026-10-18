@@ -15,7 +15,7 @@
       <span class="spotlight-title">{{ p.title }}{% if p.year %} <span class="year">{{ p.year }}</span>{% endif %}</span>
       <span class="spotlight-meta">
         {%- for v in p.venues %}{{ venue_badge(v, root) }}{% endfor -%}
-        <span>{{ icon("clock", 14) }}{{ spotlight_when }}</span>
+        <span>{{ icon("calendar", 14) }}{{ spotlight_when }}</span>
         {%- if p.film.director %}<span>{{ icon("clapper", 14) }}{{ p.film.director }}</span>{% endif -%}
       </span>
       {{ tag_list(p.tags[:3]) }}
