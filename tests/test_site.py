@@ -566,3 +566,13 @@ def test_theatre_page_has_a_photo_header_and_offer_pills(conn):
     page = pages(conn, NOW)["theatres/park/index.html"]
     assert 'class="theatre-hero"' in page and "static/theatres/park.jpg" in page
     assert 'class="tag tag-format">70mm<' in plain(page)
+
+
+def test_theatre_pills_include_what_is_on_its_schedule(conn):
+    save(
+        conn, show("Gremlins", at(19, 19), note="Q&A with Zach Galligan"), show("Jaws", at(20, 19))
+    )
+    page = plain(pages(conn, NOW)["theatres/rio/index.html"])
+    head = page.split('class="tags theatre-offers"')[1].split("</p>")[0]
+    assert ">Q&amp;A<" in head and ">7.1 sound<" in head
+    assert "One screening" not in head

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_parts.html" import day_sections, date_strip, icon %}
+{% from "_parts.html" import day_sections, date_strip, icon, TAG_ICONS %}
 
 {% block title %}{{ venue.name }} showtimes{% endblock %}
 {% block description %}What's playing at {{ venue.name }}, {{ venue.address }}.{% endblock %}
@@ -20,9 +20,10 @@
       <h1 class="venue-title">{{ venue.name }}</h1>
     {% endif %}
     <p class="meta">{{ icon("pin", 12) }}{{ venue.neighbourhood }}</p>
-    {% if venue.offers %}
+    {% if venue.offers or listed %}
     <p class="tags theatre-offers" aria-label="What this theatre offers">
       {% for o in venue.offers %}<span class="tag {{ 'tag-format' if 'mm' in o or o in ('4K', '3D') else 'tag-event' }}">{{ icon(OFFER_ICONS.get(o, "screen"), 12) }}{{ o }}</span>{% endfor %}
+      {% for t in listed if t not in venue.offers %}<span class="tag tag-{{ t | tagkind }}">{{ icon(TAG_ICONS.get(t, "star"), 12) }}{{ t }}</span>{% endfor %}
     </p>
     {% endif %}
   </div>

@@ -16,7 +16,7 @@ from cineclock import db
 from cineclock.films import Film, match_key, slugify
 from cineclock.models import VANCOUVER, Screening
 from cineclock.render import env
-from cineclock.tags import EVENTS, ON_FILM, is_event, screening_tags, sort_tags
+from cineclock.tags import EVENTS, ON_FILM, is_event, kind, screening_tags, sort_tags
 from cineclock.timefmt import clock, day_label, short_day
 from cineclock.venues import BY_NAME, VENUES, Room, Venue, order, shown_specs
 
@@ -397,6 +397,10 @@ def pages(conn: Connection, now: datetime) -> dict[str, str]:
             path,
             venue=venue,
             spec_fields=shown_specs(),
+            # What's on the schedule here right now: events and formats from the listings.
+            listed=[
+                t for t in sort_tags({t for s in mine for t in tags_for(s)}) if kind(t) != "rare"
+            ],
             current="theatres",
             days=group_days(mine, page_of, films, now),
         )
