@@ -11,12 +11,12 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from cineclock import db
-from cineclock.views import clock, group_by_day
+from cineclock.render import env
+from cineclock.views import group_by_day
 
 app = FastAPI(title="cineclock")
 app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
-templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
-templates.env.filters["clock"] = clock
+templates = Jinja2Templates(env=env)
 
 
 def get_conn() -> Iterator[Connection]:
@@ -38,7 +38,8 @@ def whats_on(
     now: Annotated[datetime, Depends(get_now)],
 ):
     days = group_by_day(db.upcoming(conn, now), now)
-    return templates.TemplateResponse(request, "index.html", {"days": days})
+    context = {"days": days, "static": "/static/", "updated": None}
+    return templates.TemplateResponse(request, "index.html", context)
 
 
 @app.get("/health")

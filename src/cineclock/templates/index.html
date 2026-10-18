@@ -4,18 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>cineclock</title>
-<link rel="preload" href="{{ url_for('static', path='fonts/big-shoulders-display.woff2') }}" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="{{ static }}fonts/big-shoulders-display.woff2" as="font" type="font/woff2" crossorigin>
 <style>
   @font-face {
     font-family: "Big Shoulders Display";
-    src: url("{{ url_for('static', path='fonts/big-shoulders-display.woff2') }}") format("woff2");
+    src: url("{{ static }}fonts/big-shoulders-display.woff2") format("woff2");
     font-weight: 100 900;
     font-display: swap;
   }
 
   @font-face {
     font-family: "Instrument Sans";
-    src: url("{{ url_for('static', path='fonts/instrument-sans.woff2') }}") format("woff2");
+    src: url("{{ static }}fonts/instrument-sans.woff2") format("woff2");
     font-weight: 400 700;
     font-display: swap;
   }
@@ -190,6 +190,7 @@
   }
 
   footer a { color: inherit; }
+  footer p { margin: 0 0 0.25rem; }
 
   @media (min-width: 40rem) {
     .masthead { display: flex; align-items: baseline; justify-content: space-between; }
@@ -244,6 +245,7 @@
   </main>
 
   <footer>
+    {% if updated %}<p class="updated">Updated {{ updated }}.</p>{% endif %}
     Inspired by <a href="https://movieclock.app">MovieClock</a>.
     Source on <a href="https://github.com/yogzoth/cineclock">GitHub</a>.
   </footer>

@@ -1,8 +1,11 @@
 # cineclock
 
 [![CI](https://github.com/yogzoth/cineclock/actions/workflows/ci.yml/badge.svg)](https://github.com/yogzoth/cineclock/actions/workflows/ci.yml)
+[![Deploy](https://github.com/yogzoth/cineclock/actions/workflows/deploy.yml/badge.svg)](https://github.com/yogzoth/cineclock/actions/workflows/deploy.yml)
 
 Vancouver showtimes for film lovers. Indie and rep cinemas in one place.
+
+**Live site: https://yogzoth.github.io/cineclock/**
 
 <img src="docs/screenshot.png" alt="cineclock on a phone: days shown as marquee letter boards, each film with its poster and showtimes" width="320">
 
@@ -37,6 +40,10 @@ To scrape every venue and save to `cineclock.db`:
 ```sh
 python -m cineclock.scrape
 ```
+
+## How it's deployed
+
+The live site is plain files on GitHub Pages, so it costs nothing and never sleeps. A GitHub Actions workflow runs on every push to `main` and every 4 hours: it runs the tests, scrapes the venues, builds the page with `python -m cineclock.build`, and publishes it. The database is kept between runs in the Actions cache, so past screenings stay as history.
 
 ## How it's built
 
