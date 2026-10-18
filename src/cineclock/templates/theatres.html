@@ -10,7 +10,7 @@
     <li>
       <a class="theatre-item" href="{{ root }}theatres/{{ v.slug }}/">
         <span class="theatre-logo">
-          {%- if v.mark and has_asset("logos/" ~ v.mark) %}{% set w, h = logo_size("logos/" ~ v.mark, 1500, 14) %}<img src="{{ root }}static/logos/{{ v.mark }}" alt="" width="{{ w }}" height="{{ h }}">{% else %}<span>{{ v.monogram }}</span>{% endif -%}
+          {%- if v.full_logo and has_asset("logos/" ~ v.full_logo) %}{% set w, h = logo_size("logos/" ~ v.full_logo, 3000, 16) %}<img src="{{ root }}static/logos/{{ v.full_logo }}" alt="" width="{{ w }}" height="{{ h }}">{% else %}<span>{{ v.monogram }}</span>{% endif -%}
         </span>
         <span class="theatre-text">
           <span class="theatre-name">{{ v.name }}</span>

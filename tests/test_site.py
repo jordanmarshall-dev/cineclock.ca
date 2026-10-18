@@ -507,3 +507,9 @@ def test_showtimes_use_the_logo_as_the_theatre_name(conn):
     heading = page.split('class="venue-heading"')[1].split("</h3>")[0]
     assert 'alt="The Rio"' in heading
     assert ">The Rio<" not in heading
+
+
+def test_theatres_list_uses_full_logos(conn):
+    page = pages(conn, NOW)["theatres/index.html"]
+    assert 'src="../static/logos/rio-full.png"' in page
+    assert "rio-mark.png" not in page
