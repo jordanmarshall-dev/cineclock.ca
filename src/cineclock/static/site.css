@@ -1100,6 +1100,7 @@ a:focus-visible {
 }
 
 .theatre-head.over-hero { position: relative; margin-top: -6.5rem; }
+.theatre-hero + .wrap { position: relative; }
 
 .theatre-head.over-hero .theatre-full-logo {
   height: 5.5rem;
@@ -1223,7 +1224,7 @@ a:focus-visible {
   .row, .film-link { grid-template-columns: 7rem 1fr; gap: 1.25rem; }
   .specs { grid-template-columns: repeat(3, 1fr); }
   .backdrop { height: 22rem; }
-  .theatre-hero { height: 24rem; }
+  .theatre-hero { height: 26rem; }
   .theatre-head.over-hero .theatre-full-logo { height: 7rem; }
   .film-head { grid-template-columns: 10rem 1fr; gap: 1.5rem; }
   .has-backdrop .film-head { margin-top: -7rem; }
@@ -1412,4 +1413,17 @@ a:focus-visible {
   .room-layout.has-photo .specs { grid-template-columns: repeat(2, 1fr); grid-auto-rows: 1fr; }
   .room-layout.has-photo .specs div { display: flex; flex-direction: column; justify-content: center; }
   .room-layout.has-photo .specs dd { font-size: 1.125rem; }
+}
+
+/* On wide screens the theatre photo fills the right side and fades into the
+   page on the left, so tall signs stay whole instead of being cropped to a strip. */
+@media (min-width: 64rem) {
+  .theatre-hero img { display: block; width: 62%; margin-left: auto; }
+  .theatre-hero::after {
+    background: linear-gradient(to right, var(--bg) 38%, rgba(20, 24, 28, 0) 60%),
+      linear-gradient(to bottom, rgba(20, 24, 28, 0) 55%, var(--bg));
+  }
+  .theatre-hero { background: var(--bg); }
+  .theatre-head.over-hero { margin-top: -15rem; }
+  .theatre-head.over-hero .theatre-full-logo { height: 7.5rem; max-width: 24rem; }
 }
