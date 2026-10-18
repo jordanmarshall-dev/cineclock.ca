@@ -15,6 +15,7 @@ from cineclock.scrapers import FilmDetails, add_details, make_client
 from cineclock.titles import clean_title, split_year
 
 VENUE = "The Cinematheque"
+VENUES = (VENUE,)
 CALENDAR_URL = "https://thecinematheque.ca/films/calendar"
 HEADERS = {"Accept": "text/html,application/xhtml+xml"}
 

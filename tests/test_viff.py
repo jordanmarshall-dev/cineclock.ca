@@ -5,6 +5,8 @@ import pytest
 
 from cineclock.scrapers import viff
 
+ROOM = "viff-centre-viff-cinema"
+
 
 def test_parse_nonce_from_real_calendar_page(fixture_text):
     assert viff.parse_nonce(fixture_text("viff/calendar.html")) == "5282647b44"
@@ -22,6 +24,19 @@ def test_parse_instances_skips_live_shows(fixture_json):
         ("Shrek", None, "Halloween Family Show"),
         ("Day of Wrath", None, None),
     ]
+
+
+def test_screens_become_separate_venues(fixture_json):
+    screenings = viff.parse_instances(fixture_json("viff/instances_2026-10.json"))
+    venues = {s.title: s.venue for s in screenings}
+    assert venues["Day of Wrath"] == "VIFF Centre"
+    assert venues["The Thing"] == "VIFF Lochmaddy"
+
+
+def test_events_at_other_locations_are_skipped():
+    item = {"start": "2026-12-05T19:00:00", "eventType": "Film", "title": card()}
+    item["resourceId"] = "roundhouse-community-arts-recreation-centre"
+    assert viff.parse_instances([item]) == []
 
 
 def test_parse_instances_fields(fixture_json):
@@ -43,7 +58,12 @@ def card(time_tag=""):
 
 
 def test_bare_start_time_is_read_as_vancouver_time():
-    item = {"start": "2026-12-05T19:00:00", "eventType": "Film", "title": card()}
+    item = {
+        "start": "2026-12-05T19:00:00",
+        "eventType": "Film",
+        "title": card(),
+        "resourceId": ROOM,
+    }
     [s] = viff.parse_instances([item])
     # Permanent UTC-7, so 7pm in December is 2am UTC.
     assert s.starts_at == datetime(2026, 12, 6, 2, 0, tzinfo=UTC)
@@ -51,13 +71,23 @@ def test_bare_start_time_is_read_as_vancouver_time():
 
 def test_time_tag_wins_over_bare_start():
     tag = '<time datetime="2026-12-05T21:00:00-07:00">9 pm</time>'
-    item = {"start": "2026-12-05T19:00:00", "eventType": "Film", "title": card(tag)}
+    item = {
+        "start": "2026-12-05T19:00:00",
+        "eventType": "Film",
+        "title": card(tag),
+        "resourceId": ROOM,
+    }
     [s] = viff.parse_instances([item])
     assert s.local_start.hour == 21
 
 
 def test_card_without_title_is_skipped():
-    item = {"start": "2026-12-05T19:00:00", "eventType": "Film", "title": "<div>nothing</div>"}
+    item = {
+        "start": "2026-12-05T19:00:00",
+        "eventType": "Film",
+        "title": "<div>nothing</div>",
+        "resourceId": ROOM,
+    }
     assert viff.parse_instances([item]) == []
 
 

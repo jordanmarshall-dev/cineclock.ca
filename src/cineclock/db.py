@@ -72,14 +72,20 @@ def _from_row(row: sqlite3.Row) -> Screening:
 
 
 def sync_venue(
-    conn: sqlite3.Connection, venue: str, screenings: list[Screening], now: datetime
+    conn: sqlite3.Connection,
+    venue: str,
+    screenings: list[Screening],
+    now: datetime,
+    allow_empty: bool = False,
 ) -> SyncResult:
     if any(s.venue != venue for s in screenings):
         raise ValueError(f"all screenings must belong to {venue}")
 
     # An empty scrape is far more likely a broken page than a venue with nothing
-    # on, so leave the existing listings alone rather than wiping them.
-    if not screenings:
+    # on, so leave the existing listings alone rather than wiping them. The one
+    # exception: a scraper covering two screens that found shows for one of them
+    # is working, so the other really has nothing on.
+    if not screenings and not allow_empty:
         return SyncResult(added=0, kept=0, removed=0)
 
     cutoff = _utc_text(now)

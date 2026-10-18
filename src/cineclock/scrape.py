@@ -1,4 +1,4 @@
-"""Scrape every venue and save the results: python -m cineclock.scrape"""
+"""Scrape every venue, save the results, then look up film details: python -m cineclock.scrape"""
 
 import os
 from datetime import UTC, datetime
@@ -6,26 +6,34 @@ from datetime import UTC, datetime
 from cineclock import db
 from cineclock.scrapers import cinematheque, make_client, park, rio, viff
 
-VENUES = {
-    rio.VENUE: rio.scrape,
-    viff.VENUE: viff.scrape,
-    park.VENUE: park.scrape,
-    cinematheque.VENUE: cinematheque.scrape,
-}
+# Each scraper and the venues it covers. VIFF's one listings feed has two screens.
+SCRAPERS = [
+    (rio.scrape, rio.VENUES),
+    (park.scrape, park.VENUES),
+    (cinematheque.scrape, cinematheque.VENUES),
+    (viff.scrape, viff.VENUES),
+]
+
+
+def run_scrapers(conn, client, now) -> None:
+    for scrape, venues in SCRAPERS:
+        # One venue failing shouldn't stop the others from updating.
+        try:
+            screenings = scrape(client, now=now)
+        except Exception as error:
+            print(f"{', '.join(venues)}: failed ({error})")
+            continue
+        for venue in venues:
+            mine = [s for s in screenings if s.venue == venue]
+            result = db.sync_venue(conn, venue, mine, now, allow_empty=bool(screenings))
+            print(f"{venue}: {result.added} new, {result.kept} kept, {result.removed} removed")
 
 
 def main():
     conn = db.connect(os.environ.get("CINECLOCK_DB", "cineclock.db"))
     now = datetime.now(UTC)
     with make_client() as client:
-        for venue, scrape in VENUES.items():
-            # One venue failing shouldn't stop the others from updating.
-            try:
-                result = db.sync_venue(conn, venue, scrape(client, now=now), now)
-            except Exception as error:
-                print(f"{venue}: failed ({error})")
-                continue
-            print(f"{venue}: {result.added} new, {result.kept} kept, {result.removed} removed")
+        run_scrapers(conn, client, now)
     conn.close()
 
 

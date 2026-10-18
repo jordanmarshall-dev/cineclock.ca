@@ -5,6 +5,7 @@ from datetime import date, datetime, timedelta
 from itertools import groupby
 
 from cineclock.models import VANCOUVER, Screening
+from cineclock.venues import order
 
 
 @dataclass
@@ -52,7 +53,7 @@ def group_by_day(screenings: list[Screening], now: datetime) -> list[Day]:
     for day, day_shows in groupby(ordered, key=lambda s: s.local_start.date()):
         day_shows = list(day_shows)
         venues = []
-        for name in sorted({s.venue for s in day_shows}):
+        for name in sorted({s.venue for s in day_shows}, key=lambda n: (order(n), n)):
             films: dict[tuple, Film] = {}
             # Two showings of the same film on the same day share one entry.
             for s in day_shows:

@@ -16,6 +16,7 @@ from cineclock.scrapers import make_client
 from cineclock.titles import clean_title, credits_year, split_year
 
 VENUE = "The Park"
+VENUES = (VENUE,)
 LISTINGS_URL = "https://tickets.theparktheatre.ca/"
 # The site refuses requests that don't say they accept HTML.
 HEADERS = {"Accept": "text/html,application/xhtml+xml"}

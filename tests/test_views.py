@@ -61,11 +61,20 @@ def test_different_notes_stay_separate():
     assert [f.note for f in day.venues[0].films] == ["35mm", "4K Restoration"]
 
 
-def test_venues_are_grouped_alphabetically():
-    shows = [show("Mirror", 18, venue="VIFF Centre"), show("Stalker", 19, venue="The Rio")]
+def test_venues_follow_the_set_order():
+    shows = [
+        show("Mirror", 18, venue="VIFF Centre"),
+        show("Pulse", 18, venue="The Cinematheque"),
+        show("Stalker", 19, venue="The Rio"),
+        show("Tony", 20, venue="The Park"),
+    ]
     [day] = group_by_day(shows, NOW)
-    assert [v.name for v in day.venues] == ["The Rio", "VIFF Centre"]
-    assert [f.title for f in day.venues[1].films] == ["Mirror"]
+    assert [v.name for v in day.venues] == [
+        "The Rio",
+        "The Park",
+        "The Cinematheque",
+        "VIFF Centre",
+    ]
 
 
 def test_no_screenings_means_no_days():

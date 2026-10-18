@@ -10,6 +10,7 @@ from cineclock.scrapers import FilmDetails, add_details, make_client
 from cineclock.titles import clean_title, credits_year, split_year
 
 VENUE = "The Rio"
+VENUES = (VENUE,)
 LISTINGS_URL = "https://riotheatre.ca/wp-json/barker/v1/listings"
 
 
