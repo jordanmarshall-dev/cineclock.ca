@@ -7,6 +7,7 @@ page per film and one page per venue. pages() returns them all as
 from memory.
 """
 
+import calendar
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
@@ -149,6 +150,38 @@ class Day:
     @property
     def anchor(self) -> str:
         return f"d{self.date:%Y%m%d}"
+
+
+@dataclass
+class CalendarDay:
+    date: date
+    anchor: str | None  # set when there are showings that day
+    today: bool
+
+
+@dataclass
+class CalendarMonth:
+    title: str
+    weeks: list[list[CalendarDay | None]]
+
+
+def calendar_months(days: list[Day], now: datetime) -> list[CalendarMonth]:
+    """Month grids covering every listed day, weeks starting on Sunday."""
+    if not days:
+        return []
+    listed = {d.date: d.anchor for d in days}
+    today = now.astimezone(VANCOUVER).date()
+    first, last = min(listed), max(listed)
+    months = []
+    year, month = first.year, first.month
+    while (year, month) <= (last.year, last.month):
+        weeks = [
+            [CalendarDay(d, listed.get(d), d == today) if d.month == month else None for d in week]
+            for week in calendar.Calendar(firstweekday=6).monthdatescalendar(year, month)
+        ]
+        months.append(CalendarMonth(f"{date(year, month, 1):%B %Y}", weeks))
+        year, month = (year + 1, 1) if month == 12 else (year, month + 1)
+    return months
 
 
 @dataclass
@@ -366,6 +399,7 @@ def pages(conn: Connection, now: datetime) -> dict[str, str]:
             "showtimes.html",
             "showtimes/index.html",
             days=days,
+            months=calendar_months(days, now),
             filter_tags=filter_tags,
             genres=sorted({g for p in film_list for g in p.genres}),
             current="showtimes",

@@ -576,3 +576,22 @@ def test_theatre_pills_include_what_is_on_its_schedule(conn):
     head = page.split('class="tags theatre-offers"')[1].split("</p>")[0]
     assert ">Q&amp;A<" in head and ">7.1 sound<" in head
     assert "One screening" not in head
+
+
+def test_calendar_months_link_days_with_showings():
+    from cineclock.site import calendar_months
+
+    shows = [show("Jaws", at(18, 19)), show("Jaws", at(31, 19))]
+    days = group_days(shows, film_pages(shows, {}), {}, NOW)
+    [october] = calendar_months(days, NOW)
+    assert october.title == "October 2026"
+    cells = [d for week in october.weeks for d in week if d]
+    assert [d.date.day for d in cells if d.anchor] == [18, 31]
+    assert [d.date.day for d in cells if d.today] == [18]
+    assert october.weeks[0][:4] == [None] * 4  # Oct 1, 2026 is a Thursday
+
+
+def test_showtimes_page_has_the_calendar(conn):
+    save(conn, show("Jaws", at(19, 19)))
+    page = pages(conn, NOW)["showtimes/index.html"]
+    assert 'class="cal-pop"' in page and 'href="#d20261019"' in page
