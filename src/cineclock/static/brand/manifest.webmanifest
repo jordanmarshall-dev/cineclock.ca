@@ -1,6 +1,7 @@
 {
   "name": "cineclock",
   "short_name": "cineclock",
+  "description": "Support local cinema.",
   "start_url": "../../",
   "display": "standalone",
   "background_color": "#14181c",

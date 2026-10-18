@@ -400,6 +400,14 @@ a:focus-visible {
 
 /* Home page rails */
 
+.tagline {
+  margin: 1.5rem 0 0;
+  color: var(--white);
+  font: 600 1.375rem/1.2 var(--serif);
+}
+
+.tagline + .rail { margin-top: 1.25rem; }
+
 .rail { margin-top: 2rem; }
 
 .rail-head {

@@ -513,3 +513,10 @@ def test_theatres_list_uses_full_logos(conn):
     page = pages(conn, NOW)["theatres/index.html"]
     assert 'src="../static/logos/rio-full.png"' in page
     assert "rio-mark.png" not in page
+
+
+def test_home_has_the_tagline(conn):
+    save(conn, show("Musk", at(18, 12)))
+    page = pages(conn, NOW)["index.html"]
+    assert '<p class="tagline">Support local cinema.</p>' in page
+    assert "<title>cineclock: Support local cinema</title>" in page
