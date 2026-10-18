@@ -39,7 +39,8 @@ class SyncResult:
 
 
 def connect(path: str = "cineclock.db") -> sqlite3.Connection:
-    conn = sqlite3.connect(path)
+    # The web app may open the connection on one thread and use it on another.
+    conn = sqlite3.connect(path, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.executescript(SCHEMA)
     return conn

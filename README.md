@@ -4,6 +4,8 @@
 
 Vancouver showtimes for film lovers. Indie and rep cinemas in one place.
 
+<img src="docs/screenshot.png" alt="cineclock on a phone: days shown as marquee letter boards, each film with its poster and showtimes" width="320">
+
 ## Status
 
 Early days. Version 1 covers The Cinematheque, VIFF Centre, the Park and the Rio:
@@ -11,7 +13,7 @@ Early days. Version 1 covers The Cinematheque, VIFF Centre, the Park and the Rio
 - [x] Project skeleton, tests and CI
 - [x] Rio scraper (showtimes, year and poster from each film page)
 - [x] Save to SQLite (reruns update instead of duplicating)
-- [ ] What's playing page, by day and venue
+- [x] What's playing page, by day and venue, with posters
 - [ ] Add to calendar (.ics)
 - [ ] VIFF, Cinematheque and Park scrapers
 
@@ -27,6 +29,8 @@ pytest
 ruff check .
 fastapi dev src/cineclock/app.py
 ```
+
+Then open http://127.0.0.1:8000.
 
 To scrape every venue and save to `cineclock.db`:
 
@@ -44,6 +48,10 @@ python -m cineclock.scrape
 ## Credits
 
 Inspired by [MovieClock](https://movieclock.app) by Jordan Hudson ([source](https://github.com/jordanhudson/moviecal), MIT licensed). Some scraper approaches are borrowed from it.
+
+## Fonts
+
+Big Shoulders Display and Instrument Sans, both under the SIL Open Font License (see `src/cineclock/static/fonts`).
 
 ## License
 
