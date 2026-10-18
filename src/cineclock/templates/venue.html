@@ -25,7 +25,7 @@
        room features (7.1, Curved) aren't on any screening, so they stay plain. #}
     {% set links = {} %}
     {% for t in listed %}{% set _ = links.update({t: root ~ "films/?venue=" ~ venue.slug ~ "&tag=" ~ ("event" if t == "Event" else t | tagslug)}) %}{% endfor %}
-    <div class="theatre-offers">{{ tag_list(venue.offers + (listed | reject("in", venue.offers) | list), links) }}</div>
+    <div class="theatre-offers">{{ tag_list(listed + (venue.offers | reject("in", listed) | list), links) }}</div>
   </div>
   <p class="venue-blurb">{{ venue.blurb }}</p>
 

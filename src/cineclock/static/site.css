@@ -1443,7 +1443,16 @@ a:focus-visible {
   filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.7));
 }
 
-.theatre-offers .tags { margin-top: 0.75rem; }
+/* One row that scrolls sideways, running off the screen's edge so it's clear there's more. */
+.theatre-offers .tags {
+  flex-wrap: nowrap;
+  margin: 0.75rem calc(var(--gutter) * -1) 0;
+  padding: 0 var(--gutter) 0.125rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.theatre-offers .tags::-webkit-scrollbar { display: none; }
+.theatre-offers .tag { flex: none; }
 .tag-link { text-decoration: none; }
 .tag-link:hover { border-color: var(--accent-text); color: var(--white); }
 
