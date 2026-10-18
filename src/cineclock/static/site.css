@@ -835,17 +835,23 @@ a:focus-visible {
 .film-info .ratings, .film-info .tags, .film-info .card-venues { display: flex; }
 
 .film-dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.125rem 0.875rem;
   margin-top: 0.125rem;
   color: var(--bright);
   font-size: 0.8125rem;
   font-weight: 500;
 }
 
+.film-dates > span { display: inline-flex; align-items: center; gap: 0.3125rem; }
+
 .film-count {
-  margin-left: 0.5rem;
   color: var(--text);
   font-weight: 400;
 }
+
+.icon { flex: none; color: var(--text); }
 
 /* Theatres */
 
@@ -876,7 +882,14 @@ a:focus-visible {
   justify-content: flex-start;
 }
 
-.theatre-logo img { display: block; max-width: 100%; height: auto; }
+.theatre-logo img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 4rem;
+  object-fit: contain;
+  object-position: left center;
+}
 
 .theatre-logo span {
   color: var(--bright);

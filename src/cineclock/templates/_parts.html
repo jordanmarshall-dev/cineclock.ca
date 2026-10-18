@@ -42,6 +42,14 @@
 {% endif %}
 {%- endmacro %}
 
+{# Small line icons, drawn in the text colour. #}
+{% macro icon(name) -%}
+<svg class="icon" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+{%- if name == "calendar" %}<rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/>
+{%- elif name == "ticket" %}<path d="M4 7a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v3a2 2 0 0 0 0 4v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a2 2 0 0 0 0-4z"/><path d="M15 6.5v11" stroke-dasharray="1.5 2.5"/>
+{%- endif %}</svg>
+{%- endmacro %}
+
 {% macro tag_list(tags) -%}
 {% if tags %}<p class="tags">{% for t in tags %}<span class="tag tag-{{ t | tagslug }}">{{ t }}</span>{% endfor %}</p>{% endif %}
 {%- endmacro %}
