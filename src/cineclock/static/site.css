@@ -1483,3 +1483,10 @@ a:focus-visible {
 
 .date-tools { margin-top: 1rem; }
 .rooms-head { align-items: center; }
+
+/* Theatre filter chips show the theatre's logo. Unpicked ones are dimmed. */
+.chip-logo { display: inline-flex; align-items: center; padding: 0.375rem 0.875rem; }
+.chip-logo .venue-pill { min-height: 0; }
+.chip-logo img { opacity: 0.6; transition: opacity 120ms; }
+.chip-logo[aria-pressed="true"] img, .chip-logo:hover img { opacity: 1; }
+.chip-logo[aria-pressed="true"] { border-color: var(--accent); background: rgba(136, 48, 223, 0.18); }

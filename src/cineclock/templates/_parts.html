@@ -185,7 +185,7 @@
 {%- endmacro %}
 
 {# Search, plus dropdowns of filter chips. Hidden until the script turns it on. #}
-{% macro filter_bar(venues, filter_tags, genres, sorting=False) -%}
+{% macro filter_bar(venues, filter_tags, genres, root, sorting=False) -%}
 <form class="filters" role="search" hidden>
   <div class="filter-top">
     <label class="search">{{ icon("search", 16) }}<input type="search" name="q" placeholder="Search films" aria-label="Search films" autocomplete="off"></label>
@@ -203,7 +203,7 @@
   <div class="filter-menus">
     <details>
       <summary>Theatre <span class="count"></span></summary>
-      <div class="chips">{% for v in venues %}<button type="button" class="chip" data-filter="venue" data-value="{{ v.slug }}" aria-pressed="false">{{ v.short }}</button>{% endfor %}</div>
+      <div class="chips">{% for v in venues %}<button type="button" class="chip chip-logo" data-filter="venue" data-value="{{ v.slug }}" aria-pressed="false" aria-label="{{ v.name }}">{{ venue_badge(v, root) }}</button>{% endfor %}</div>
     </details>
     <details>
       <summary>Format and events <span class="count"></span></summary>
