@@ -1,6 +1,6 @@
 import pytest
 
-from cineclock.titles import clean_title, credits_year
+from cineclock.titles import clean_title, credits_year, split_year
 
 
 @pytest.mark.parametrize(
@@ -52,3 +52,19 @@ def test_clean_title(raw, title, note):
 )
 def test_credits_year(text, year):
     assert credits_year(text) == year
+
+
+@pytest.mark.parametrize(
+    "title, expected",
+    [
+        ("The Thing (1982)", ("The Thing", 1982)),
+        ("Suspiria(1977)", ("Suspiria", 1977)),
+        ("The Thing", ("The Thing", None)),
+        ("Blade Runner 2049", ("Blade Runner 2049", None)),
+        ("1917", ("1917", None)),
+        ("(500) Days of Summer", ("(500) Days of Summer", None)),
+        ("Metropolis (3000)", ("Metropolis (3000)", None)),
+    ],
+)
+def test_split_year(title, expected):
+    assert split_year(title) == expected

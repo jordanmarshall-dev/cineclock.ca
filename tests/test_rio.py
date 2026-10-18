@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 
 import httpx
 
-from cineclock.scrapers import rio
+from cineclock.scrapers import FilmDetails, rio
 
 
 def test_parse_listings_skips_live_events(fixture_json):
@@ -63,7 +63,7 @@ def test_parse_film_page_with_comma_free_credits(fixture_text):
 
 def test_parse_film_page_without_details():
     details = rio.parse_film_page("<html><body>Coming soon</body></html>")
-    assert details == rio.FilmDetails(year=None, poster_url=None)
+    assert details == FilmDetails()
 
 
 def fake_rio(listings, pages, calls=None):

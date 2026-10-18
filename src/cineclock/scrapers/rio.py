@@ -1,23 +1,16 @@
 """The Rio Theatre: listings come from its WordPress API, details from each film page."""
 
-from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
 
 import httpx
 from bs4 import BeautifulSoup
 
 from cineclock.models import Screening
-from cineclock.scrapers import make_client
-from cineclock.titles import clean_title, credits_year
+from cineclock.scrapers import FilmDetails, add_details, make_client
+from cineclock.titles import clean_title, credits_year, split_year
 
 VENUE = "The Rio"
 LISTINGS_URL = "https://riotheatre.ca/wp-json/barker/v1/listings"
-
-
-@dataclass(frozen=True)
-class FilmDetails:
-    year: int | None
-    poster_url: str | None
 
 
 def parse_listings(data: list[dict]) -> list[Screening]:
@@ -28,10 +21,12 @@ def parse_listings(data: list[dict]) -> list[Screening]:
         if "/movie/" not in event["link"]:
             continue
         title, note = clean_title(event["title"])
+        title, year = split_year(title)
         screenings.append(
             Screening(
                 venue=VENUE,
                 title=title,
+                year=year,
                 note=note,
                 # The API includes the UTC offset, so this is already an exact moment.
                 starts_at=datetime.fromisoformat(item["start_time"]),
@@ -59,23 +54,7 @@ def scrape(client: httpx.Client, now: datetime | None = None) -> list[Screening]
     }
     response = client.get(LISTINGS_URL, params=params)
     response.raise_for_status()
-    screenings = parse_listings(response.json())
-
-    # Each film plays several times, so fetch its page once.
-    details = {}
-    for url in {s.info_url for s in screenings}:
-        try:
-            page = client.get(url)
-            page.raise_for_status()
-            details[url] = parse_film_page(page.text)
-        except httpx.HTTPError:
-            # Missing year or poster is fine; the screening still shows.
-            details[url] = FilmDetails(year=None, poster_url=None)
-
-    return [
-        replace(s, year=details[s.info_url].year, poster_url=details[s.info_url].poster_url)
-        for s in screenings
-    ]
+    return add_details(client, parse_listings(response.json()), parse_film_page)
 
 
 if __name__ == "__main__":

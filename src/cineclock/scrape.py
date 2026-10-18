@@ -4,9 +4,9 @@ import os
 from datetime import UTC, datetime
 
 from cineclock import db
-from cineclock.scrapers import make_client, rio
+from cineclock.scrapers import make_client, rio, viff
 
-VENUES = {rio.VENUE: rio.scrape}
+VENUES = {rio.VENUE: rio.scrape, viff.VENUE: viff.scrape}
 
 
 def main():
