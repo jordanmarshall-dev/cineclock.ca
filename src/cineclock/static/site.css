@@ -738,7 +738,7 @@ a:focus-visible {
   margin-top: 1rem;
 }
 
-.tagline { margin: 0; }
+.tagline { margin: 0; white-space: nowrap; }
 
 /* The way into the Letterboxd features, styled after Letterboxd's own buttons. */
 .lb-button {
@@ -878,15 +878,25 @@ a:focus-visible {
 
 .eyebrow {
   display: inline-flex;
+  max-width: 100%;
+  padding: 0.0625rem 0.5rem;
+  overflow: hidden;
+  border: 1px solid rgba(185, 138, 240, 0.45);
+  border-radius: 999px;
+  background: rgba(20, 24, 28, 0.86);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  backdrop-filter: blur(4px);
   align-items: center;
   gap: 0.3125rem;
   justify-self: start;
   color: var(--accent-text);
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.5;
 }
+
+.eyebrow .icon { flex: none; }
 
 .spotlight-title { font: 700 1.75rem/1.1 var(--serif); }
 .spotlight-title .year { font-family: var(--sans); font-size: 1rem; }
@@ -1554,6 +1564,8 @@ a:focus-visible {
 
 /* Theatre page folds: Tickets and Tech specs, closed until tapped. */
 .folds { display: grid; gap: 0.5rem; margin-top: 1.5rem; }
+/* Grid items default to their content's width; the room cards inside would push the page wide. */
+.folds > * { min-width: 0; }
 
 .fold {
   border: 1px solid var(--panel-line);
