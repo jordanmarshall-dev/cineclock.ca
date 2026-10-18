@@ -30,10 +30,33 @@
     {% if venue.website %}<li><a href="{{ venue.website }}">{{ icon("external") }}Website</a></li>{% endif %}
   </ul>
 
+  {# Tickets and the rooms' specs fold away, so the films are a short scroll down. #}
+  <div class="folds">
+  {% set pr = venue.prices %}
+  {% if pr and (pr.tickets or pr.deals) %}
+  <details class="fold">
+    <summary>{{ icon("ticket", 18) }}<span class="fold-title">Tickets</span>
+      <span class="fold-hint">{% if pr.tickets %}{{ pr.tickets[0].label }} {{ pr.tickets[0].amount.split(" / ")[0] }}{% else %}{{ pr.deals[0].amount }}{% endif %}</span>{{ icon("chevron", 18) }}</summary>
+    <div class="fold-body">
+      {% for group, rows in [("Admission", pr.tickets), ("Memberships and packs", pr.deals)] if rows %}
+      <h3 class="fold-subhead">{{ group }}</h3>
+      {% if loop.first and pr.columns and rows is sameas pr.tickets %}<p class="meta fold-columns">{{ pr.columns }}</p>{% endif %}
+      <dl class="price-list">
+        {% for row in rows %}<div><dt>{{ row.label }}{% if row.detail %}<small>{{ row.detail }}</small>{% endif %}</dt><dd>{{ row.amount }}</dd></div>{% endfor %}
+      </dl>
+      {% endfor %}
+      {% if pr.note %}<p class="meta fold-note">{{ pr.note }}</p>{% endif %}
+      <p class="meta fold-note">From {{ venue.name }}'s own website, checked {{ pr.checked }}. Prices change, so check before you go.</p>
+      <ul class="links">{% for text, url in pr.sources %}<li><a href="{{ url }}">{{ icon("external") }}{{ text }}</a></li>{% endfor %}</ul>
+    </div>
+  </details>
+  {% endif %}
   {% if spec_fields %}
   {% set multi = venue.rooms | length > 1 %}
-  <section class="rooms" aria-labelledby="room-h">
-    <h2 class="section-heading" id="room-h">{{ "The rooms" if multi else "The room" }}</h2>
+  <details class="fold rooms">
+    <summary>{{ icon("projector", 18) }}<span class="fold-title">Tech specs</span>
+      <span class="fold-hint">{% if multi %}{{ venue.rooms | length }} rooms{% elif venue.rooms[0].specs.get("Seats") %}{{ venue.rooms[0].specs["Seats"] }} seats{% endif %}</span>{{ icon("chevron", 18) }}</summary>
+    <div class="fold-body">
     {# Several rooms swipe sideways, with the next one peeking in so it's clear there's more. #}
     <div class="{{ 'room-swipe' if multi else 'room-single' }}">
     {% for room in venue.rooms %}
@@ -49,8 +72,10 @@
     </div>
     {% endfor %}
     </div>
-  </section>
+    </div>
+  </details>
   {% endif %}
+  </div>
 
   {% if venue.about %}
   <h2 class="section-heading">About</h2>

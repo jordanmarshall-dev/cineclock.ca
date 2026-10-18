@@ -22,8 +22,8 @@ OFFERS = [
     ("16mm", r"\b16mm\b"),
     ("4K", r"\b4k\b"),
     ("3D", r"\b3d\b"),
-    ("7.1 sound", r"\b7\.1\b"),
-    ("Curved screen", r"\bcurved\b"),
+    ("7.1", r"\b7\.1\b"),
+    ("Curved", r"\bcurved\b"),
 ]
 
 
@@ -34,6 +34,27 @@ class Room:
     short: str = ""  # shown on showtimes at theatres with more than one room
     specs: dict[str, str] = field(default_factory=dict)
     sources: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class Price:
+    label: str  # "Adult"
+    amount: str  # "$17", or "$17 / $15" for a theatre with two rooms
+    detail: str = ""
+
+
+@dataclass(frozen=True)
+class Prices:
+    """What a theatre charges, copied from its own website and dated, since prices change.
+    Only what the theatre itself publishes goes in."""
+
+    tickets: tuple[Price, ...] = ()
+    # What a two-part price means, shown above the list ("VIFF Cinema / Lochmaddy")
+    columns: str = ""
+    deals: tuple[Price, ...] = ()  # memberships, ticket packs
+    note: str = ""
+    checked: str = ""  # "Oct 18, 2026"
+    sources: tuple[tuple[str, str], ...] = ()  # (link text, url)
 
 
 @dataclass(frozen=True)
@@ -56,6 +77,7 @@ class Venue:
     # The Rio and the Park make their own posters, which beat generic ones.
     own_posters: bool = False
     about: tuple[str, ...] = ()
+    prices: Prices | None = None
 
     def room(self, room_id: str | None) -> Room | None:
         return next((r for r in self.rooms if r.id == room_id), None)
@@ -83,11 +105,83 @@ class Venue:
         return "".join(word[0] for word in self.short.split()[:2]).upper()
 
 
+CHECKED = "Oct 18, 2026"
+
+# The Rio's ticket page covers the membership it shares with the Park.
+RIO_PARK_MEMBERSHIP = Price(
+    "Rio and Park membership",
+    "$30 a year",
+    "$3 off regular films at both theatres, free popcorn and soda refills",
+)
+
+RIO_PRICES = Prices(
+    tickets=(
+        Price("Adult", "$16"),
+        Price("Member, senior or student", "$13", "Bring your ID or membership pass"),
+    ),
+    deals=(RIO_PARK_MEMBERSHIP,),
+    checked=CHECKED,
+    sources=(("Rio ticket info", "https://riotheatre.ca/ticket-info/"),),
+)
+
+PARK_PRICES = Prices(
+    deals=(RIO_PARK_MEMBERSHIP,),
+    note="The Park shows ticket prices when you buy on its site.",
+    checked=CHECKED,
+    sources=(
+        ("Park tickets", "https://tickets.theparktheatre.ca/"),
+        ("Membership details", "https://riotheatre.ca/ticket-info/"),
+    ),
+)
+
+CINEMATHEQUE_PRICES = Prices(
+    tickets=(
+        Price("General", "$15", "18 and over"),
+        Price("Senior", "$13", "65 and over"),
+        Price("Student", "$11"),
+        Price("First Nations, Inuit and Métis", "Free"),
+    ),
+    deals=(
+        Price("5-film pack", "$55", "$11 a film"),
+        Price("10-film pack", "$100", "$10 a film"),
+        Price("50-film pack", "$450", "$9 a film"),
+    ),
+    note="Special events can cost more. Every ticket includes the society membership"
+    " that lets the Cinematheque show unrated films.",
+    checked=CHECKED,
+    sources=(
+        ("Cinematheque visit info", "https://thecinematheque.ca/about/visit"),
+        ("Ticket packs", "https://thecinematheque.ca/shop/ticket-pack"),
+    ),
+)
+
+VIFF_PRICES = Prices(
+    tickets=(
+        Price("Adult", "$17 / $15"),
+        Price("Senior or student", "$15 / $13"),
+        Price("VIFF+ member", "$14 / $12"),
+        Price("VIFF+ Premium or under 25", "$12 / $10"),
+        Price("Accessible", "$12 / $10"),
+    ),
+    deals=(
+        Price(
+            "VIFF+ membership",
+            "From $49 a year",
+            "Cheaper tickets all year, free guest tickets, popcorn vouchers, festival discounts",
+        ),
+    ),
+    columns="VIFF Cinema / Lochmaddy Studio Theatre",
+    note="Prices are before GST.",
+    checked=CHECKED,
+    sources=(("VIFF ticket info", "https://viff.org/ticket-info/"),),
+)
+
 VENUES = [
     Venue(
         name="The Rio",
         short="Rio",
         slug="rio",
+        prices=RIO_PRICES,
         neighbourhood="East Broadway at Commercial",
         address="1660 East Broadway, Vancouver, BC V5N 1W1",
         website="https://riotheatre.ca/",
@@ -119,6 +213,7 @@ VENUES = [
         name="The Park",
         short="Park",
         slug="park",
+        prices=PARK_PRICES,
         neighbourhood="Cambie Village",
         address="3440 Cambie Street, Vancouver, BC V5Z 2W8",
         website="https://tickets.theparktheatre.ca/",
@@ -153,6 +248,7 @@ VENUES = [
         name="The Cinematheque",
         short="Cinematheque",
         slug="cinematheque",
+        prices=CINEMATHEQUE_PRICES,
         neighbourhood="Downtown, Howe at Helmcken",
         address="1131 Howe Street, Vancouver, BC V6Z 2L7",
         website="https://thecinematheque.ca/",
@@ -190,6 +286,7 @@ VENUES = [
         name="VIFF Centre",
         short="VIFF",
         slug="viff-centre",
+        prices=VIFF_PRICES,
         neighbourhood="Downtown, Seymour at Davie",
         address="1181 Seymour Street, Vancouver, BC V6B 3M7",
         website="https://viff.org/whats-on/",

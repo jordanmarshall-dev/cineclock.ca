@@ -523,7 +523,8 @@ def test_every_theatre_page_shows_the_same_spec_fields(conn):
     built = pages(conn, NOW)
     for v in VENUES:
         page = built[f"theatres/{v.slug}/index.html"]
-        assert re.findall(r"<dt>(\w+)</dt>", plain(page)) == shown_specs() * len(v.rooms), v.name
+        specs = "".join(re.findall(r'<dl class="specs">(.*?)</dl>', plain(page), re.S))
+        assert re.findall(r"<dt>(\w+)</dt>", specs) == shown_specs() * len(v.rooms), v.name
 
 
 def test_viff_rooms_are_swipe_cards(conn):
@@ -599,7 +600,7 @@ def test_theatre_pills_include_what_is_on_its_schedule(conn):
     )
     page = plain(pages(conn, NOW)["theatres/rio/index.html"])
     head = page.split('class="theatre-offers"')[1].split("</p>")[0]
-    assert ">Q&amp;A<" in head and ">7.1 sound<" in head
+    assert ">Q&amp;A<" in head and ">7.1<" in head
     assert "One screening" not in head
 
 
@@ -884,3 +885,14 @@ def test_no_card_has_an_empty_score_spot(conn):
     page = plain(pages(conn, NOW)["films/index.html"])
     assert 'class="card-badge" title="Shorts">Shorts<' in page
     assert '<span class="card-tag card-unrated">Unrated</span>' in page
+
+
+def test_theatre_pages_fold_away_prices_and_specs(conn):
+    built = pages(conn, NOW)
+    viff = plain(built["theatres/viff-centre/index.html"])
+    assert '<span class="fold-title">Tickets</span>' in viff
+    assert "<dt>Adult</dt><dd>$17 / $15</dd>" in viff
+    assert '<span class="fold-title">Tech specs</span>' in viff and "2 rooms" in viff
+    assert 'href="https://viff.org/ticket-info/"' in viff and ">https://" not in viff
+    # No published prices for the Dunbar, so no Tickets fold there.
+    assert "Tickets</span>" not in built["theatres/dunbar/index.html"]

@@ -11,7 +11,7 @@ from cineclock.tags import filter_slugs, kind, said_by_tags, screening_tags, slu
         ("Vertigo", None, "35 mm", ["35mm"]),
         ("Pulse", None, "DCP", []),
         ("Avatar", "Presented in 3D", None, ["3D"]),
-        ("Dune", "Dolby Atmos", None, ["Dolby Atmos"]),
+        ("Dune", "Dolby Atmos", None, ["Atmos"]),
         ("Ran", "Projected in 4K", None, ["4K"]),
         # A 4K restoration is about the restoration, not this screening
         ("Ran", "4K Restoration", None, []),
@@ -29,8 +29,8 @@ from cineclock.tags import filter_slugs, kind, said_by_tags, screening_tags, slu
             None,
             ["Intro"],
         ),
-        ("Claudio Simonetti's Goblin Performs TENEBRE", None, None, ["Live music"]),
-        ("Nosferatu", "With a live score by Tyondai Braxton", None, ["Live music"]),
+        ("Claudio Simonetti's Goblin Performs TENEBRE", None, None, ["Music"]),
+        ("Nosferatu", "With a live score by Tyondai Braxton", None, ["Music"]),
         ("Queer Film Festival Opening Night", None, None, ["Festival"]),
         ("SFMF Shorts Programme 2", None, None, ["Shorts"]),
         ("The Fly", "Special Presentation", None, ["Event"]),
@@ -55,7 +55,7 @@ def test_sort_tags_puts_rare_showings_then_formats_first_and_dedupes():
 
 
 def test_each_tag_belongs_to_a_family():
-    tags = ["One screening", "35mm", "Dolby Atmos", "Intro", "Preview"]
+    tags = ["One screening", "35mm", "Atmos", "Intro", "Preview"]
     assert [kind(t) for t in tags] == ["rare", "format", "format", "event", "event"]
 
 

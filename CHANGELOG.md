@@ -2,6 +2,9 @@
 
 ## 2.0.1 (October 18, 2026)
 
+- Theatre pages have a Tickets section with prices and memberships, copied from each theatre's own site and dated, and the room specs move into a Tech specs section. Both stay folded until tapped.
+- Theatre headings on Showtimes and film pages use each theatre's full logo.
+- One-word tags: Music (was Live music), Atmos (was Dolby Atmos), and the theatre pills 7.1 and Curved.
 - Your Letterboxd is simpler: enter your username and the page shows your watchlist films playing now and the films you've seen that are playing again, with a disconnect button. A username that isn't synced yet gets a link to ask for it. The export upload and the watchlist calendar feed are gone.
 - A "Seen it" filter joins "On my watchlist".
 - Every card always shows a score or Unrated, so no line is ever blank.
@@ -40,7 +43,7 @@ A redesign around one idea: every film looks the same everywhere, so you always 
 
 ### Tags
 
-- Shorter names: Q&A (filmmaker Q&As included), Intro, Live music, Festival, Shorts, Event, Guests and Preview (advance, insider and sneak screenings).
+- Shorter names: Q&A (filmmaker Q&As included), Intro, Music, Festival, Shorts, Event, Guests and Preview (advance, insider and sneak screenings).
 - Festival programmes are tagged from the series the Cinematheque files them under, like "Small File Media Festival 2026".
 - A listing with no year, no score and no tag is tagged Event.
 

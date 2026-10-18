@@ -18,7 +18,7 @@ FORMATS = {
     # "4K restoration" describes the restoration, not the projection, so only
     # an explicit 4K presentation counts.
     "4K": r"\b(presented|projected|screening|screened|shown) in 4k\b",
-    "Dolby Atmos": r"\bdolby atmos\b",
+    "Atmos": r"\bdolby atmos\b",
     "3D": r"\bin 3-?d\b|\b3-?d (screening|presentation)\b",
 }
 
@@ -27,7 +27,7 @@ FORMATS = {
 EVENTS = {
     "Q&A": r"\bq\s?&\s?a\b|\bq and a\b|talkback|in conversation",
     "Intro": r"introduc|\bintro\b",
-    "Live music": r"live (score|music|accompaniment|soundtrack)|accompanied by|\bperforms\b",
+    "Music": r"live (score|music|accompaniment|soundtrack)|accompanied by|\bperforms\b",
     "Festival": r"\bfestival\b|\bfest\b",
     "Shorts": r"\bshorts\b|short films",
     "Event": r"special (presentation|screening|event)",

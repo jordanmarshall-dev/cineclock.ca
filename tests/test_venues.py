@@ -76,6 +76,6 @@ def test_monograms():
 
 
 def test_theatre_offers_come_only_from_recorded_specs():
-    assert BY_NAME["The Park"].offers == ["70mm", "35mm", "7.1 sound", "Curved screen"]
-    assert BY_NAME["VIFF Centre"].offers == ["35mm", "4K", "7.1 sound", "2 screens"]
+    assert BY_NAME["The Park"].offers == ["70mm", "35mm", "7.1", "Curved"]
+    assert BY_NAME["VIFF Centre"].offers == ["35mm", "4K", "7.1", "2 screens"]
     assert "70mm" not in BY_NAME["The Rio"].offers
