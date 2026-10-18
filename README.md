@@ -20,7 +20,7 @@ Early days. Version 1 covers The Cinematheque, VIFF Centre, the Park and the Rio
 - [ ] Add to calendar (.ics)
 - [x] VIFF Centre scraper
 - [x] Park scraper
-- [ ] Cinematheque scraper
+- [x] Cinematheque scraper
 
 ## Running it
 

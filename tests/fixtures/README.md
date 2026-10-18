@@ -9,3 +9,5 @@ Saved venue responses, so tests never touch the network.
 - `viff/instances_2026-10.json`: a few items from VIFF's calendar API, Oct 18 2026, including a live show.
 - `viff/film_*.html`: full VIFF film pages, Oct 18 2026.
 - `park/page1.html`, `park/page2.html`: both pages of the Park's listings, Oct 18 2026. Page 1 includes a dateless bundle and a listing with no ticket button.
+- `cinematheque/calendar.html`: the Cinematheque's calendar, Oct 18 2026, with rentals, an AGM notice and closed days mixed in.
+- `cinematheque/film_*.html`: a feature and a shorts program with no year, Oct 18 2026.

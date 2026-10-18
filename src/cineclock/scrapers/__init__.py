@@ -15,7 +15,12 @@ class FilmDetails:
 
 
 def make_client() -> httpx.Client:
-    return httpx.Client(headers={"User-Agent": USER_AGENT}, timeout=30, follow_redirects=True)
+    headers = {
+        "User-Agent": USER_AGENT,
+        # Some venue sites refuse requests that don't say they accept HTML.
+        "Accept": "text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8",
+    }
+    return httpx.Client(headers=headers, timeout=30, follow_redirects=True)
 
 
 def add_details(
