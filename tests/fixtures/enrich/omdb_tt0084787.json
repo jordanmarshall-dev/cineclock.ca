@@ -1,12 +1,40 @@
 {
-  "Title": "The Thing",
-  "Year": "1982",
-  "imdbID": "tt0084787",
-  "imdbRating": "8.2",
-  "Ratings": [
-    {"Source": "Internet Movie Database", "Value": "8.2/10"},
-    {"Source": "Rotten Tomatoes", "Value": "84%"},
-    {"Source": "Metacritic", "Value": "57/100"}
-  ],
-  "Response": "True"
+ "Title": "The Thing",
+ "Year": "1982",
+ "Rated": "R",
+ "Released": "25 Jun 1982",
+ "Runtime": "109 min",
+ "Genre": "Horror, Mystery, Sci-Fi",
+ "Director": "John Carpenter",
+ "Writer": "Bill Lancaster, John W. Campbell Jr.",
+ "Actors": "Kurt Russell, Wilford Brimley, Keith David",
+ "Plot": "A research team in Antarctica is hunted by a shape-shifting alien that assumes the appearance of its victims.",
+ "Language": "English, Norwegian",
+ "Country": "United States",
+ "Awards": "1 win & 5 nominations total",
+ "Poster": "https://m.media-amazon.com/images/M/MV5BYTA3NDU5MWEtNTk4Yy00ZDNkLThmZTQtMjU3ZGVhYzAyMzU4XkEyXkFqcGc@._V1_QL75_UX380_CR0,4,380,562_.jpg",
+ "Ratings": [
+  {
+   "Source": "Internet Movie Database",
+   "Value": "8.2/10"
+  },
+  {
+   "Source": "Rotten Tomatoes",
+   "Value": "85%"
+  },
+  {
+   "Source": "Metacritic",
+   "Value": "57/100"
+  }
+ ],
+ "Metascore": "57",
+ "imdbRating": "8.2",
+ "imdbVotes": "537,503",
+ "imdbID": "tt0084787",
+ "Type": "movie",
+ "DVD": "N/A",
+ "BoxOffice": "$20,063,820",
+ "Production": "N/A",
+ "Website": "N/A",
+ "Response": "True"
 }

@@ -36,6 +36,9 @@ jobs:
           key: db-${{ github.run_id }}
           restore-keys: db-
       - run: python -m cineclock.scrape
+        env:
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+          OMDB_API_KEY: ${{ secrets.OMDB_API_KEY }}
       - uses: actions/cache/save@v4
         with:
           path: cineclock.db

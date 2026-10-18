@@ -1,0 +1,247 @@
+from datetime import UTC, date, datetime, timedelta
+
+import pytest
+
+from cineclock import db
+from cineclock.films import Film, match_key
+from cineclock.models import VANCOUVER, Screening
+from cineclock.site import choose_poster, film_pages, group_days, pages, stats
+from cineclock.timefmt import clock, day_label, short_day
+
+NOW = datetime(2026, 10, 18, 8, 0, tzinfo=UTC)  # 1am Oct 18 in Vancouver
+
+
+def at(day, hour, minute=0):
+    return datetime(2026, 10, day, hour, minute, tzinfo=VANCOUVER)
+
+
+def show(title, starts, venue="The Rio", year=None, note=None, poster=None, info=None):
+    return Screening(
+        venue, title, starts, f"https://tix/{venue}/{title}/{starts:%d%H%M}",
+        info_url=info, year=year, note=note, poster_url=poster,
+    )  # fmt: skip
+
+
+def film(title, year, tmdb_id=None, **extra):
+    return Film(match_key(title, year), NOW, tmdb_id=tmdb_id, title=title, year=year, **extra)
+
+
+@pytest.fixture
+def conn():
+    connection = db.connect(":memory:")
+    yield connection
+    connection.close()
+
+
+def save(conn, *screenings):
+    for venue in {s.venue for s in screenings}:
+        db.sync_venue(conn, venue, [s for s in screenings if s.venue == venue], NOW)
+
+
+# Time formatting
+
+
+@pytest.mark.parametrize(
+    "hour, minute, expected",
+    [(0, 0, "12:00 am"), (9, 5, "9:05 am"), (12, 0, "12:00 pm"), (23, 45, "11:45 pm")],
+)
+def test_clock(hour, minute, expected):
+    assert clock(at(18, hour, minute)) == expected
+
+
+def test_day_labels():
+    today = date(2026, 10, 18)
+    assert day_label(today, today) == "Today, Oct 18"
+    assert day_label(date(2026, 10, 19), today) == "Tomorrow, Oct 19"
+    assert day_label(date(2026, 11, 6), today) == "Friday, Nov 6"
+    assert short_day(date(2026, 10, 20), today) == "Tue 20"
+
+
+# Posters
+
+
+def test_rio_and_park_keep_their_own_posters():
+    tmdb = film("Tony", 2026, 1, poster_url="https://tmdb/tony.jpg")
+    assert choose_poster(
+        show("Tony", at(18, 13), "The Park", poster="https://park/tony.jpg"), tmdb
+    ) == ("https://park/tony.jpg")
+
+
+def test_other_venues_use_tmdb_posters_over_stills():
+    tmdb = film("Pulse", 2001, 2, poster_url="https://tmdb/pulse.jpg")
+    still = show("Pulse", at(18, 20), "The Cinematheque", poster="https://cin/still.jpg")
+    assert choose_poster(still, tmdb) == "https://tmdb/pulse.jpg"
+    assert choose_poster(still, None) == "https://cin/still.jpg"
+
+
+def test_rio_falls_back_to_tmdb_without_its_own_poster():
+    tmdb = film("Musk", 2026, 3, poster_url="https://tmdb/musk.jpg")
+    assert choose_poster(show("Musk", at(18, 12)), tmdb) == "https://tmdb/musk.jpg"
+
+
+# Film pages
+
+
+def test_matched_film_shares_one_page_across_venues():
+    devils = film("The Devils", 1971, 31767)
+    films = {
+        match_key("Ken Russell's 'The Devils'", 1971): devils,
+        match_key("The Devils", 1971): devils,
+    }
+    a = show("Ken Russell's 'The Devils'", at(18, 16), "The Park", year=1971)
+    b = show("The Devils", at(20, 19), "VIFF Centre", year=1971)
+    page_of = film_pages([a, b], films)
+    assert page_of[id(a)] is page_of[id(b)]
+    assert page_of[id(a)].slug == "the-devils-1971"
+    assert page_of[id(a)].title == "The Devils"
+
+
+def test_unmatched_titles_get_their_own_pages():
+    a, b = show("SFMF Series 2", at(18, 13)), show("SFMF Series 3", at(18, 16))
+    page_of = film_pages([a, b], {})
+    assert page_of[id(a)].slug == "sfmf-series-2"
+    assert page_of[id(b)].slug == "sfmf-series-3"
+
+
+def test_same_title_different_films_get_different_slugs():
+    films = {
+        match_key("Pulse", 2001): film("Pulse", 2001, 1),
+        match_key("Pulse", 2006): film("Pulse", 2006, 2),
+        match_key("Pulse", None): film("Pulse", None, 3),
+    }
+    shows = [show("Pulse", at(18, 20), year=2001), show("Pulse", at(19, 20), year=2006)]
+    shows.append(show("Pulse", at(20, 20)))
+    slugs = [film_pages(shows, films)[id(s)].slug for s in shows]
+    assert slugs == ["pulse-2001", "pulse-2006", "pulse"]
+
+
+# Grouping by day
+
+
+def test_late_show_stays_on_its_local_day():
+    s = show("Rocky Horror", at(23, 23, 45))
+    [day] = group_days([s], film_pages([s], {}), {}, NOW)
+    assert day.date == date(2026, 10, 23)
+
+
+def test_venues_follow_the_set_order():
+    shows = [
+        show("Mirror", at(18, 19), "VIFF Lochmaddy"),
+        show("Mirror", at(18, 18), "VIFF Centre"),
+        show("Pulse", at(18, 20), "The Cinematheque"),
+        show("Tony", at(18, 13), "The Park"),
+        show("Musk", at(18, 12), "The Rio"),
+    ]
+    [day] = group_days(shows, film_pages(shows, {}), {}, NOW)
+    assert [g.venue.name for g in day.groups] == [
+        "The Rio", "The Park", "The Cinematheque", "VIFF Centre", "VIFF Lochmaddy",
+    ]  # fmt: skip
+
+
+def test_same_film_twice_a_day_shares_a_row_unless_labelled_differently():
+    shows = [
+        show("Dune: Part Three", at(18, 15), "The Park", note="Presented in 70mm"),
+        show("Dune: Part Three", at(18, 18), "The Park", note="Presented in 70mm"),
+        show("Dune: Part Three", at(18, 21), "The Park", note="Advance Screening"),
+    ]
+    [day] = group_days(shows, film_pages(shows, {}), {}, NOW)
+    rows = day.groups[0].rows
+    assert [(r.note, len(r.showtimes)) for r in rows] == [
+        ("Presented in 70mm", 2),
+        ("Advance Screening", 1),
+    ]
+
+
+# Whole site
+
+
+def test_pages_cover_home_films_and_every_venue(conn):
+    save(conn, show("Musk", at(18, 12)), show("Pulse", at(18, 20), "The Cinematheque", year=2001))
+    built = pages(conn, NOW)
+    assert "index.html" in built
+    assert "films/musk/index.html" in built
+    assert "films/pulse-2001/index.html" in built
+    for slug in ("rio", "park", "cinematheque", "viff-centre", "viff-lochmaddy"):
+        assert f"venues/{slug}/index.html" in built
+
+
+def test_links_are_relative_to_each_page(conn):
+    save(conn, show("Musk", at(18, 12)))
+    built = pages(conn, NOW)
+    assert 'href="films/musk/"' in built["index.html"]
+    assert 'href="static/site.css"' in built["index.html"]
+    assert 'href="../../static/site.css"' in built["films/musk/index.html"]
+    assert 'href="../../venues/rio/"' in built["films/musk/index.html"]
+
+
+def test_film_page_shows_details_ratings_and_links(conn):
+    s = show("The Thing", at(31, 17, 40), "VIFF Lochmaddy", year=1982, info="https://viff/thing")
+    save(conn, s)
+    db.save_film(
+        conn,
+        film(
+            "The Thing", 1982, 1091,
+            imdb_id="tt0084787", director="John Carpenter", runtime=109,
+            overview="A research team in Antarctica.", poster_url="https://tmdb/p.jpg",
+            backdrop_url="https://tmdb/b.jpg", letterboxd_url="https://letterboxd.com/film/the-thing/",
+            letterboxd_rating=4.35, imdb_rating=8.2, rt_score=85,
+        ),
+    )  # fmt: skip
+    page = pages(conn, NOW)["films/the-thing-1982/index.html"]
+    for expected in [
+        "directed by <b>John Carpenter</b>",
+        "109 min",
+        "A research team in Antarctica.",
+        ">4.3<",
+        ">8.2<",
+        ">85%<",
+        'href="https://letterboxd.com/film/the-thing/"',
+        'href="https://www.imdb.com/title/tt0084787/"',
+        "rottentomatoes.com/search?search=The+Thing",
+        'href="https://tix/VIFF Lochmaddy/The Thing/311740"',
+        'href="https://viff/thing"',
+        'src="https://tmdb/b.jpg"',
+        "has-backdrop",
+    ]:
+        assert expected in page, expected
+
+
+def test_unmatched_film_page_still_has_showtimes(conn):
+    save(conn, show("SFMF Series 2", at(18, 13), "The Cinematheque"))
+    page = pages(conn, NOW)["films/sfmf-series-2/index.html"]
+    assert "1:00 pm" in page
+    assert "Letterboxd</a>" not in page
+
+
+def test_venue_page_lists_only_its_shows(conn):
+    save(conn, show("Musk", at(18, 12)), show("Pulse", at(18, 20), "The Cinematheque"))
+    page = pages(conn, NOW)["venues/rio/index.html"]
+    assert "Musk" in page and "Pulse" not in page
+    assert "1660 East Broadway" in page
+    assert 'aria-current="page"' in page
+
+
+def test_empty_venue_page_points_to_its_website(conn):
+    page = pages(conn, NOW)["venues/viff-lochmaddy/index.html"]
+    assert "Nothing listed here right now" in page
+
+
+def test_titles_are_escaped(conn):
+    save(conn, show("<script>alert(1)</script>", at(18, 12)))
+    built = pages(conn, NOW)
+    assert all("<script>alert(1)</script>" not in html for html in built.values())
+
+
+def test_stats(conn):
+    save(conn, show("The Thing", at(31, 17), "VIFF Lochmaddy", year=1982), show("SFMF", at(18, 13)))
+    db.save_film(conn, film("The Thing", 1982, 1091, letterboxd_rating=4.35))
+    summary = stats(conn, NOW)
+    assert summary["screenings"] == 2
+    assert summary["per_venue"] == {"The Rio": 1, "VIFF Lochmaddy": 1}
+    assert (summary["matched"], summary["with_letterboxd_rating"]) == (1, 1)
+    assert summary["unmatched"] == ["sfmf|"]
+
+
+def test_past_screenings_are_left_out(conn):
+    save(conn, show("Gone", NOW - timedelta(hours=1)), show("Musk", at(18, 12)))
+    assert "Gone" not in pages(conn, NOW)["index.html"]

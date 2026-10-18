@@ -61,7 +61,7 @@ def test_full_lookup(conn, services):
     film = db.get_film(conn, match_key("The Thing", 1982))
     assert (film.tmdb_id, film.director, film.runtime) == (1091, "John Carpenter", 109)
     assert film.letterboxd_url == "https://letterboxd.com/film/the-thing/"
-    assert (film.letterboxd_rating, film.imdb_rating, film.rt_score) == (4.24, 8.2, 84)
+    assert (film.letterboxd_rating, film.imdb_rating, film.rt_score) == (4.35, 8.2, 85)
     assert film.poster_url.startswith("https://image.tmdb.org/")
 
 
@@ -80,10 +80,40 @@ def test_fresh_results_are_not_looked_up_again(conn, services):
     assert len(services["calls"]) == before
 
 
-def test_week_old_results_are_refreshed(conn, services):
+def test_found_films_are_not_looked_up_again_for_a_month(conn, services):
+    later = NOW + timedelta(days=20)
     db.sync_venue(conn, "VIFF Lochmaddy", [show("The Thing", 1982)], NOW)
     run(conn, services)
+    db.sync_venue(
+        conn,
+        "VIFF Lochmaddy",
+        [
+            Screening(
+                "VIFF Lochmaddy", "The Thing", later + timedelta(days=1), "https://x", year=1982
+            )
+        ],
+        later,
+    )
+    assert run(conn, services, now=later).looked_up == 0
+
+
+def test_unfound_titles_are_retried_after_a_week(conn, services):
     later = NOW + timedelta(days=8)
+    db.sync_venue(conn, "VIFF Lochmaddy", [show("SFMF Series 2")], NOW)
+    run(conn, services)
+    db.sync_venue(
+        conn,
+        "VIFF Lochmaddy",
+        [Screening("VIFF Lochmaddy", "SFMF Series 2", later + timedelta(days=1), "https://x")],
+        later,
+    )
+    assert run(conn, services, now=later).looked_up == 1
+
+
+def test_month_old_results_are_refreshed(conn, services):
+    db.sync_venue(conn, "VIFF Lochmaddy", [show("The Thing", 1982)], NOW)
+    run(conn, services)
+    later = NOW + timedelta(days=31)
     assert run(conn, services, now=later).looked_up == 0  # the show itself is past by then
     db.sync_venue(
         conn,

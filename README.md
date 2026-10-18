@@ -7,20 +7,19 @@ Vancouver showtimes for film lovers. Indie and rep cinemas in one place.
 
 **Live site: https://yogzoth.github.io/cineclock/**
 
-<img src="docs/screenshot.png" alt="cineclock on a phone: days shown as marquee letter boards, each film with its poster and showtimes" width="320">
+<img src="docs/screenshot.png" alt="A cineclock film page on a phone: backdrop, poster, ratings from Letterboxd, IMDb and Rotten Tomatoes, synopsis and showtimes" width="320">
 
 ## Status
 
-Early days. Version 1 covers The Cinematheque, VIFF Centre, the Park and the Rio:
+Version 1 covers the Rio, the Park, the Cinematheque and VIFF (both screens):
 
-- [x] Project skeleton, tests and CI
-- [x] Rio scraper (showtimes, year and poster from each film page)
-- [x] Save to SQLite (reruns update instead of duplicating)
-- [x] What's playing page, by day and venue, with posters
+- [x] Scrapers for all four venues, tested against saved real responses
+- [x] SQLite storage; reruns update instead of duplicating
+- [x] Home page by day and venue, film pages and theatre pages
+- [x] Film matching on TMDB for posters, synopsis, director and runtime
+- [x] Letterboxd, IMDb and Rotten Tomatoes ratings and links
 - [ ] Add to calendar (.ics)
-- [x] VIFF Centre scraper
-- [x] Park scraper
-- [x] Cinematheque scraper
+- [ ] Format tags (35mm, 70mm, DCP)
 
 ## Running it
 
@@ -35,9 +34,9 @@ ruff check .
 fastapi dev src/cineclock/app.py
 ```
 
-Then open http://127.0.0.1:8000.
+Then open http://127.0.0.1:8000. The preview serves exactly the pages the static build publishes.
 
-To scrape every venue and save to `cineclock.db`:
+To scrape every venue and save to `cineclock.db` (set `TMDB_API_KEY` and `OMDB_API_KEY` to also look up film details and ratings):
 
 ```sh
 python -m cineclock.scrape
@@ -52,6 +51,7 @@ The live site is plain files on GitHub Pages, so it costs nothing and never slee
 - Python, SQLite, FastAPI with Jinja2 templates
 - httpx and BeautifulSoup for scraping
 - Each venue scraper has a pure parse function tested against saved sample responses, so tests never hit the network
+- Film details come from TMDB, matched on title and year. Each film is looked up once when it first appears and refreshed monthly, so the APIs get a handful of calls a day
 - Times are stored in UTC and shown in Vancouver time using the pinned `tzdata` package, so clock rule changes (like B.C.'s 2026 move to permanent daylight time) can't shift a showtime
 
 ## Credits
@@ -60,7 +60,7 @@ Inspired by [MovieClock](https://movieclock.app) by Jordan Hudson ([source](http
 
 ## Fonts
 
-Big Shoulders Display and Instrument Sans, both under the SIL Open Font License (see `src/cineclock/static/fonts`).
+Instrument Sans and Source Serif 4, both under the SIL Open Font License (see `src/cineclock/static/fonts`).
 
 ## License
 

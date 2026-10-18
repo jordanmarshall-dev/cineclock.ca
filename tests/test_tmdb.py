@@ -75,9 +75,9 @@ def test_parse_details(fixture_json):
         "runtime": 109,
         "overview": details["overview"],
         "poster_url": "https://image.tmdb.org/t/p/w500/tzGY49kseSE9QAKk47uuDGwnSCu.jpg",
-        "backdrop_url": "https://image.tmdb.org/t/p/w1280/fTaHcHkfCZJ1qNBr4XEnLV1MQHA.jpg",
+        "backdrop_url": "https://image.tmdb.org/t/p/w1280/r9leYNa8nTRCceZrZhP1DXkgKVb.jpg",
     }
-    assert details["overview"].startswith("Members of an American")
+    assert details["overview"].startswith("A research team in Antarctica")
 
 
 def test_parse_details_with_little_data():

@@ -11,76 +11,41 @@ NOW = datetime(2026, 10, 18, 8, 0, tzinfo=UTC)
 
 
 @pytest.fixture
-def conn():
+def client():
     connection = db.connect(":memory:")
+    db.sync_venue(
+        connection,
+        "The Rio",
+        [Screening("The Rio", "Scream", NOW + timedelta(days=1), "https://tix/scream")],
+        NOW,
+    )
     app.dependency_overrides[get_conn] = lambda: connection
     app.dependency_overrides[get_now] = lambda: NOW
-    yield connection
+    yield TestClient(app)
     app.dependency_overrides.clear()
     connection.close()
 
 
-@pytest.fixture
-def client(conn):
-    return TestClient(app)
-
-
-def add(conn, *screenings):
-    db.sync_venue(conn, "The Rio", list(screenings), NOW)
-
-
 def test_health(client):
-    response = client.get("/health")
-    assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
+    assert client.get("/health").json() == {"status": "ok"}
 
 
-def test_empty_page_says_how_to_fill_it(client):
-    response = client.get("/")
-    assert response.status_code == 200
-    assert "python -m cineclock.scrape" in response.text
+def test_serves_the_same_pages_as_the_build(client):
+    assert "Scream" in client.get("/").text
+    assert "Scream" in client.get("/films/scream/").text
+    assert "1660 East Broadway" in client.get("/venues/rio/").text
 
 
-def test_page_shows_screenings(client, conn):
-    add(
-        conn,
-        Screening(
-            "The Rio",
-            "Scream",
-            datetime(2026, 10, 27, 4, 30, tzinfo=UTC),
-            "https://tix/scream",
-            info_url="https://riotheatre.ca/movie/scream/",
-            year=1996,
-            note="30th Anniversary Screening",
-            poster_url="https://riotheatre.ca/poster.jpg",
-        ),
-    )
-    page = client.get("/").text
-    assert 'aria-label="Monday Oct 26"' in page
-    assert "Scream" in page
-    assert "1996" in page
-    assert "30th Anniversary Screening" in page
-    assert 'href="https://tix/scream"' in page
-    assert "9:30 pm" in page
-    assert 'src="https://riotheatre.ca/poster.jpg"' in page
+def test_missing_slash_redirects_like_github_pages(client):
+    response = client.get("/films/scream", follow_redirects=False)
+    assert response.status_code == 307
+    assert response.headers["location"] == "/films/scream/"
 
 
-def test_past_screenings_are_hidden(client, conn):
-    add(conn, Screening("The Rio", "Gone", NOW - timedelta(hours=1), "https://tix/gone"))
-    assert "Gone" not in client.get("/").text
+def test_unknown_page_is_404(client):
+    assert client.get("/films/nope/").status_code == 404
 
 
-def test_titles_are_escaped(client, conn):
-    add(
-        conn,
-        Screening("The Rio", "<script>alert(1)</script>", NOW + timedelta(hours=2), "https://x"),
-    )
-    page = client.get("/").text
-    assert "<script>alert(1)</script>" not in page
-    assert "&lt;script&gt;" in page
-
-
-def test_fonts_are_served_locally(client):
-    response = client.get("/static/fonts/big-shoulders-display.woff2")
-    assert response.status_code == 200
-    assert "fonts.googleapis.com" not in client.get("/").text
+def test_static_files(client):
+    assert client.get("/static/site.css").status_code == 200
+    assert client.get("/static/fonts/instrument-sans.woff2").status_code == 200

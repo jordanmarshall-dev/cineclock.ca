@@ -1,19 +1,185 @@
 {
-  "id": 1091,
-  "imdb_id": "tt0084787",
-  "title": "The Thing",
-  "original_title": "The Thing",
-  "release_date": "1982-06-25",
-  "runtime": 109,
-  "overview": "Members of an American scientific research outpost in Antarctica find themselves battling a parasitic alien organism capable of perfectly imitating its victims.",
-  "poster_path": "/tzGY49kseSE9QAKk47uuDGwnSCu.jpg",
-  "backdrop_path": "/fTaHcHkfCZJ1qNBr4XEnLV1MQHA.jpg",
-  "external_ids": {"imdb_id": "tt0084787"},
-  "credits": {
-    "cast": [{"name": "Kurt Russell", "character": "MacReady"}],
-    "crew": [
-      {"name": "John Carpenter", "job": "Director"},
-      {"name": "Bill Lancaster", "job": "Screenplay"}
-    ]
+ "adult": false,
+ "backdrop_path": "/r9leYNa8nTRCceZrZhP1DXkgKVb.jpg",
+ "belongs_to_collection": {
+  "id": 479888,
+  "name": "The Thing Collection",
+  "poster_path": "/vnfxRM89Qav5d0fMluIwx1hKadc.jpg",
+  "backdrop_path": "/lUPruOqjDhZrCKz9Ze2tCufPxHR.jpg"
+ },
+ "budget": 15000000,
+ "genres": [
+  {
+   "id": 27,
+   "name": "Horror"
+  },
+  {
+   "id": 9648,
+   "name": "Mystery"
+  },
+  {
+   "id": 878,
+   "name": "Science Fiction"
   }
+ ],
+ "homepage": "http://www.theofficialjohncarpenter.com/the-thing/",
+ "id": 1091,
+ "imdb_id": "tt0084787",
+ "origin_country": [
+  "US"
+ ],
+ "original_language": "en",
+ "original_title": "The Thing",
+ "overview": "A research team in Antarctica is hunted by a shape-shifting alien that assumes the appearance of its victims.",
+ "popularity": 28.2627,
+ "poster_path": "/tzGY49kseSE9QAKk47uuDGwnSCu.jpg",
+ "production_companies": [
+  {
+   "id": 33,
+   "logo_path": "/8lvHyhjr8oUKOOy2dKXoALWKdp0.png",
+   "name": "Universal Pictures",
+   "origin_country": "US"
+  },
+  {
+   "id": 662,
+   "logo_path": null,
+   "name": "The Turman-Foster Company",
+   "origin_country": "US"
+  }
+ ],
+ "production_countries": [
+  {
+   "iso_3166_1": "US",
+   "name": "United States of America"
+  }
+ ],
+ "release_date": "1982-06-25",
+ "revenue": 19629760,
+ "runtime": 109,
+ "softcore": false,
+ "spoken_languages": [
+  {
+   "english_name": "English",
+   "iso_639_1": "en",
+   "name": "English"
+  },
+  {
+   "english_name": "Norwegian",
+   "iso_639_1": "no",
+   "name": "Norsk"
+  }
+ ],
+ "status": "Released",
+ "tagline": "Anytime. Anywhere. Anyone.",
+ "title": "The Thing",
+ "video": false,
+ "vote_average": 8.075,
+ "vote_count": 8356,
+ "external_ids": {
+  "imdb_id": "tt0084787",
+  "wikidata_id": "Q210756",
+  "facebook_id": "TheThingMovie",
+  "instagram_id": null,
+  "twitter_id": null
+ },
+ "credits": {
+  "cast": [
+   {
+    "adult": false,
+    "gender": 2,
+    "id": 6856,
+    "known_for_department": "Acting",
+    "name": "Kurt Russell",
+    "original_name": "Kurt Russell",
+    "popularity": 6.8005,
+    "profile_path": "/6g1d98oH4miG4k0ZiZWmF3Dt0bO.jpg",
+    "cast_id": 14,
+    "character": "MacReady",
+    "credit_id": "52fe42e7c3a36847f802ba37",
+    "order": 0
+   },
+   {
+    "adult": false,
+    "gender": 2,
+    "id": 11065,
+    "known_for_department": "Acting",
+    "name": "Wilford Brimley",
+    "original_name": "Wilford Brimley",
+    "popularity": 2.1097,
+    "profile_path": "/tB0DdWX6FeNB3tjffJIaC0EOLBB.jpg",
+    "cast_id": 15,
+    "character": "Blair",
+    "credit_id": "52fe42e7c3a36847f802ba3b",
+    "order": 1
+   },
+   {
+    "adult": false,
+    "gender": 2,
+    "id": 15411,
+    "known_for_department": "Acting",
+    "name": "T.K. Carter",
+    "original_name": "T.K. Carter",
+    "popularity": 1.4941,
+    "profile_path": "/rqlDLtg8USZsO07VEiYQpQyjyA2.jpg",
+    "cast_id": 16,
+    "character": "Nauls",
+    "credit_id": "52fe42e7c3a36847f802ba3f",
+    "order": 2
+   }
+  ],
+  "crew": [
+   {
+    "adult": false,
+    "gender": 2,
+    "id": 11770,
+    "known_for_department": "Directing",
+    "name": "John Carpenter",
+    "original_name": "John Carpenter",
+    "popularity": 3.0159,
+    "profile_path": "/3Qp0mg61u1qSZNJh30BFEUZrIMG.jpg",
+    "credit_id": "52fe42e7c3a36847f802b9eb",
+    "department": "Directing",
+    "job": "Director"
+   },
+   {
+    "adult": false,
+    "gender": 2,
+    "id": 11813,
+    "known_for_department": "Production",
+    "name": "David Foster",
+    "original_name": "David Foster",
+    "popularity": 0.5191,
+    "profile_path": "/6T3NcuvGbYzjI5Mk6DBYGvTVPlf.jpg",
+    "credit_id": "52fe42e7c3a36847f802b9fd",
+    "department": "Production",
+    "job": "Producer"
+   },
+   {
+    "adult": false,
+    "gender": 2,
+    "id": 15406,
+    "known_for_department": "Writing",
+    "name": "Bill Lancaster",
+    "original_name": "Bill Lancaster",
+    "popularity": 1.3655,
+    "profile_path": "/4CYmRRI9bZC9fgM30MeNZaA8SSQ.jpg",
+    "credit_id": "52fe42e7c3a36847f802b9f1",
+    "department": "Writing",
+    "job": "Screenplay"
+   },
+   {
+    "adult": false,
+    "gender": 2,
+    "id": 10770,
+    "known_for_department": "Production",
+    "name": "Lawrence Turman",
+    "original_name": "Lawrence Turman",
+    "popularity": 0.7672,
+    "profile_path": "/6cLBXZ4lazCzYSvclrIg3LiRr3J.jpg",
+    "credit_id": "54e637c8c3a3685fea0003f7",
+    "department": "Production",
+    "job": "Producer"
+   }
+  ]
+ }
 }

@@ -15,7 +15,8 @@ from cineclock import db
 from cineclock.enrich import letterboxd, omdb, tmdb
 from cineclock.films import Film, match_key
 
-STALE_AFTER = timedelta(days=7)
+REFRESH_MATCHED = timedelta(days=30)
+RETRY_UNMATCHED = timedelta(days=7)
 
 
 @dataclass(frozen=True)
@@ -77,8 +78,10 @@ def enrich(
     looked_up = matched = failed = 0
     for title, year in sorted(wanted, key=lambda item: (item[0], item[1] or 0)):
         cached = db.get_film(conn, match_key(title, year))
-        if cached and now - cached.fetched_at < STALE_AFTER:
-            continue
+        if cached:
+            wait = REFRESH_MATCHED if cached.matched else RETRY_UNMATCHED
+            if now - cached.fetched_at < wait:
+                continue
         try:
             film = lookup_film(client, title, year, now, tmdb_key, omdb_key, pause)
         except httpx.HTTPError:

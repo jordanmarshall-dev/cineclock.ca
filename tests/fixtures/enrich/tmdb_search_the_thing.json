@@ -1,10 +1,413 @@
 {
-  "page": 1,
-  "results": [
-    {"id": 60935, "title": "The Thing", "original_title": "The Thing", "release_date": "2011-10-12", "popularity": 30.1},
-    {"id": 1091, "title": "The Thing", "original_title": "The Thing", "release_date": "1982-06-25", "popularity": 45.7},
-    {"id": 10830, "title": "The Thing from Another World", "original_title": "The Thing from Another World", "release_date": "1951-04-06", "popularity": 12.4}
-  ],
-  "total_pages": 1,
-  "total_results": 3
+ "page": 1,
+ "results": [
+  {
+   "adult": false,
+   "backdrop_path": "/r9leYNa8nTRCceZrZhP1DXkgKVb.jpg",
+   "genre_ids": [
+    27,
+    9648,
+    878
+   ],
+   "id": 1091,
+   "title": "The Thing",
+   "original_language": "en",
+   "original_title": "The Thing",
+   "overview": "A research team in Antarctica is hunted by a shape-shifting alien that assumes the appearance of its victims.",
+   "popularity": 28.2627,
+   "poster_path": "/tzGY49kseSE9QAKk47uuDGwnSCu.jpg",
+   "release_date": "1982-06-25",
+   "softcore": false,
+   "video": false,
+   "vote_average": 8.075,
+   "vote_count": 8356
+  },
+  {
+   "adult": false,
+   "backdrop_path": "/qgSlGJurPzgSHKYlqBiDmr3vjrc.jpg",
+   "genre_ids": [
+    27,
+    878,
+    9648
+   ],
+   "id": 60935,
+   "title": "The Thing",
+   "original_language": "en",
+   "original_title": "The Thing",
+   "overview": "When paleontologist Kate Lloyd travels to an isolated outpost in Antarctica for the expedition of a lifetime, she joins an international team that unearths a remarkable discovery. Their elation quickly turns to fear as they realize that their experiment has freed a mysterious being from its frozen prison. Paranoia spreads like an epidemic as a creature that can mimic anything it touches will pit human against human as it tries to survive and flourish in this spine-tingling thriller.",
+   "popularity": 9.2575,
+   "poster_path": "/dmn2nVo8h7LMnk694JxCRIwK06p.jpg",
+   "release_date": "2011-10-12",
+   "softcore": false,
+   "video": false,
+   "vote_average": 6.259,
+   "vote_count": 3365
+  },
+  {
+   "adult": false,
+   "backdrop_path": "/6E0GtHsx8335YHJE7dD9oL1gk9i.jpg",
+   "genre_ids": [
+    35,
+    10749
+   ],
+   "id": 8992,
+   "title": "The Sure Thing",
+   "original_language": "en",
+   "original_title": "The Sure Thing",
+   "overview": "Gib, a beer-guzzling slob, and Alison, an uptight Ivy-Leaguer, are an unlikely duo stuck together on a cross-country trip during Christmas break. At first they get on each other's nerves but, as time passes, they find their divergent natures complement each other. Now they need to realize what they've already found before it's too late.",
+   "popularity": 7.9552,
+   "poster_path": "/a9cuohQn5kczi4htWZAZjEZvXkZ.jpg",
+   "release_date": "1985-03-01",
+   "softcore": false,
+   "video": false,
+   "vote_average": 6.5,
+   "vote_count": 342
+  },
+  {
+   "adult": false,
+   "backdrop_path": "/7rQm6TZAB3CLB1UNDuocQ8EMdHk.jpg",
+   "genre_ids": [
+    10749,
+    35
+   ],
+   "id": 11812,
+   "title": "The Sweetest Thing",
+   "original_language": "en",
+   "original_title": "The Sweetest Thing",
+   "overview": "Christina's love life is stuck in neutral. After years of avoiding the hazards of a meaningful relationship, one night while club-hopping with her girlfriends, she meets Peter, her perfect match. Fed up with playing games, she finally gets the courage to let her guard down and follow her heart, only to discover that Peter has suddenly left town. Accompanied by Courtney, she sets out to capture the one that got away.",
+   "popularity": 8.8968,
+   "poster_path": "/qLysz4B5YmiDq52Op0zq4eD75LC.jpg",
+   "release_date": "2002-04-12",
+   "softcore": false,
+   "video": false,
+   "vote_average": 5.611,
+   "vote_count": 1225
+  },
+  {
+   "adult": false,
+   "backdrop_path": "/xnLh9CNRxkpkSNikVhi5qLwcfUG.jpg",
+   "genre_ids": [
+    18
+   ],
+   "id": 925,
+   "title": "Do the Right Thing",
+   "original_language": "en",
+   "original_title": "Do the Right Thing",
+   "overview": "Sal is the Italian owner of a pizzeria in Brooklyn. A neighborhood local, Buggin' Out, becomes upset when he sees that the pizzeria's Wall of Fame exhibits only Italian actors. Buggin' Out believes a pizzeria in a black neighborhood should showcase black actors, but Sal disagrees. The wall becomes a symbol of racism and hate to Buggin' Out and to other people in the neighborhood, and tensions rise.",
+   "popularity": 9.1109,
+   "poster_path": "/63rmSDPahrH7C1gEFYzRuIBAN9W.jpg",
+   "release_date": "1989-06-14",
+   "softcore": false,
+   "video": false,
+   "vote_average": 7.772,
+   "vote_count": 2104
+  },
+  {
+   "adult": false,
+   "backdrop_path": "/yzgTMSFkhMdCG1VtMnChGI6rKxF.jpg",
+   "genre_ids": [
+    18
+   ],
+   "id": 1127628,
+   "title": "The Thing with Feathers",
+   "original_language": "en",
+   "original_title": "The Thing with Feathers",
+   "overview": "Following the death of his wife, a young father's hold on reality crumbles, and a strange presence begins to stalk him from the shadowy recesses of the apartment he shares with his two young sons.",
+   "popularity": 6.984,
+   "poster_path": "/iLamE7RrYElb0AuzAjqNuN2Sq8X.jpg",
+   "release_date": "2025-10-17",
+   "softcore": false,
+   "video": false,
+   "vote_average": 6.5,
+   "vote_count": 47
+  },
+  {
+   "adult": false,
+   "backdrop_path": "/gA319UUESvNt5jCsQ9YqSidJ2CE.jpg",
+   "genre_ids": [
+    35,
+    18,
+    10749
+   ],
+   "id": 1831,
+   "title": "The Next Best Thing",
+   "original_language": "en",
+   "original_title": "The Next Best Thing",
+   "overview": "A comedy-drama about best friends - one a straight woman, Abbie, the other a gay man, Robert - who decide to have a child together. Five years later, Abbie falls in love with a straight man and wants to move away with her and Robert's little boy Sam, and a nasty custody battle ensues.",
+   "popularity": 6.4322,
+   "poster_path": "/iYK1ZUtY4etcn91glUmrGuZRH6M.jpg",
+   "release_date": "2000-03-03",
+   "softcore": false,
+   "video": false,
+   "vote_average": 5.2,
+   "vote_count": 207
+  },
+  {
+   "adult": false,
+   "backdrop_path": "/30aHDHSHGX4HEeKlrgCwhTU72QP.jpg",
+   "genre_ids": [
+    18,
+    27,
+    878
+   ],
+   "id": 10785,
+   "title": "The Thing from Another World",
+   "original_language": "en",
+   "original_title": "The Thing from Another World",
+   "overview": "Scientists and US Air Force officials fend off a blood-thirsty alien organism while investigating at a remote arctic outpost.",
+   "popularity": 5.0801,
+   "poster_path": "/rm2w8dEhOGDuckB6i0Spz9lTzpR.jpg",
+   "release_date": "1951-04-05",
+   "softcore": false,
+   "video": false,
+   "vote_average": 6.723,
+   "vote_count": 720
+  },
+  {
+   "adult": false,
+   "backdrop_path": "/5U9tWqwaLREc6cnXPOVSVIDzYpl.jpg",
+   "genre_ids": [
+    18,
+    10749,
+    10402
+   ],
+   "id": 27804,
+   "title": "The Thing Called Love",
+   "original_language": "en",
+   "original_title": "The Thing Called Love",
+   "overview": "A group of newcomers to the country music business seek love and stardom.",
+   "popularity": 3.7407,
+   "poster_path": "/xsxkXRFDYeGGMGkdvotCIhMJFPl.jpg",
+   "release_date": "1993-08-27",
+   "softcore": false,
+   "video": false,
+   "vote_average": 6.1,
+   "vote_count": 152
+  },
+  {
+   "adult": false,
+   "backdrop_path": "/cGUxPXVZF5n5P09dnlhWC8bLVp7.jpg",
+   "genre_ids": [
+    18,
+    53
+   ],
+   "id": 505225,
+   "title": "The Last Thing He Wanted",
+   "original_language": "en",
+   "original_title": "The Last Thing He Wanted",
+   "overview": "At the turning point of the Iran-Contra affair, Elena McMahon, a fearless investigative journalist covering the 1984 US presidential campaign, puts herself in danger when she abandons her assigned task in order to fulfill the last wish of her ailing father, a mysterious man whose past activities she barely knows.",
+   "popularity": 5.3612,
+   "poster_path": "/4mDbGqi8mloDdxkviq13SKCfuFH.jpg",
+   "release_date": "2020-02-14",
+   "softcore": false,
+   "video": false,
+   "vote_average": 4.9,
+   "vote_count": 549
+  },
+  {
+   "adult": false,
+   "backdrop_path": "/4VxP8wmMo6k9uvIyQN5XoirBeho.jpg",
+   "genre_ids": [
+    99,
+    27
+   ],
+   "id": 1327198,
+   "title": "The Thing Expanded",
+   "original_language": "en",
+   "original_title": "The Thing Expanded",
+   "overview": "The ultimate companion to John Carpenter’s \"The Thing\", digging deep into the proverbial iceberg to enhance your viewing experience with new insights, stories, and revelations.",
+   "popularity": 2.0268,
+   "poster_path": "/isz3cx3xztpE0ZXjghwgjixapud.jpg",
+   "release_date": "2026-04-23",
+   "softcore": false,
+   "video": false,
+   "vote_average": 8.833,
+   "vote_count": 6
+  },
+  {
+   "adult": false,
+   "backdrop_path": "/vTGbFAFh3cGAFeLaXS8M3l3sl9z.jpg",
+   "genre_ids": [
+    27,
+    878
+   ],
+   "id": 19142,
+   "title": "The Return of Swamp Thing",
+   "original_language": "en",
+   "original_title": "The Return of Swamp Thing",
+   "overview": "The Swamp Thing returns to battle the evil Dr. Arcane, who has a new science lab full of creatures transformed by genetic mutation, and chooses Heather Locklear as his new object of affection.",
+   "popularity": 3.7358,
+   "poster_path": "/5sm1Yi1hgj805b9o2a1uC6BXhqw.jpg",
+   "release_date": "1989-05-11",
+   "softcore": false,
+   "video": false,
+   "vote_average": 5.461,
+   "vote_count": 271
+  },
+  {
+   "adult": false,
+   "backdrop_path": "/zURTkqYGHfEUUPLsUTHLxktiNom.jpg",
+   "genre_ids": [
+    18,
+    27
+   ],
+   "id": 164052,
+   "title": "The Strange Thing About the Johnsons",
+   "original_language": "en",
+   "original_title": "The Strange Thing About the Johnsons",
+   "overview": "A suburban father gets trapped in a one-sided incestuous relationship with his abusive son.",
+   "popularity": 3.8119,
+   "poster_path": "/ac2GXs7rJ7eQBKcvjRA3VDSNxA4.jpg",
+   "release_date": "2011-01-22",
+   "softcore": false,
+   "video": false,
+   "vote_average": 6.81,
+   "vote_count": 405
+  },
+  {
+   "adult": false,
+   "backdrop_path": "/aMqoTR7JbW7u37w7jbI190XGTBP.jpg",
+   "genre_ids": [
+    28,
+    35,
+    27
+   ],
+   "id": 343701,
+   "title": "Bunny the Killer Thing",
+   "original_language": "fi",
+   "original_title": "Bunny the Killer Thing",
+   "overview": "A group of seven young friends travel to a cabin in the dark woods of Finland for the weekend, where they have the misfortune of encountering a creature that's half-human, half-rabbit. In addition to satisfying its killer instinct, the ferocious creature also needs to satiate another pressing appetite.",
+   "popularity": 2.7842,
+   "poster_path": "/pShIldQSNMulPnvp6dlfSzMzW2w.jpg",
+   "release_date": "2015-11-06",
+   "softcore": false,
+   "video": false,
+   "vote_average": 4.4,
+   "vote_count": 89
+  },
+  {
+   "adult": false,
+   "backdrop_path": "/cQJFrLn4TCoPtVYXSbU60JMcyzI.jpg",
+   "genre_ids": [
+    99
+   ],
+   "id": 168735,
+   "title": "The Thing",
+   "original_language": "it",
+   "original_title": "La cosa",
+   "overview": "1989. Amid the collapse of the Eastern Bloc, the largest communist party in Western Europe—Italy's PCI—announces that it'll change its name, vowing to become 'a new thing'. The film follows the debates taking place in various PCI branches across Italy in the aftermath of this historic decision.",
+   "popularity": 1.6124,
+   "poster_path": "/cWDUgndKJVt91tQvUa85aLUORAh.jpg",
+   "release_date": "1990-03-04",
+   "softcore": false,
+   "video": false,
+   "vote_average": 6.8,
+   "vote_count": 19
+  },
+  {
+   "adult": false,
+   "backdrop_path": "/sI2UYmh2K2aCfrZMkXE0WjiwxLP.jpg",
+   "genre_ids": [
+    27,
+    878,
+    53
+   ],
+   "id": 66121,
+   "title": "The Thing Below",
+   "original_language": "en",
+   "original_title": "The Thing Below",
+   "overview": "A top secret drilling platform in the Gulf of Mexico raises a dormant alien creature from the depths. Once loose, the creature goes on a murderous rampage.",
+   "popularity": 1.8319,
+   "poster_path": "/bA1NlbAnI6a3FpUY2ZAmdkFDnn2.jpg",
+   "release_date": "2004-01-07",
+   "softcore": false,
+   "video": false,
+   "vote_average": 3.5,
+   "vote_count": 42
+  },
+  {
+   "adult": false,
+   "backdrop_path": null,
+   "genre_ids": [
+    35
+   ],
+   "id": 779204,
+   "title": "The Thing Before the Thing",
+   "original_language": "en",
+   "original_title": "The Thing Before the Thing",
+   "overview": "A group of old college friends reunite over a weekend getaway to celebrate the retirement of the mentor that brought them together.",
+   "popularity": 1.1208,
+   "poster_path": "/ycEB74KKgoAiL5aIXkKmgaHeiiT.jpg",
+   "release_date": "2020-11-04",
+   "softcore": false,
+   "video": false,
+   "vote_average": 2.0,
+   "vote_count": 1
+  },
+  {
+   "adult": false,
+   "backdrop_path": "/6c1OQVjrDc5X8GPIR7153ASWiig.jpg",
+   "genre_ids": [
+    27,
+    10770,
+    18
+   ],
+   "id": 319311,
+   "title": "The Damned Thing",
+   "original_language": "en",
+   "original_title": "The Damned Thing",
+   "overview": "Sheriff Reddle thinks there's a connection between a mysterious, invisible force that made his father kill his mother back in 1981. He sets out to uncover and stop the so-called \"dammed thing\" before it decimates the whole town by forcing the residents to kill each other and then finally... themselves.",
+   "popularity": 1.5052,
+   "poster_path": "/bDRAeqepWtoXkfQGKJtpnkYbi0r.jpg",
+   "release_date": "2006-10-27",
+   "softcore": false,
+   "video": false,
+   "vote_average": 5.125,
+   "vote_count": 41
+  },
+  {
+   "adult": false,
+   "backdrop_path": null,
+   "genre_ids": [
+    53,
+    27,
+    9648
+   ],
+   "id": 296855,
+   "title": "The Thing on the Doorstep",
+   "original_language": "en",
+   "original_title": "The Thing on the Doorstep",
+   "overview": "A psychological horror film based on the short story by H.P. Lovecraft. Daniel Upton's relationship with his friend Edward Derby is abruptly changed after Edward becomes romantically involved with Asenath Waite, a hypnotist with an odd reputation. As Edward's behavior becomes more erratic and events unexplainable, Daniel investigates. Is it madness...or something far more terrifying?",
+   "popularity": 1.5378,
+   "poster_path": "/Nc0FpkBlKQ3DxvwBvgT6xpJOv2.jpg",
+   "release_date": "2014-10-08",
+   "softcore": false,
+   "video": false,
+   "vote_average": 4.3,
+   "vote_count": 9
+  },
+  {
+   "adult": false,
+   "backdrop_path": "/mTRrGeLphIlj4JM7EauuEYpS3iv.jpg",
+   "genre_ids": [
+    10749,
+    10770,
+    35
+   ],
+   "id": 647325,
+   "title": "The Thing About Harry",
+   "original_language": "en",
+   "original_title": "The Thing About Harry",
+   "overview": "Two high school enemies, uber-jock Harry and out-and-proud Sam, are forced to share a car ride to their Missouri hometown for a friend's engagement party on Valentine's Day. Things take a turn when Sam learns Harry has come out.",
+   "popularity": 3.2887,
+   "poster_path": "/sdn5NdFMcsub3QUwlovOA9fPJoW.jpg",
+   "release_date": "2020-02-15",
+   "softcore": false,
+   "video": false,
+   "vote_average": 6.767,
+   "vote_count": 236
+  }
+ ],
+ "total_pages": 45,
+ "total_results": 883
 }

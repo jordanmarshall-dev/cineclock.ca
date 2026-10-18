@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% from "_parts.html" import day_sections, date_strip %}
+
+{% block title %}{{ venue.name }} showtimes{% endblock %}
+{% block description %}What's playing at {{ venue.name }}, {{ venue.address }}.{% endblock %}
+
+{% block main %}
+<div class="wrap">
+  <h1 class="venue-title">{{ venue.name }}</h1>
+  <p class="venue-blurb">{{ venue.blurb }}</p>
+  <ul class="links">
+    {% if venue.address %}<li><a href="{{ venue.map_url }}">{{ venue.address.split(",")[0] }}</a></li>{% endif %}
+    {% if venue.website %}<li><a href="{{ venue.website }}">Website</a></li>{% endif %}
+  </ul>
+
+  {{ date_strip(days) }}
+  {% if days %}
+    {{ day_sections(days, root, show_venues=False) }}
+  {% else %}
+    <p class="empty">Nothing listed here right now. Check the <a href="{{ venue.website }}">theatre's website</a>.</p>
+  {% endif %}
+</div>
+{% endblock %}

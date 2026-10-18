@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#14181c">
+<title>{% block title %}cineclock{% endblock %}</title>
+<meta name="description" content="{% block description %}Showtimes at Vancouver's repertory and independent cinemas.{% endblock %}">
+<link rel="preload" href="{{ root }}static/fonts/instrument-sans.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="{{ root }}static/site.css">
+</head>
+<body class="{% block body_class %}{% endblock %}">
+<header class="site-header">
+  <div class="wrap">
+    <a class="wordmark" href="{{ root }}">cine<span>clock</span></a>
+    <nav class="venue-nav" aria-label="Theatres">
+      {% for v in venues %}
+        <a href="{{ root }}venues/{{ v.slug }}/"{% if current_venue == v.slug %} aria-current="page"{% endif %}>{{ v.name | replace("The ", "") }}</a>
+      {% endfor %}
+    </nav>
+  </div>
+</header>
+
+<main>
+{% block main %}{% endblock %}
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <p>Updated {{ updated }}. Showtimes come from each theatre's website; check there before you go.</p>
+    <p>Film details and posters from <a href="https://www.themoviedb.org/">TMDB</a>. This product uses the TMDB API but is not endorsed or certified by TMDB. Ratings from Letterboxd, IMDb and Rotten Tomatoes.</p>
+    <p>Inspired by <a href="https://movieclock.app">MovieClock</a>. <a href="https://github.com/yogzoth/cineclock">Source on GitHub</a>.</p>
+  </div>
+</footer>
+</body>
+</html>

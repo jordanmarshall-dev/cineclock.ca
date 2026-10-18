@@ -7,7 +7,7 @@ from cineclock.enrich import letterboxd, omdb
 def test_letterboxd_page(fixture_text):
     url, rating = letterboxd.parse_film_page(fixture_text("enrich/letterboxd_the_thing.html"))
     assert url == "https://letterboxd.com/film/the-thing/"
-    assert rating == 4.24
+    assert rating == 4.35
 
 
 def test_letterboxd_page_without_rating():
@@ -25,7 +25,7 @@ def test_letterboxd_lookup_follows_the_redirect(fixture_text):
         return httpx.Response(200, text=fixture_text("enrich/letterboxd_the_thing.html"))
 
     with httpx.Client(transport=httpx.MockTransport(handler), follow_redirects=True) as client:
-        assert letterboxd.lookup(client, 1091) == ("https://letterboxd.com/film/the-thing/", 4.24)
+        assert letterboxd.lookup(client, 1091) == ("https://letterboxd.com/film/the-thing/", 4.35)
 
 
 def test_letterboxd_blocked_raises():
@@ -38,7 +38,7 @@ def test_letterboxd_blocked_raises():
 
 
 def test_omdb(fixture_json):
-    assert omdb.parse(fixture_json("enrich/omdb_tt0084787.json")) == (8.2, 84)
+    assert omdb.parse(fixture_json("enrich/omdb_tt0084787.json")) == (8.2, 85)
 
 
 @pytest.mark.parametrize(
@@ -69,5 +69,5 @@ def test_omdb_lookup_sends_id_and_key(fixture_json):
         return httpx.Response(200, json=fixture_json("enrich/omdb_tt0084787.json"))
 
     with httpx.Client(transport=httpx.MockTransport(handler)) as client:
-        assert omdb.lookup(client, "key", "tt0084787") == (8.2, 84)
+        assert omdb.lookup(client, "key", "tt0084787") == (8.2, 85)
     assert seen == {"i": "tt0084787", "apikey": "key"}
