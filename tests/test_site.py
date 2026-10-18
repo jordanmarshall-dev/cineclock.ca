@@ -799,3 +799,15 @@ def test_a_card_without_a_score_shows_its_tag_there(conn):
     page = plain(pages(conn, NOW)["films/index.html"])
     assert 'class="card-tag" title="Shorts programme">Shorts programme<' in page
     assert page.count('class="card-tag"') == 1
+
+
+def test_a_festival_series_tags_its_screenings(conn):
+    save(
+        conn,
+        Screening(
+            "The Cinematheque", "SFMF Series 2", at(19, 13), "https://x",
+            series="Small File Media Festival 2026",
+        ),
+    )  # fmt: skip
+    page = plain(pages(conn, NOW)["films/index.html"])
+    assert 'class="card-tag" title="Festival">Festival<' in page

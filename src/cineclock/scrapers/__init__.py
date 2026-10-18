@@ -13,6 +13,7 @@ class FilmDetails:
     year: int | None = None
     poster_url: str | None = None
     film_format: str | None = None
+    series: str | None = None
 
 
 def make_client() -> httpx.Client:
@@ -47,6 +48,7 @@ def add_details(
             year=details[s.info_url].year or s.year,
             poster_url=details[s.info_url].poster_url or s.poster_url,
             film_format=details[s.info_url].film_format or s.film_format,
+            series=details[s.info_url].series or s.series,
         )
         if s.info_url
         else s

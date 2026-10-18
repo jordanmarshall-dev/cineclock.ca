@@ -26,6 +26,8 @@ class Screening:
     poster_url: str | None = None
     # As the venue lists it: "35mm", "DCP". Only the Cinematheque says, so far.
     film_format: str | None = None
+    # The programme or festival the venue files it under ("Small File Media Festival 2026").
+    series: str | None = None
     # When cineclock first saw this listing. Not part of what makes two screenings equal.
     first_seen: datetime | None = field(default=None, compare=False)
 

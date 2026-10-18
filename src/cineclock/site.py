@@ -47,7 +47,9 @@ def venue_for(name: str) -> Venue:
 
 
 def tags_for(s: Screening) -> list[str]:
-    return screening_tags(s.title, s.note, s.film_format)
+    # The series name counts too, so a festival programme gets the Festival tag.
+    note = " ".join(filter(None, [s.note, s.series])) or None
+    return screening_tags(s.title, note, s.film_format)
 
 
 def compact(n: int) -> str:

@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS screenings (
     note TEXT,
     poster_url TEXT,
     film_format TEXT,
+    series TEXT,
     first_seen TEXT,
     UNIQUE (venue, title, starts_at)
 );
@@ -75,7 +76,7 @@ CREATE TABLE IF NOT EXISTS profiles (
 
 FIELDS = (
     "venue", "title", "starts_at", "url", "room", "info_url", "year", "note", "poster_url",
-    "film_format",
+    "film_format", "series",
 )  # fmt: skip
 
 
@@ -89,7 +90,7 @@ class SyncResult:
 # Columns added after the first release. A database saved by an older version
 # (like the one the deploy keeps between runs) gets them added on connect.
 ADDED_COLUMNS = {
-    "screenings": {"first_seen": "TEXT", "film_format": "TEXT", "room": "TEXT"},
+    "screenings": {"first_seen": "TEXT", "film_format": "TEXT", "room": "TEXT", "series": "TEXT"},
     "films": {"letterboxd_count": "INTEGER", "genres": "TEXT", "metacritic": "INTEGER"},
 }
 
@@ -136,6 +137,7 @@ def _to_row(s: Screening) -> tuple:
         s.note,
         s.poster_url,
         s.film_format,
+        s.series,
     )
 
 
@@ -178,7 +180,7 @@ def sync_venue(
         conn.executemany(
             f"""
             INSERT INTO screenings ({", ".join(FIELDS)}, first_seen)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES ({", ".join("?" * (len(FIELDS) + 1))})
             ON CONFLICT (venue, title, starts_at) DO UPDATE SET
                 url = excluded.url,
                 room = excluded.room,
@@ -187,6 +189,7 @@ def sync_venue(
                 note = excluded.note,
                 poster_url = excluded.poster_url,
                 film_format = excluded.film_format,
+                series = excluded.series,
                 -- Keep the date we first saw it; only fill it in for older rows.
                 first_seen = COALESCE(screenings.first_seen, excluded.first_seen)
             """,

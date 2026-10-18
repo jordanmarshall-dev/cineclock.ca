@@ -94,10 +94,14 @@ def parse_film_page(page: str) -> FilmDetails:
     year_text = year_tag.get_text(strip=True) if year_tag else ""
     og_image = soup.find("meta", property="og:image")
     film_format = soup.select_one("ul#details .filmFormat")
+    # The breadcrumb names the programme in full ("Small File Media Festival 2026");
+    # the details list only has a short form ("SFMF 2026").
+    series = soup.select_one('#breadcrumbs a[href*="/series/"]')
     return FilmDetails(
         year=int(year_text) if re.fullmatch(r"(18|19|20)\d{2}", year_text) else None,
         poster_url=(og_image.get("content") if og_image else None) or None,
         film_format=(film_format.get_text(strip=True) or None) if film_format else None,
+        series=(series.get_text(" ", strip=True) or None) if series else None,
     )
 
 

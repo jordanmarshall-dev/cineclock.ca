@@ -114,3 +114,10 @@ def test_www_and_bare_links_become_one_address():
       </ol></li></ol>"""
     screenings = cinematheque.parse_calendar(page)
     assert {s.info_url for s in screenings} == {"https://thecinematheque.ca/films/2026/kwaidan"}
+
+
+def test_film_page_names_its_series(fixture_text):
+    sfmf = cinematheque.parse_film_page(fixture_text("cinematheque/film_sfmf-series-2.html"))
+    assert sfmf.series == "Small File Media Festival 2026"
+    dark = cinematheque.parse_film_page(fixture_text("cinematheque/film_daughters-darkness.html"))
+    assert dark.series == "Forbidden Rooms: Halloween on Howe"
