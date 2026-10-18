@@ -19,7 +19,8 @@ Early days. Version 1 covers The Cinematheque, VIFF Centre, the Park and the Rio
 - [x] What's playing page, by day and venue, with posters
 - [ ] Add to calendar (.ics)
 - [x] VIFF Centre scraper
-- [ ] Park and Cinematheque scrapers
+- [x] Park scraper
+- [ ] Cinematheque scraper
 
 ## Running it
 
