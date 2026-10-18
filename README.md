@@ -37,3 +37,7 @@ fastapi dev src/cineclock/app.py
 ## Credits
 
 Inspired by [MovieClock](https://movieclock.app) by Jordan Hudson ([source](https://github.com/jordanhudson/moviecal), MIT licensed). Some scraper approaches are borrowed from it.
+
+## License
+
+MIT. See [LICENSE](LICENSE).

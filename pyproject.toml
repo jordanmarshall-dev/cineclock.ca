@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Vancouver showtimes for film lovers. Indie and rep cinemas in one place."
 readme = "README.md"
 requires-python = ">=3.12"
+license = "MIT"
 dependencies = [
     "fastapi[standard]>=0.115",
     "jinja2>=3.1",
