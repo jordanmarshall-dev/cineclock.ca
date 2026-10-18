@@ -14,7 +14,7 @@ from cineclock.tags import filter_slugs, kind, said_by_tags, slug
 from cineclock.timefmt import clock
 from cineclock.venues import room_label
 
-RELAY_URL = ""
+RELAY_URL = "https://cineclock-relay.cineclock-relay.workers.dev"
 
 STATIC = Path(__file__).parent / "static"
 
