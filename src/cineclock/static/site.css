@@ -1469,11 +1469,6 @@ a:focus-visible {
 .showing-times .times { margin-top: 0; }
 .showing-times .tags, .showing-times .showing-note { margin: 0 0 0.5rem; }
 
-@media (min-width: 40rem) {
-  .showing { grid-template-columns: 12rem 9rem 1fr; }
-  .showing-venue { justify-self: start; }
-  .showing-times { grid-column: auto; }
-}
 
 /* Time buttons a touch tighter on phones so three fit across. */
 @media (max-width: 30rem) {
@@ -1490,3 +1485,8 @@ a:focus-visible {
 .chip-logo img { opacity: 0.6; transition: opacity 120ms; }
 .chip-logo[aria-pressed="true"] img, .chip-logo:hover img { opacity: 1; }
 .chip-logo[aria-pressed="true"] { border-color: var(--accent); background: rgba(136, 48, 223, 0.18); }
+
+/* Booking buttons always sit in their own row at the bottom of a block,
+   from its left edge: in day listings, on theatre pages and on film pages. */
+.row .times { grid-column: 1 / -1; margin-top: 0.125rem; }
+.showing-times .times { margin-top: 0.25rem; }

@@ -99,9 +99,9 @@
     {% if r.note and not (r.note | said_by_tags(r.tags)) %}<p class="meta">{{ r.note }}</p>{% elif r.page.film and r.page.film.director %}<p class="meta">{{ r.page.film.director }}</p>{% endif %}
     {{ ratings(r.page.film, root) }}
     {{ tag_list(r.tags) }}
-    <div class="times">
-      {% for s in r.showtimes %}{{ showtime(s, r.title) }}{% endfor %}
-    </div>
+  </div>
+  <div class="times">
+    {% for s in r.showtimes %}{{ showtime(s, r.title) }}{% endfor %}
   </div>
 </li>
 {%- endmacro %}
