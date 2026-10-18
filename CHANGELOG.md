@@ -2,6 +2,9 @@
 
 ## 2.0.1 (October 18, 2026)
 
+- Your Letterboxd is simpler: enter your username and the page shows your watchlist films playing now and the films you've seen that are playing again, with a disconnect button. A username that isn't synced yet gets a link to ask for it. The export upload and the watchlist calendar feed are gone.
+- A "Seen it" filter joins "On my watchlist".
+- Every card always shows a score or Unrated, so no line is ever blank.
 - Cards: anything special (35mm, Q&A, Festival) is a badge on the poster's corner, shown even when the film has a score, and the theatre logos move off the poster to their own line under the date.
 - Film pages use the theatre's own description when TMDB has no synopsis, so one-off events like Vampyr × Applied Silence still say what they are.
 - The README screenshots are taken from the live data by a Screenshots workflow in GitHub Actions.

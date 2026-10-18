@@ -2,9 +2,9 @@ from datetime import UTC, date, datetime
 
 from cineclock import personal
 from cineclock.films import Film, match_key
-from cineclock.models import VANCOUVER, Screening
+from cineclock.models import Screening
 from cineclock.profiles import Profile
-from cineclock.site import FilmPage, venue_for
+from cineclock.site import FilmPage
 
 NOW = datetime(2026, 10, 18, 8, 0, tzinfo=UTC)
 
@@ -38,25 +38,3 @@ def test_profile_json_only_covers_films_playing():
     data = personal.profile_json(PROFILE, films, NOW)
     assert data["user"] == "me"
     assert data["films"] == {"jaws": {"w": 1, "s": 1, "old": 1}}
-
-
-def test_films_index_has_what_matching_needs():
-    show = datetime(2026, 10, 19, 19, 0, tzinfo=VANCOUVER)
-    [entry] = personal.films_index([page("jaws", "jaws", show)])
-    assert set(entry) == {"slug", "title", "year", "alt"} and entry["slug"] == "jaws"
-
-
-def test_watchlist_calendar_lists_each_screening():
-    shows = [
-        datetime(2026, 10, 19, 19, 0, tzinfo=VANCOUVER),
-        datetime(2026, 10, 20, 21, 0, tzinfo=VANCOUVER),
-    ]
-    films = [page("jaws", "jaws", *shows, runtime=124), page("heat", "heat", shows[0])]
-    feed = personal.watchlist_calendar(PROFILE, films, venue_for, NOW)
-    assert feed.count("BEGIN:VEVENT") == 2  # heat is seen, not on the watchlist
-    assert "DTSTART:20261020T020000Z" in feed  # 7 pm in Vancouver is 2 am UTC
-    assert "DTEND:20261020T040400Z" in feed  # plus the 124-minute runtime
-    assert "SUMMARY:Jaws at The Rio" in feed
-    assert "LOCATION:1660 East Broadway\\, Vancouver\\, BC V5N 1W1" in feed
-    assert all(len(line) <= 75 for line in feed.split("\r\n"))
-    assert feed.endswith("END:VCALENDAR\r\n")

@@ -7,33 +7,40 @@
 {% block main %}
 <div class="wrap me-page">
   <h1 class="page-title">Your Letterboxd</h1>
-  <p class="page-intro">See which films on your watchlist are playing, and which ones you've seen. It all stays in this browser.</p>
 
-  <section class="panel me-card" id="me-connected" hidden>
-    <p class="me-status"><img class="source-logo" src="{{ root }}static/logos/letterboxd.png" alt="">Connected as <b id="me-name"></b></p>
-    <p class="me-summary" id="me-summary"></p>
-    <ul class="links">
-      <li><a href="{{ root }}films/?tag=watchlist">{{ icon("bookmark") }}Your watchlist, playing now</a></li>
-      <li id="me-feed" hidden><a href="#">{{ icon("calendar") }}Add watchlist screenings to your calendar</a></li>
-    </ul>
-    <p class="me-feed-note meta" id="me-feed-note" hidden>Subscribing keeps it current: new watchlist screenings appear in your calendar on their own.</p>
-    <button type="button" class="clear" id="me-disconnect">Disconnect</button>
-  </section>
-
-  <section class="panel me-card" id="me-connect">
-    <h2 class="section-heading">Connect with your username</h2>
+  <section id="me-connect">
+    <p class="page-intro">Enter your Letterboxd username to see which films on your watchlist are playing, and which ones you've already seen.</p>
     <form id="me-user-form" class="me-form">
-      <label class="search">{{ icon("search", 16) }}<input name="user" placeholder="Letterboxd username" autocomplete="username" autocapitalize="none" spellcheck="false" required></label>
+      <label class="search"><img class="source-logo" src="{{ root }}static/logos/letterboxd.png" alt=""><input name="user" placeholder="Letterboxd username" aria-label="Letterboxd username" autocomplete="username" autocapitalize="none" spellcheck="false" required></label>
       <button type="submit" class="me-button">Connect</button>
     </form>
-    <p class="meta">Works for profiles the site keeps in sync{% if synced %} (right now: {{ synced | join(", ") }}){% endif %}. For anyone else, use your export below.</p>
-
-    <h2 class="section-heading">Or upload your Letterboxd export</h2>
-    <p class="meta">On Letterboxd, go to Settings, then Data, then Export your data. Choose the zip it sends you, or the CSV files inside it. Nothing is uploaded anywhere; it's read right here.</p>
-    <label class="me-button me-file">{{ icon("bookmark") }}Choose export<input type="file" id="me-file" accept=".zip,.csv" multiple hidden></label>
+    <p class="filter-status" id="me-message" aria-live="polite"></p>
   </section>
 
-  <p class="filter-status" id="me-message" aria-live="polite"></p>
+  <section id="me-connected" hidden>
+    <div class="me-bar">
+      <p class="me-status"><img class="source-logo" src="{{ root }}static/logos/letterboxd.png" alt=""><span>Connected as <b id="me-name"></b></span></p>
+      <button type="button" class="clear" id="me-disconnect">Disconnect</button>
+    </div>
+
+    <div class="rail">
+      <div class="rail-head">
+        <h2><a href="{{ root }}films/?tag=watchlist">{{ icon("bookmark", 16) }}On your watchlist, playing now</a></h2>
+        <a class="see-all" href="{{ root }}films/?tag=watchlist" aria-label="See your watchlist films with filters">{{ icon("chevron", 22) }}</a>
+      </div>
+      <ul class="film-grid" id="me-watchlist"></ul>
+      <p class="meta" id="me-watchlist-empty" hidden>Nothing from your watchlist is playing right now. New screenings show up here as theatres add them.</p>
+    </div>
+
+    <div class="rail">
+      <div class="rail-head">
+        <h2><a href="{{ root }}films/?tag=seen">{{ icon("eye", 16) }}Seen it, playing again</a></h2>
+        <a class="see-all" href="{{ root }}films/?tag=seen" aria-label="See films you've seen with filters">{{ icon("chevron", 22) }}</a>
+      </div>
+      <ul class="film-grid" id="me-seen"></ul>
+      <p class="meta" id="me-seen-empty" hidden>None of the films you've logged are playing right now.</p>
+    </div>
+  </section>
 </div>
 {% endblock %}
 
@@ -43,6 +50,14 @@
     const me = window.cineclockMe;
     const $ = (id) => document.getElementById(id);
     const say = (text) => ($("me-message").textContent = text);
+    const synced = {{ synced | tojson }};
+
+    async function fill(films, id, test) {
+      const list = await me.cards(films, test);
+      $(id).innerHTML = list;
+      $(id).hidden = !list;
+      $(`${id}-empty`).hidden = Boolean(list);
+    }
 
     async function refresh() {
       const value = me.saved();
@@ -51,43 +66,34 @@
       if (!value) return;
       try {
         const data = await me.load(value);
-        const films = Object.values(data.films);
-        const watch = films.filter((f) => f.w).length;
-        const seen = films.filter((f) => f.s).length;
-        $("me-name").textContent = data.label;
-        $("me-summary").textContent =
-          `${watch} film${watch === 1 ? "" : "s"} from your watchlist ${watch === 1 ? "is" : "are"} playing, and ${seen} you've seen.`;
-        if (data.synced) {
-          const feed = new URL(`${me.root}me/${encodeURIComponent(value.user)}/watchlist.ics`, location.href);
-          $("me-feed").querySelector("a").href = feed.href.replace(/^https?:/, "webcal:");
-          $("me-feed").hidden = $("me-feed-note").hidden = false;
-        }
+        $("me-name").textContent = data.user;
+        await fill(data.films, "me-watchlist", (f) => f.w);
+        await fill(data.films, "me-seen", (f) => f.s && !f.w);
+        me.mark(data.films);
       } catch (e) {
-        say("Couldn't load your lists. Try connecting again.");
+        me.save(null);
+        $("me-connected").hidden = true;
+        $("me-connect").hidden = false;
+        say("Couldn't load that profile. Try connecting again.");
       }
     }
 
-    $("me-user-form").addEventListener("submit", async (e) => {
+    // Letterboxd won't let a browser read profiles from another site, so the
+    // nightly build reads them; only the usernames it syncs work here.
+    $("me-user-form").addEventListener("submit", (e) => {
       e.preventDefault();
-      const user = e.target.user.value.trim().toLowerCase().replace(/^@/, "");
-      try {
-        await me.load({ user });
-      } catch (err) {
-        say(`${user} isn't synced yet. Upload your export instead.`);
+      const user = e.target.user.value.trim().toLowerCase().replace(/^@/, "").replace(/^.*letterboxd\.com\//, "").replace(/\/.*$/, "");
+      if (!synced.includes(user)) {
+        const ask = `https://github.com/yogzoth/cineclock/issues/new?title=${encodeURIComponent(`Sync Letterboxd user ${user}`)}`;
+        $("me-message").innerHTML = "";
+        $("me-message").append(
+          `cineclock doesn't follow ${user} yet; profiles are read once a day by the site itself. `,
+          Object.assign(document.createElement("a"), { href: ask, textContent: "Ask to add it" }),
+          "."
+        );
         return;
       }
-      me.save({ user }) ? location.reload() : say("Your browser blocked saving this.");
-    });
-
-    $("me-file").addEventListener("change", async (e) => {
-      say("Reading your export...");
-      try {
-        const entries = await me.readExport(e.target.files);
-        const ok = me.save({ upload: { name: "your export", entries, at: new Date().toISOString() } });
-        ok ? location.reload() : say("Your export is too big for this browser's storage.");
-      } catch (err) {
-        say(err.message || "That file couldn't be read.");
-      }
+      me.save({ user }) ? refresh() : say("Your browser blocked saving this.");
     });
 
     $("me-disconnect").addEventListener("click", () => {

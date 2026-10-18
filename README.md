@@ -26,7 +26,7 @@ Five theatres so far: the Rio, the Park, the Cinematheque, VIFF Centre (both scr
 - **Film pages:** backdrop, poster, synopsis, scores from Letterboxd, IMDb, Rotten Tomatoes and Metacritic, and every showtime
 - **One card everywhere:** every poster card has the same four lines (title, year and score, date, theatres), so the details are always in the same spot. Anything special, like 35mm or a Q&A, is a badge on the poster's corner. Cards show the Letterboxd score, or the next source that has one
 - **Tags** from what each theatre's listing says: 70mm, 35mm, 16mm, IMAX, Q&A, Intro, Live music, Festival, Shorts, Preview and more. A film with only one screening gets a star on its date instead of a badge
-- **Letterboxd:** connect a profile or upload your Letterboxd export to see what's on your watchlist and what you've seen, with a "From your watchlist" row and a calendar feed of watchlist screenings
+- **Letterboxd:** enter your username to see the films on your watchlist that are playing now, and the ones you've seen that are playing again, with a "From your watchlist" row on the home page and watchlist and seen filters. Profiles are read once a day by the site, so a username works once it's synced
 - **Link previews:** sharing a page shows a proper card with the film's backdrop or the theatre's photo
 - **Tap a poster** on a film page to see it full size
 
@@ -65,7 +65,7 @@ The screenshots above are taken the same way: a manual Screenshots workflow buil
 - httpx and BeautifulSoup for scraping
 - Each venue scraper has a pure parse function tested against saved sample responses, so tests never hit the network
 - Film details come from TMDB, matched on title and year, with scores from Letterboxd and OMDb. Each film is looked up once when it first appears and refreshed monthly, so the APIs get a handful of calls a day
-- The site is static: filters, the spotlight carousel and the Letterboxd features run in the browser with a little plain JavaScript. An uploaded Letterboxd export is read in your browser and never leaves your device
+- The site is static: filters, the spotlight carousel and the Letterboxd features run in the browser with a little plain JavaScript. Your Letterboxd username is remembered only in your browser
 - "Just added" ignores everything from a theatre's first scrape, so adding a new theatre doesn't flood it
 - Times are stored in UTC and shown in Vancouver time using the pinned `tzdata` package, so clock rule changes (like B.C.'s 2026 move to permanent daylight time) can't shift a showtime
 

@@ -266,8 +266,9 @@ def test_titles_are_escaped(conn):
     built = pages(conn, NOW)
     pages_only = [html for path, html in built.items() if path.endswith(".html")]
     assert all("<script>alert(1)</script>" not in html for html in pages_only)
-    # films.json is data, not a page; the browser escapes it before showing it
-    assert '"<script>alert(1)</script>"' in built["films.json"]
+    # films.json carries finished cards, escaped like every page
+    assert "<script>alert(1)</script>" not in built["films.json"]
+    assert "&lt;script&gt;alert(1)&lt;/script&gt;" in built["films.json"]
 
 
 def test_stats(conn):

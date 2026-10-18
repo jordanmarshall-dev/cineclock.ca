@@ -1,10 +1,9 @@
 // Personal touches from a visitor's Letterboxd, all in their own browser.
 //
-// A connected visitor is remembered in localStorage as either
-//   { user: "yogzoth" }                 a profile the site syncs (me/<user>.json)
-//   { upload: { name, entries, at } }   lists read from their Letterboxd export
-// Every film on a page carries data-film="<slug>"; we mark the ones that
-// match, then tell the filters (which listen for "cineclock:personal").
+// A connected visitor is remembered in localStorage as { user: "yogzoth" }, a
+// profile the site syncs (me/<user>.json). Every film on a page carries
+// data-film="<slug>"; we mark the ones that match, then tell the filters
+// (which listen for "cineclock:personal").
 (() => {
   const root = document.body.dataset.root || "";
   const KEY = "cineclock.letterboxd";
@@ -18,7 +17,8 @@
 
   function saved() {
     try {
-      return JSON.parse(localStorage.getItem(KEY) || "null");
+      const value = JSON.parse(localStorage.getItem(KEY) || "null");
+      return value && value.user ? value : null;
     } catch (e) {
       return null;
     }
@@ -34,38 +34,25 @@
     }
   }
 
-  // "The Thing" and "the thing!" should match; years keep same-titled films apart.
-  const norm = (title) => (title || "").toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "");
-  const key = (title, year) => `${norm(title)}|${year || ""}`;
-
   async function getJSON(path) {
     const response = await fetch(root + path, { cache: "no-cache" });
     if (!response.ok) throw new Error(`${path}: ${response.status}`);
     return response.json();
   }
 
-  // Map an uploaded export onto the films playing now, by title and year.
-  function matchUpload(entries, index) {
-    const films = {};
-    for (const film of index) {
-      const candidates = [key(film.title, film.year), key(film.alt, film.year)];
-      const hit = candidates.map((k) => entries[k]).find(Boolean);
-      if (hit) films[film.slug] = hit;
-    }
-    return films;
-  }
-
   async function load(value = saved()) {
     if (!value) return null;
-    if (value.user) {
-      const data = await getJSON(`me/${encodeURIComponent(value.user)}.json`);
-      return { label: value.user, synced: true, films: data.films, updated: data.updated };
-    }
-    if (value.upload) {
-      const index = await getJSON("films.json");
-      return { label: value.upload.name, synced: false, films: matchUpload(value.upload.entries, index) };
-    }
-    return null;
+    const data = await getJSON(`me/${encodeURIComponent(value.user)}.json`);
+    return { user: value.user, films: data.films, updated: data.updated };
+  }
+
+  // The finished cards (from films.json) for the films that pass a test.
+  async function cards(films, test) {
+    const index = await getJSON("films.json");
+    return index
+      .filter((f) => films[f.slug] && test(films[f.slug]))
+      .map((f) => f.card.replaceAll("@root@", root))
+      .join("");
   }
 
   const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -125,14 +112,12 @@
   async function shelf(films) {
     const spot = document.getElementById("mine-rail");
     if (!spot) return;
-    const index = await getJSON("films.json");
-    const picks = index.filter((f) => films[f.slug] && films[f.slug].w);
-    if (!picks.length) return;
     // The build draws each card, so the shelf matches every other card on the site.
-    const cards = picks.map((f) => f.card.replaceAll("@root@", root)).join("");
+    const list = await cards(films, (f) => f.w);
+    if (!list) return;
     spot.innerHTML = `<section class="rail rail-personal"><div class="rail-head"><h2><a href="${root}films/?tag=watchlist">From your watchlist</a></h2>
       <a class="see-all" href="${root}films/?tag=watchlist" aria-label="See all from your watchlist"><svg class="icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></a></div>
-      <ul class="rail-cards">${cards}</ul></section>`;
+      <ul class="rail-cards">${list}</ul></section>`;
   }
 
   function show(connected) {
@@ -158,85 +143,6 @@
     }
   }
 
-  // --- Reading a Letterboxd export (zip or its CSVs), all in the browser ---
-
-  function parseCSV(text) {
-    const rows = [];
-    let row = [];
-    let cell = "";
-    let quoted = false;
-    for (let i = 0; i < text.length; i++) {
-      const c = text[i];
-      if (quoted) {
-        if (c === '"' && text[i + 1] === '"') { cell += '"'; i++; }
-        else if (c === '"') quoted = false;
-        else cell += c;
-      } else if (c === '"') quoted = true;
-      else if (c === ",") { row.push(cell); cell = ""; }
-      else if (c === "\n" || c === "\r") {
-        if (c === "\r" && text[i + 1] === "\n") i++;
-        row.push(cell); rows.push(row); row = []; cell = "";
-      } else cell += c;
-    }
-    if (cell || row.length) { row.push(cell); rows.push(row); }
-    const [head, ...body] = rows.filter((r) => r.some(Boolean));
-    return (body || []).map((r) => Object.fromEntries((head || []).map((h, i) => [h.trim(), r[i]])));
-  }
-
-  // Just enough of the zip format to pull out the CSVs Letterboxd puts in its export.
-  async function unzip(buffer) {
-    const view = new DataView(buffer);
-    const files = {};
-    let end = buffer.byteLength - 22;
-    while (end >= 0 && view.getUint32(end, true) !== 0x06054b50) end--;
-    if (end < 0) throw new Error("not a zip file");
-    let at = view.getUint32(end + 16, true);
-    const count = view.getUint16(end + 10, true);
-    for (let n = 0; n < count; n++) {
-      const method = view.getUint16(at + 10, true);
-      const size = view.getUint32(at + 20, true);
-      const nameLength = view.getUint16(at + 28, true);
-      const extra = view.getUint16(at + 30, true);
-      const comment = view.getUint16(at + 32, true);
-      const local = view.getUint32(at + 42, true);
-      const name = new TextDecoder().decode(new Uint8Array(buffer, at + 46, nameLength));
-      at += 46 + nameLength + extra + comment;
-      if (!/^[^/]*\.csv$/.test(name)) continue; // top-level CSVs only
-      const start = local + 30 + view.getUint16(local + 26, true) + view.getUint16(local + 28, true);
-      const bytes = new Uint8Array(buffer, start, size);
-      files[name] = method === 0
-        ? new TextDecoder().decode(bytes)
-        : await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).text();
-    }
-    return files;
-  }
-
-  async function readExport(fileList) {
-    const files = {};
-    for (const file of fileList) {
-      if (/\.zip$/i.test(file.name)) Object.assign(files, await unzip(await file.arrayBuffer()));
-      else files[file.name.replace(/^.*\//, "")] = await file.text();
-    }
-    const entries = {};
-    const touch = (row) => (entries[key(row.Name, row.Year)] ||= {});
-    for (const row of parseCSV(files["watchlist.csv"] || "")) touch(row).w = 1;
-    for (const row of parseCSV(files["watched.csv"] || "")) touch(row).s = 1;
-    for (const row of parseCSV(files["ratings.csv"] || "")) {
-      const entry = touch(row);
-      entry.s = 1;
-      entry.r = Math.round(parseFloat(row.Rating) * 2) || undefined;
-    }
-    for (const row of parseCSV(files["diary.csv"] || "")) {
-      const entry = touch(row);
-      entry.s = 1;
-      const day = row["Watched Date"] || row.Date;
-      if (day && (!entry.d || day > entry.d)) entry.d = day;
-    }
-    const total = Object.keys(entries).length;
-    if (!total) throw new Error("No Letterboxd lists found in that file.");
-    return entries;
-  }
-
-  window.cineclockMe = { saved, save, load, readExport, show, root };
+  window.cineclockMe = { saved, save, load, cards, mark, root };
   start();
 })();

@@ -239,6 +239,7 @@
         <button type="button" class="chip" data-filter="tag" data-value="on-film" aria-pressed="false">On film</button>
         <button type="button" class="chip" data-filter="tag" data-value="event" aria-pressed="false">Events</button>
         <button type="button" class="chip chip-personal" data-filter="tag" data-value="watchlist" aria-pressed="false" data-needs-me hidden>On my watchlist</button>
+        <button type="button" class="chip chip-personal" data-filter="tag" data-value="seen" aria-pressed="false" data-needs-me hidden>Seen it</button>
         {% for t in filter_tags %}<button type="button" class="chip" data-filter="tag" data-value="{{ t | tagslug }}" aria-pressed="false">{{ t }}</button>{% endfor %}
       </div>
     </details>

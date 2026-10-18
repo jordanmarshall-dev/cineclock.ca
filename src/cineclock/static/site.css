@@ -1538,20 +1538,23 @@ a:focus-visible {
 .chip-personal { color: #6fd3a4; }
 .rail-personal .rail-head h2 a { color: #6fd3a4; }
 
-.me-card { margin-top: 1.25rem; padding: 0 1.25rem 1.25rem; }
-.me-card .section-heading { margin-top: 1.25rem; font-size: 1rem; }
-#me-connected { padding-top: 1.25rem; }
-.me-status { display: flex; align-items: center; gap: 0.5rem; margin: 0; color: var(--bright); }
-.me-status b { color: var(--white); }
-.me-summary { margin: 0.5rem 0 0; color: var(--bright); }
-.me-form { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
-.me-form input { width: 100%; padding: 0.625rem 0.75rem 0.625rem 2.25rem; border: 1px solid var(--line); border-radius: 4px; background: var(--raised); color: var(--white); font: inherit; }
+/* Your Letterboxd: one username box, then your films. */
+.me-form { display: flex; gap: 0.5rem; max-width: 30rem; margin-top: 1rem; }
+.me-form input {
+  width: 100%;
+  padding: 0.625rem 0.75rem 0.625rem 3rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--raised);
+  color: var(--white);
+  font: inherit;
+}
+.me-form input:focus { border-color: var(--accent); outline: none; }
+.me-form .source-logo { position: absolute; top: 50%; left: 0.75rem; height: 0.75rem; transform: translateY(-50%); }
+.me-form + .filter-status a { color: var(--accent-text); }
 
 .me-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 1.125rem;
   border: 1px solid var(--accent);
   border-radius: 6px;
   background: var(--accent);
@@ -1560,9 +1563,25 @@ a:focus-visible {
   cursor: pointer;
 }
 
-.me-file { margin-top: 0.75rem; background: none; color: var(--bright); }
-.me-file .icon { color: var(--accent-text); }
-#me-disconnect { margin-top: 1rem; padding-left: 0; }
+.me-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.me-status { display: flex; align-items: center; gap: 0.5rem; margin: 0; color: var(--bright); }
+.me-status b { color: var(--white); }
+.me-status .source-logo { height: 0.75rem; }
+#me-disconnect { margin: 0; }
+.me-page .rail-head h2 a { display: inline-flex; align-items: center; gap: 0.5rem; }
+.me-page .rail-head .icon { color: #6fd3a4; }
+.me-page .film-grid { margin-top: 0.75rem; }
 
 /* 10. Wider screens */
 

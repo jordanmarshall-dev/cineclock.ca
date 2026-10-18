@@ -6,8 +6,7 @@ Letterboxd has no API, so we read the same public pages a browser would:
   /<user>/rss/               their latest diary entries, with the date watched
 
 Letterboxd blocks the watched list past its first page (and the full diary),
-so a synced profile knows the whole watchlist but only recent watches. An
-uploaded export in the browser fills in the rest.
+so a synced profile knows the whole watchlist but only recent watches.
 
 Films are identified by Letterboxd's own slug ("santa-sangre"), which the
 site already stores for every matched film, so matching is exact rather than
@@ -24,8 +23,8 @@ import httpx
 from bs4 import BeautifulSoup
 
 BASE = "https://letterboxd.com"
-# Members whose lists the site reads on each update. Anyone else can upload
-# their Letterboxd export in the browser instead.
+# Members whose lists the site reads on each update. Letterboxd won't let a
+# browser read profiles from another site, so these are the usernames that work.
 SYNCED = ["yogzoth"]
 MAX_PAGES = 60  # 60 pages of watched films is over 4,000; a safety stop, not a limit we expect
 LB_NS = "{https://letterboxd.com}"

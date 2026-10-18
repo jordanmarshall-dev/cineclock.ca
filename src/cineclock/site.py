@@ -567,10 +567,10 @@ ROOT_MARK = "@root@"
 
 
 def shelf_index(film_list: list[FilmPage], now: datetime) -> list[dict]:
-    """films.json: each film's details plus its finished poster card, so the
-    watchlist shelf drawn in the browser looks exactly like every other card."""
+    """films.json: each film's finished poster card, so the Letterboxd rows drawn
+    in the browser look exactly like every other card."""
     parts = env.get_template("_parts.html").module
-    index = personal.films_index(film_list)
+    index = [{"slug": page.slug} for page in film_list]
     for entry, page in zip(index, film_list, strict=True):
         entry["card"] = str(parts.film_card(page, ROOT_MARK, when(page.next_showing, now))).strip()
     return index
@@ -641,9 +641,6 @@ def pages(conn: Connection, now: datetime) -> dict[str, str]:
         synced.append(user)
         data = personal.profile_json(stored[0], film_list, now)
         out[f"me/{user}.json"] = json.dumps(data, separators=(",", ":"))
-        out[f"me/{user}/watchlist.ics"] = personal.watchlist_calendar(
-            stored[0], film_list, venue_for, now
-        )
     out["me/index.html"] = render("me.html", "me/index.html", synced=synced)
     out["about/index.html"] = render("about.html", "about/index.html")
     for venue in VENUES:
