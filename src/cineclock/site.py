@@ -56,6 +56,15 @@ def compact(n: int) -> str:
     return str(n)
 
 
+def rarity(screenings: list[Screening]) -> list[str]:
+    """Flags for films you could easily miss: one showing, or several on a single day."""
+    if len(screenings) == 1:
+        return ["One screening"]
+    if len({s.local_start.date() for s in screenings}) == 1:
+        return ["One day only"]
+    return []
+
+
 @dataclass
 class FilmPage:
     slug: str
@@ -79,10 +88,9 @@ class FilmPage:
 
     @property
     def tags(self) -> list[str]:
-        tags = [t for s in self.screenings for t in tags_for(s)]
-        if len(self.screenings) == 1:
-            tags.append("One screening")
-        return sort_tags(tags)
+        return sort_tags(
+            [t for s in self.screenings for t in tags_for(s)] + rarity(self.screenings)
+        )
 
     @property
     def venues(self) -> list[Venue]:
@@ -120,10 +128,9 @@ class Row:
 
     @property
     def tags(self) -> list[str]:
-        tags = [t for s in self.showtimes for t in tags_for(s)]
-        if len(self.page.screenings) == 1:
-            tags.append("One screening")
-        return sort_tags(tags)
+        return sort_tags(
+            [t for s in self.showtimes for t in tags_for(s)] + rarity(self.page.screenings)
+        )
 
 
 @dataclass
@@ -219,14 +226,14 @@ def group_days(
 
 
 def when(s: Screening, now: datetime) -> str:
-    """Today 7:00 pm, Tomorrow 7:00 pm, Sat Oct 24, 7:00 pm"""
+    """Today, 7:00 pm / Tomorrow, 7:00 pm / Oct 24, 7:00 pm (short enough for a card)"""
     today = now.astimezone(VANCOUVER).date()
     day = s.local_start.date()
     if day == today:
         return f"Today, {clock(s.starts_at)}"
     if day == today + timedelta(days=1):
         return f"Tomorrow, {clock(s.starts_at)}"
-    return f"{day:%a %b} {day.day}, {clock(s.starts_at)}"
+    return f"{day:%b} {day.day}, {clock(s.starts_at)}"
 
 
 def rails(film_list: list[FilmPage], now: datetime) -> list[Rail]:

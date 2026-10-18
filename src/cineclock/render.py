@@ -17,6 +17,9 @@ STATIC = Path(__file__).parent / "static"
 env = Environment(loader=PackageLoader("cineclock"), autoescape=select_autoescape())
 env.filters["clock"] = clock
 env.filters["tagslug"] = slug
+env.filters["runtime"] = lambda minutes: (
+    f"{minutes // 60}h {minutes % 60:02d}m" if minutes >= 60 else f"{minutes}m"
+)
 env.filters["room_label"] = lambda s: room_label(s.venue, s.room)
 
 

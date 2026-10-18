@@ -30,8 +30,7 @@
           {% if p.film and p.film.director %}<span class="meta">{{ p.film.director }}</span>{% endif %}
           <span class="film-dates"><span>{{ icon("calendar") }}{{ p.date_range }}</span><span class="film-count">{{ icon("ticket") }}{{ p.screenings | length }} {{ "screening" if p.screenings | length == 1 else "screenings" }}</span></span>
           {{ ratings(p.film, root) }}
-          {# The count already says "1 screening", so that tag would repeat it. #}
-          {{ tag_list(p.tags | reject("equalto", "One screening") | list) }}
+          {{ tag_list(p.tags) }}
           <span class="card-venues">{% for v in p.venues %}{{ venue_badge(v, root) }}{% endfor %}</span>
         </span>
       </a>

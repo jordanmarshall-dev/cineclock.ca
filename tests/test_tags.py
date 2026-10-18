@@ -28,11 +28,11 @@ def test_screening_tags(title, note, film_format, expected):
     assert screening_tags(title, note, film_format) == expected
 
 
-def test_sort_tags_puts_formats_first_and_dedupes():
+def test_sort_tags_puts_rare_showings_then_formats_first_and_dedupes():
     assert sort_tags(["Event", "One screening", "70mm", "Event"]) == [
+        "One screening",
         "70mm",
         "Event",
-        "One screening",
     ]
 
 

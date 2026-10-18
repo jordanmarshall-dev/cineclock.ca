@@ -1,10 +1,11 @@
 {% extends "base.html" %}
-{% from "_parts.html" import day_sections, date_strip %}
+{% from "_parts.html" import day_sections, date_strip, icon %}
 
 {% block title %}{{ venue.name }} showtimes{% endblock %}
 {% block description %}What's playing at {{ venue.name }}, {{ venue.address }}.{% endblock %}
 
 {% block main %}
+{% set SPEC_ICONS = {"Seats": "seat", "Screen": "screen", "Projection": "projector", "Sound": "speaker"} %}
 <div class="wrap">
   <div class="theatre-head">
     {% if venue.full_logo and has_asset("logos/" ~ venue.full_logo) %}
@@ -18,8 +19,8 @@
   <p class="venue-blurb">{{ venue.blurb }}</p>
 
   <ul class="links">
-    {% if venue.address %}<li><a href="{{ venue.map_url }}">{{ venue.address.split(",")[0] }}</a></li>{% endif %}
-    {% if venue.website %}<li><a href="{{ venue.website }}">Website</a></li>{% endif %}
+    {% if venue.address %}<li><a href="{{ venue.map_url }}">{{ icon("pin") }}{{ venue.address.split(",")[0] }}</a></li>{% endif %}
+    {% if venue.website %}<li><a href="{{ venue.website }}">{{ icon("external") }}Website</a></li>{% endif %}
   </ul>
 
   {% if spec_fields %}
@@ -36,7 +37,7 @@
     <div class="room" data-room="{{ room.id }}">
       {% if venue.rooms | length > 1 %}<h3 class="room-name">{{ room.name }}</h3>{% endif %}
       <dl class="specs">
-        {% for f in spec_fields %}<div><dt>{{ f }}</dt><dd>{{ room.specs[f] }}</dd></div>{% endfor %}
+        {% for f in spec_fields %}<div><dt>{{ icon(SPEC_ICONS[f]) }}{{ f }}</dt><dd>{{ room.specs[f] }}</dd></div>{% endfor %}
       </dl>
     </div>
     {% endfor %}

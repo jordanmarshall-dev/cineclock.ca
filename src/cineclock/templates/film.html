@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_parts.html" import poster, showtime, tag_list, venue_badge, venue_label, source_mark %}
+{% from "_parts.html" import poster, showtime, tag_list, venue_label, source_mark, icon %}
 
 {% block title %}{{ page.title }}{% if page.year %} ({{ page.year }}){% endif %} showtimes in Vancouver{% endblock %}
 {% block description %}{% if film and film.overview %}{{ film.overview | truncate(160) }}{% else %}Showtimes for {{ page.title }} in Vancouver.{% endif %}{% endblock %}
@@ -16,9 +16,9 @@
     <div>
       <h1 class="film-title">{{ page.title }}</h1>
       <p class="film-sub">
-        {%- if page.year %}<b>{{ page.year }}</b>{% endif -%}
-        {%- if film and film.director %}{% if page.year %}, {% endif %}directed by <b>{{ film.director }}</b>{% endif -%}
-        {%- if film and film.runtime %}<br>{{ film.runtime }} min{% endif -%}
+        {%- if page.year %}<span><b>{{ page.year }}</b></span>{% endif -%}
+        {%- if film and film.runtime %}<span>{{ icon("clock") }}{{ film.runtime | runtime }}</span>{% endif -%}
+        {%- if film and film.director %}<span class="film-director">{{ icon("clapper") }}<span class="visually-hidden">Directed by </span><b>{{ film.director }}</b></span>{% endif -%}
       </p>
       {% if page.genres %}<p class="genres">{% for g in page.genres %}<span class="genre">{{ g }}</span>{% endfor %}</p>{% endif %}
       {{ tag_list(page.tags) }}

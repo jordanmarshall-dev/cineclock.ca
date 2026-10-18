@@ -20,7 +20,7 @@ EVENT = "|".join([
 ])  # fmt: skip
 PREVIEW = r"advance screening|insider screening|sneak preview|preview screening"
 
-ORDER = ["70mm", "35mm", "16mm", "IMAX", "Event", "Preview", "One screening"]
+ORDER = ["One screening", "One day only", "70mm", "35mm", "16mm", "IMAX", "Event", "Preview"]
 
 
 def screening_tags(title: str, note: str | None, film_format: str | None) -> list[str]:

@@ -42,16 +42,33 @@
 {% endif %}
 {%- endmacro %}
 
-{# Small line icons, drawn in the text colour. #}
-{% macro icon(name) -%}
-<svg class="icon" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-{%- if name == "calendar" %}<rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/>
-{%- elif name == "ticket" %}<path d="M4 7a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v3a2 2 0 0 0 0 4v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a2 2 0 0 0 0-4z"/><path d="M15 6.5v11" stroke-dasharray="1.5 2.5"/>
-{%- endif %}</svg>
+{# One set of line icons, drawn in the current text colour so they follow whatever they sit in. #}
+{% set ICONS = {
+  "calendar": '<rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
+  "ticket": '<path d="M4 7a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v3a2 2 0 0 0 0 4v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a2 2 0 0 0 0-4z"/><path d="M15 6.5v11" stroke-dasharray="1.5 2.5"/>',
+  "clock": '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  "pin": '<path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>',
+  "external": '<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
+  "film": '<rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M8 3v18M16 3v18M4 7.5h4M4 12h4M4 16.5h4M16 7.5h4M16 12h4M16 16.5h4"/>',
+  "mic": '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M9 21h6"/>',
+  "eye": '<path d="M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.5"/>',
+  "star": '<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>',
+  "clapper": '<path d="M4 9.5h16V19a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 19zM4 9.5l-.6-2.9a1 1 0 0 1 .8-1.2l13.7-2.7a1 1 0 0 1 1.2.8l.5 2.6zM8.5 4.3l2 4.4M13.5 3.3l2 4.4"/>',
+  "seat": '<path d="M6 11V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v5M4 11h16v4H4zM6 15v5M18 15v5"/>',
+  "screen": '<rect x="3" y="5" width="18" height="11" rx="1"/><path d="M8 20h8M12 16v4"/>',
+  "projector": '<rect x="3" y="8" width="18" height="9" rx="2"/><circle cx="15" cy="12.5" r="2.5"/><path d="M6.5 12.5h3M7 17v2.5M17 17v2.5"/>',
+  "speaker": '<path d="M4 9.5h3.5L12 6v12l-4.5-3.5H4zM15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/>',
+  "search": '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>',
+  "chevron": '<path d="M9 5l7 7-7 7"/>',
+} %}
+{% macro icon(name, size=14) -%}
+<svg class="icon icon-{{ name }}" viewBox="0 0 24 24" width="{{ size }}" height="{{ size }}" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">{{ ICONS[name] | safe }}</svg>
 {%- endmacro %}
 
+{% set TAG_ICONS = {"One screening": "star", "One day only": "star", "70mm": "film", "35mm": "film", "16mm": "film", "IMAX": "screen", "Event": "mic", "Preview": "eye"} %}
+
 {% macro tag_list(tags) -%}
-{% if tags %}<p class="tags">{% for t in tags %}<span class="tag tag-{{ t | tagslug }}">{{ t }}</span>{% endfor %}</p>{% endif %}
+{% if tags %}<p class="tags">{% for t in tags %}<span class="tag tag-{{ t | tagslug }}">{% if t in TAG_ICONS %}{{ icon(TAG_ICONS[t], 12) }}{% endif %}{{ t }}</span>{% endfor %}</p>{% endif %}
 {%- endmacro %}
 
 {% macro showtime(s, label=None) -%}
@@ -106,7 +123,7 @@
 <section class="rail" aria-labelledby="rail-{{ r.title | tagslug }}">
   <div class="rail-head">
     <h2 id="rail-{{ r.title | tagslug }}"><a href="{{ root }}{{ r.more }}">{{ r.title }}</a></h2>
-    <a class="see-all" href="{{ root }}{{ r.more }}" aria-label="See all: {{ r.title }}"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+    <a class="see-all" href="{{ root }}{{ r.more }}" aria-label="See all: {{ r.title }}">{{ icon("chevron", 22) }}</a>
   </div>
   <ul class="rail-cards">
     {% for c in r.cards %}
@@ -118,7 +135,7 @@
         </span>
         <span class="card-title">{{ c.page.title }}{% if c.page.year %} <span class="year">{{ c.page.year }}</span>{% endif %}</span>
         {% if c.why %}<span class="card-why">{{ c.why }}</span>{% endif %}
-        <span class="card-next">{{ c.next_label }}</span>
+        <span class="card-next">{{ icon("clock", 12) }}{{ c.next_label }}</span>
       </a>
     </li>
     {% endfor %}
@@ -130,7 +147,7 @@
 {% macro filter_bar(venues, filter_tags, genres, sorting=False) -%}
 <form class="filters" role="search" hidden>
   <div class="filter-top">
-    <input type="search" name="q" placeholder="Search films" aria-label="Search films" autocomplete="off">
+    <label class="search">{{ icon("search", 16) }}<input type="search" name="q" placeholder="Search films" aria-label="Search films" autocomplete="off"></label>
     {% if sorting %}
     <select name="sort" aria-label="Sort films">
       <option value="next">Soonest</option>

@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 {% from "_parts.html" import rail %}
 
-{% block title %}cineclock: Support local cinema{% endblock %}
+{% block title %}cineclock: Support local cinemas{% endblock %}
 
 {% block main %}
 <div class="wrap">
-  <p class="tagline">Support local cinema.</p>
+  <p class="tagline">Support local cinemas.</p>
   {% if rails %}
     {% for r in rails %}{{ rail(r, root) }}{% endfor %}
     <p class="all-showtimes"><a href="{{ root }}showtimes/">All showtimes, day by day</a></p>

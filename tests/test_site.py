@@ -24,6 +24,11 @@ def show(title, starts, venue="The Rio", year=None, note=None, poster=None, info
     )  # fmt: skip
 
 
+def plain(html):
+    """Page HTML without inline icons, so tests can match the text around them."""
+    return re.sub(r"<svg.*?</svg>", "", html, flags=re.S)
+
+
 def film(title, year, tmdb_id=None, **extra):
     return Film(match_key(title, year), NOW, tmdb_id=tmdb_id, title=title, year=year, **extra)
 
@@ -194,8 +199,8 @@ def test_film_page_shows_details_ratings_and_links(conn):
     )  # fmt: skip
     page = pages(conn, NOW)["films/the-thing-1982/index.html"]
     for expected in [
-        "directed by <b>John Carpenter</b>",
-        "109 min",
+        "Directed by </span><b>John Carpenter</b>",
+        "1h 49m",
         "A research team in Antarctica.",
         ">4.3<",
         ">8.2<",
@@ -363,8 +368,8 @@ def test_rows_carry_tags_and_filter_data(conn):
     save(conn, show("Dune: Part Three", at(18, 19), "The Park", note="Presented in 70mm"))
     page = pages(conn, NOW)["showtimes/index.html"]
     assert 'data-venues="park"' in page
-    assert 'data-tags="70mm one-screening"' in page
-    assert 'class="tag tag-70mm">70mm<' in page
+    assert 'data-tags="one-screening 70mm"' in page
+    assert 'class="tag tag-70mm">70mm<' in plain(page)
     assert 'data-value="on-film"' in page
 
 
@@ -391,7 +396,7 @@ def test_every_rail_has_a_see_all_link(conn):
 def test_next_label_for_later_days(conn):
     save(conn, show("Later", at(24, 20, 15)))
     [card] = rail_titles(conn)["Coming up"].cards
-    assert card.next_label == "Sat Oct 24, 8:15 pm"
+    assert card.next_label == "Oct 24, 8:15 pm"
 
 
 def test_home_cards_show_year_reason_next_showing_and_theatres(conn):
@@ -404,7 +409,7 @@ def test_home_cards_show_year_reason_next_showing_and_theatres(conn):
     home = pages(conn, NOW)["index.html"]
     assert '<span class="year">1970</span>' in home
     assert '<span class="card-why">4.1 on Letterboxd</span>' in home
-    assert '<span class="card-next">Today, 7:00 pm</span>' in home
+    assert '<span class="card-next">Today, 7:00 pm</span>' in plain(home)
     assert 'title="The Rio"' in home and 'title="The Cinematheque"' in home
 
 
@@ -433,7 +438,7 @@ def test_theatres_page_lists_every_venue(conn):
 
 def test_theatre_page_has_specs_and_about(conn):
     page = pages(conn, NOW)["theatres/cinematheque/index.html"]
-    assert "<dt>Seats</dt><dd>153</dd>" in page
+    assert "<dt>Seats</dt><dd>153</dd>" in plain(page)
     assert "Pacific Cinémathèque Pacifique Society" in page
 
 
@@ -476,13 +481,13 @@ def test_every_theatre_page_shows_the_same_spec_fields(conn):
     built = pages(conn, NOW)
     for v in VENUES:
         page = built[f"theatres/{v.slug}/index.html"]
-        assert re.findall(r"<dt>(\w+)</dt>", page) == shown_specs() * len(v.rooms), v.name
+        assert re.findall(r"<dt>(\w+)</dt>", plain(page)) == shown_specs() * len(v.rooms), v.name
 
 
 def test_viff_page_has_a_room_picker(conn):
     page = pages(conn, NOW)["theatres/viff-centre/index.html"]
     assert '<option value="viff-lochmaddy">Lochmaddy Studio Theatre</option>' in page
-    assert "<dt>Seats</dt><dd>41</dd>" in page
+    assert "<dt>Seats</dt><dd>41</dd>" in plain(page)
     assert "room-picker" not in pages(conn, NOW)["theatres/rio/index.html"]
 
 
@@ -518,5 +523,14 @@ def test_theatres_list_uses_full_logos(conn):
 def test_home_has_the_tagline(conn):
     save(conn, show("Musk", at(18, 12)))
     page = pages(conn, NOW)["index.html"]
-    assert '<p class="tagline">Support local cinema.</p>' in page
-    assert "<title>cineclock: Support local cinema</title>" in page
+    assert '<p class="tagline">Support local cinemas.</p>' in page
+    assert "<title>cineclock: Support local cinemas</title>" in page
+
+
+def test_several_showings_on_one_day_are_flagged():
+    save(conn := db.connect(":memory:"), show("Jaws", at(19, 14)), show("Jaws", at(19, 19)))
+    [p] = {id(x): x for x in film_pages(db.upcoming(conn, NOW), {}).values()}.values()
+    assert p.tags == ["One day only"]
+    save(conn, show("Jaws", at(19, 14)), show("Jaws", at(19, 19)), show("Jaws", at(20, 19)))
+    [p] = {id(x): x for x in film_pages(db.upcoming(conn, NOW), {}).values()}.values()
+    assert p.tags == []
