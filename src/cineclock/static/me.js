@@ -162,6 +162,8 @@
     const value = saved();
     show(Boolean(value));
     if (!value) return;
+    // Connected: the Letterboxd button shows whose profile it is.
+    document.querySelectorAll("[data-me-name]").forEach((el) => (el.textContent = value.user));
     try {
       const me = await load(value);
       if (!me) return;

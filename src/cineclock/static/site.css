@@ -1611,6 +1611,19 @@ a:focus-visible {
 .price-list dt small { display: block; color: var(--text); font-size: 0.75rem; }
 .price-list dd { margin: 0; color: var(--white); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
+/* A film page's link to the theatre's own page for it, under that theatre's times. */
+.run-more { margin: 0.875rem 0 0; padding-top: 0.75rem; border-top: 1px solid var(--panel-line); }
+.run-more a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: var(--accent-text);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+.run-more a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
 /* Your Letterboxd: one username box, then your films. */
 .me-form { display: flex; gap: 0.5rem; max-width: 30rem; margin-top: 1rem; }
 .me-form input {

@@ -59,6 +59,9 @@
       {% endfor %}
     </div>
     {% endfor %}
+    {# The theatre's own page for this film: trailers, notes, guests, everything we don't copy. #}
+    {% set info = run.days | map(attribute=1) | sum(start=[]) | map(attribute="showtimes") | sum(start=[]) | map(attribute="info_url") | select | first %}
+    {% if info %}<p class="run-more"><a href="{{ info }}" target="_blank" rel="noopener">{{ icon("external") }}More about this screening at {{ run.venue.short }}</a></p>{% endif %}
   </div>
   {% endfor %}
 </div>

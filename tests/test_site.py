@@ -221,7 +221,9 @@ def test_film_page_links_go_through_score_tiles(conn):
     page = pages(conn, NOW)["films/the-thing-1982/index.html"]
     assert 'href="https://letterboxd.com/tmdb/1091/"' in page
     assert 'class="links"' not in page
-    assert "https://viff/x" not in page
+    # The theatre's own page for the film sits under its showtimes, opening in a new tab.
+    assert '<p class="run-more"><a href="https://viff/x" target="_blank" rel="noopener">' in page
+    assert "More about this screening at VIFF" in page
     assert 'href="../../theatres/viff-centre/">' in page
 
 
@@ -906,3 +908,9 @@ def test_theatre_tags_link_to_films_at_that_theatre(conn):
     assert 'href="../../films/?venue=rio&amp;tag=q-a"' in rio
     # Room features aren't on any screening, so they stay plain pills.
     assert '<span class="tag tag-event tag-7-1">' in rio
+
+
+def test_booking_opens_in_a_new_tab(conn):
+    save(conn, show("Jaws", at(19, 19), year=1975))
+    page = pages(conn, NOW)["showtimes/index.html"]
+    assert 'target="_blank" rel="noopener" aria-label="Tickets for Jaws' in page

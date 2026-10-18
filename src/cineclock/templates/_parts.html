@@ -105,7 +105,9 @@
 {%- endmacro %}
 
 {% macro showtime(s, label=None, rare=False) -%}
-<a class="time{% if rare %} time-rare{% endif %}" href="{{ s.url }}" aria-label="Tickets for {{ label or s.title }}, {{ s.local_start.strftime('%A %B') }} {{ s.local_start.day }} at {{ s.starts_at | clock }}{% if s | room_label %}, {{ s | room_label }}{% endif %}">
+{# Booking opens in a new tab: the theatres' ticket pages can't be shown inside
+   another site, and cineclock stays open for after checkout. #}
+<a class="time{% if rare %} time-rare{% endif %}" href="{{ s.url }}" target="_blank" rel="noopener" aria-label="Tickets for {{ label or s.title }}, {{ s.local_start.strftime('%A %B') }} {{ s.local_start.day }} at {{ s.starts_at | clock }}{% if s | room_label %}, {{ s | room_label }}{% endif %} (opens in a new tab)">
   {{- icon("ticket", 16) }}<span class="time-text">{{ s.starts_at | clock }}{% if s | room_label %}<small>{{ s | room_label }}</small>{% endif %}</span>
 </a>
 {%- endmacro %}
