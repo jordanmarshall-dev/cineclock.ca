@@ -8,7 +8,6 @@
 {% set SPEC_ICONS = {"Seats": "seat", "Screen": "screen", "Projection": "projector", "Sound": "speaker"} %}
 {% set OFFER_ICONS = {"70mm": "film", "35mm": "film", "16mm": "film", "4K": "screen", "3D": "eye", "7.1 sound": "speaker", "Curved screen": "screen"} %}
 {% set photo = "theatres/" ~ venue.slug ~ ".jpg" %}
-{% set inside = "theatres/" ~ venue.slug ~ "-inside.jpg" %}
 {% if has_asset(photo) %}
 <div class="theatre-hero" aria-hidden="true"><img src="{{ root }}static/{{ photo }}" alt="" style="object-position: {{ venue.photo_focus }}" onerror="this.hidden = true"></div>
 {% endif %}
@@ -45,19 +44,18 @@
       </select>
       {% endif %}
     </div>
-    <div class="room-layout">
-      {% if has_asset(inside) %}<figure class="room-photo"><img src="{{ root }}static/{{ inside }}" alt="Inside {{ venue.name }}" loading="lazy"></figure>{% endif %}
-      <div>
-        {% for room in venue.rooms %}
-        <div class="room" data-room="{{ room.id }}">
-          {% if venue.rooms | length > 1 %}<h3 class="room-name">{{ room.name }}</h3>{% endif %}
-          <dl class="specs">
-            {% for f in spec_fields %}<div><dt>{{ icon(SPEC_ICONS[f]) }}{{ f }}</dt><dd>{{ room.specs[f] }}</dd></div>{% endfor %}
-          </dl>
-        </div>
-        {% endfor %}
+    {% for room in venue.rooms %}
+    {% set room_photo = "rooms/" ~ room.id ~ ".jpg" %}
+    <div class="room" data-room="{{ room.id }}">
+      {% if venue.rooms | length > 1 %}<h3 class="room-name">{{ room.name }}</h3>{% endif %}
+      <div class="room-layout{% if has_asset(room_photo) %} has-photo{% endif %}">
+        {% if has_asset(room_photo) %}<figure class="room-photo"><img src="{{ root }}static/{{ room_photo }}" alt="Inside {{ room.name if venue.rooms | length > 1 else venue.name }}" loading="lazy"></figure>{% endif %}
+        <dl class="specs">
+          {% for f in spec_fields %}<div><dt>{{ icon(SPEC_ICONS[f]) }}{{ f }}</dt><dd>{{ room.specs[f] }}</dd></div>{% endfor %}
+        </dl>
       </div>
     </div>
+    {% endfor %}
   </section>
   {% endif %}
 

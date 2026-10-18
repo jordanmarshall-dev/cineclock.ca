@@ -629,4 +629,6 @@ def test_most_screenings_needs_a_real_run(conn):
 
 def test_theatre_page_frames_the_inside_photo_beside_the_specs(conn):
     page = pages(conn, NOW)["theatres/rio/index.html"]
-    assert 'class="room-photo"' in page and "static/theatres/rio-inside.jpg" in page
+    assert 'class="room-photo"' in page and "static/rooms/rio-main.jpg" in page
+    viff = pages(conn, NOW)["theatres/viff-centre/index.html"]
+    assert "static/rooms/viff-lochmaddy.jpg" in viff and "static/rooms/viff-main.jpg" in viff

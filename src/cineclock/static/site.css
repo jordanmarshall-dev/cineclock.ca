@@ -1390,10 +1390,11 @@ a:focus-visible {
   .day-bar { margin-left: 0; margin-right: 0; padding-left: 0; padding-right: 0; }
 }
 
-/* The room: a framed photo of the auditorium beside its specs. */
-.room-layout { display: grid; gap: 1rem; margin-top: 1rem; }
+/* The room: a framed photo of the auditorium beside its specs. On wide
+   screens the specs stretch to the photo's height so nothing floats. */
+.room-layout { display: grid; gap: 0.75rem; margin-top: 1rem; }
 .room-layout .specs { margin-top: 0; }
-.room-layout .room-name { margin-top: 0; }
+.room-name { margin-bottom: 0; }
 
 .room-photo {
   margin: 0;
@@ -1407,6 +1408,8 @@ a:focus-visible {
 .room-photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
 
 @media (min-width: 40rem) {
-  .room-layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
-  .room-layout .specs { grid-template-columns: repeat(2, 1fr); }
+  .room-layout.has-photo { grid-template-columns: 3fr 2fr; align-items: stretch; }
+  .room-layout.has-photo .specs { grid-template-columns: repeat(2, 1fr); grid-auto-rows: 1fr; }
+  .room-layout.has-photo .specs div { display: flex; flex-direction: column; justify-content: center; }
+  .room-layout.has-photo .specs dd { font-size: 1.125rem; }
 }
