@@ -24,6 +24,7 @@ class Film:
     backdrop_url: str | None = None
     letterboxd_url: str | None = None
     letterboxd_rating: float | None = None
+    letterboxd_count: int | None = None
     imdb_rating: float | None = None
     rt_score: int | None = None
 

@@ -12,5 +12,5 @@ Saved venue responses, so tests never touch the network.
 - `cinematheque/calendar.html`: the Cinematheque's calendar, Oct 18 2026, with rentals, an AGM notice and closed days mixed in.
 - `cinematheque/film_*.html`: a feature and a shorts program with no year, Oct 18 2026.
 - `enrich/tmdb_*.json`: real TMDB responses for The Thing, Oct 18 2026 (credits trimmed to a few people).
-- `enrich/letterboxd_the_thing.html`: the <head> of Letterboxd's real page for The Thing, Oct 18 2026 (the body isn't used).
+- `enrich/letterboxd_the_thing.html`: the <head> and structured-data script of Letterboxd's real page for The Thing, Oct 18 2026.
 - `enrich/omdb_tt0084787.json`: real OMDb response for The Thing, Oct 18 2026.

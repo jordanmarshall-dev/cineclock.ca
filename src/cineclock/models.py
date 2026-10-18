@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from importlib.resources import files
 from zoneinfo import ZoneInfo
@@ -22,6 +22,10 @@ class Screening:
     year: int | None = None
     note: str | None = None
     poster_url: str | None = None
+    # As the venue lists it: "35mm", "DCP". Only the Cinematheque says, so far.
+    film_format: str | None = None
+    # When cineclock first saw this listing. Not part of what makes two screenings equal.
+    first_seen: datetime | None = field(default=None, compare=False)
 
     def __post_init__(self):
         # Scrapers must hand us a real moment in time, not a bare clock reading.

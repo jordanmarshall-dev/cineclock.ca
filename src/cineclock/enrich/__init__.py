@@ -26,6 +26,11 @@ class EnrichResult:
     failed: int
 
 
+def needs_backfill(film: Film) -> bool:
+    """Films saved before rating counts were collected get one early refresh."""
+    return film.letterboxd_rating is not None and film.letterboxd_count is None
+
+
 def lookup_film(
     client: httpx.Client,
     title: str,
@@ -39,11 +44,11 @@ def lookup_film(
     if not found:
         return Film(match_key=match_key(title, year), fetched_at=now)
 
-    lb_url, lb_rating, imdb_rating, rt_score = None, None, None, None
+    lb, imdb_rating, rt_score = letterboxd.LetterboxdFilm(), None, None
     # Letterboxd and OMDb are extras: if either is down, keep the TMDB match.
     try:
         time.sleep(pause)  # Be gentle with Letterboxd, which has no API.
-        lb_url, lb_rating = letterboxd.lookup(client, found["tmdb_id"])
+        lb = letterboxd.lookup(client, found["tmdb_id"])
     except httpx.HTTPError:
         pass
     if omdb_key and found["imdb_id"]:
@@ -55,8 +60,9 @@ def lookup_film(
     return Film(
         match_key=match_key(title, year),
         fetched_at=now,
-        letterboxd_url=lb_url,
-        letterboxd_rating=lb_rating,
+        letterboxd_url=lb.url,
+        letterboxd_rating=lb.rating,
+        letterboxd_count=lb.rating_count,
         imdb_rating=imdb_rating,
         rt_score=rt_score,
         **found,
@@ -78,7 +84,7 @@ def enrich(
     looked_up = matched = failed = 0
     for title, year in sorted(wanted, key=lambda item: (item[0], item[1] or 0)):
         cached = db.get_film(conn, match_key(title, year))
-        if cached:
+        if cached and not needs_backfill(cached):
             wait = REFRESH_MATCHED if cached.matched else RETRY_UNMATCHED
             if now - cached.fetched_at < wait:
                 continue

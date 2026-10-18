@@ -84,9 +84,11 @@ def parse_film_page(page: str) -> FilmDetails:
     year_tag = soup.select_one("ul#details .filmYear")
     year_text = year_tag.get_text(strip=True) if year_tag else ""
     og_image = soup.find("meta", property="og:image")
+    film_format = soup.select_one("ul#details .filmFormat")
     return FilmDetails(
         year=int(year_text) if re.fullmatch(r"(18|19|20)\d{2}", year_text) else None,
         poster_url=(og_image.get("content") if og_image else None) or None,
+        film_format=(film_format.get_text(strip=True) or None) if film_format else None,
     )
 
 

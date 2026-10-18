@@ -24,6 +24,8 @@ CREATE TABLE IF NOT EXISTS screenings (
     year INTEGER,
     note TEXT,
     poster_url TEXT,
+    film_format TEXT,
+    first_seen TEXT,
     UNIQUE (venue, title, starts_at)
 );
 CREATE INDEX IF NOT EXISTS screenings_starts_at ON screenings (starts_at);
@@ -44,12 +46,15 @@ CREATE TABLE IF NOT EXISTS films (
     backdrop_url TEXT,
     letterboxd_url TEXT,
     letterboxd_rating REAL,
+    letterboxd_count INTEGER,
     imdb_rating REAL,
     rt_score INTEGER
 );
 """
 
-FIELDS = ("venue", "title", "starts_at", "url", "info_url", "year", "note", "poster_url")
+FIELDS = (
+    "venue", "title", "starts_at", "url", "info_url", "year", "note", "poster_url", "film_format",
+)  # fmt: skip
 
 
 @dataclass(frozen=True)
@@ -59,12 +64,30 @@ class SyncResult:
     removed: int
 
 
+# Columns added after the first release. A database saved by an older version
+# (like the one the deploy keeps between runs) gets them added on connect.
+ADDED_COLUMNS = {
+    "screenings": {"first_seen": "TEXT", "film_format": "TEXT"},
+    "films": {"letterboxd_count": "INTEGER"},
+}
+
+
 def connect(path: str = "cineclock.db") -> sqlite3.Connection:
     # The web app may open the connection on one thread and use it on another.
     conn = sqlite3.connect(path, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.executescript(SCHEMA)
+    upgrade(conn)
     return conn
+
+
+def upgrade(conn: sqlite3.Connection) -> None:
+    for table, columns in ADDED_COLUMNS.items():
+        have = {row["name"] for row in conn.execute(f"PRAGMA table_info({table})")}
+        for name, kind in columns.items():
+            if name not in have:
+                conn.execute(f"ALTER TABLE {table} ADD COLUMN {name} {kind}")
+    conn.commit()
 
 
 def _utc_text(dt: datetime) -> str:
@@ -83,12 +106,15 @@ def _to_row(s: Screening) -> tuple:
         s.year,
         s.note,
         s.poster_url,
+        s.film_format,
     )
 
 
 def _from_row(row: sqlite3.Row) -> Screening:
     data = {field: row[field] for field in FIELDS}
     data["starts_at"] = datetime.fromisoformat(data["starts_at"])
+    if row["first_seen"]:
+        data["first_seen"] = datetime.fromisoformat(row["first_seen"])
     return Screening(**data)
 
 
@@ -122,15 +148,19 @@ def sync_venue(
         }
         conn.executemany(
             f"""
-            INSERT INTO screenings ({", ".join(FIELDS)}) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO screenings ({", ".join(FIELDS)}, first_seen)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT (venue, title, starts_at) DO UPDATE SET
                 url = excluded.url,
                 info_url = excluded.info_url,
                 year = excluded.year,
                 note = excluded.note,
-                poster_url = excluded.poster_url
+                poster_url = excluded.poster_url,
+                film_format = excluded.film_format,
+                -- Keep the date we first saw it; only fill it in for older rows.
+                first_seen = COALESCE(screenings.first_seen, excluded.first_seen)
             """,
-            [_to_row(s) for s in screenings],
+            [(*_to_row(s), cutoff) for s in screenings],
         )
         gone = {key for key in existing - scraped if key[1] >= cutoff}
         conn.executemany(

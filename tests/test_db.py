@@ -131,3 +131,34 @@ def test_database_file_persists(tmp_path):
     reopened = db.connect(path)
     assert [s.title for s in db.upcoming(reopened, NOW)] == ["Stalker"]
     reopened.close()
+
+
+def test_first_seen_is_kept_on_later_syncs(conn):
+    db.sync_venue(conn, "The Rio", [show("Stalker", 30)], NOW)
+    db.sync_venue(
+        conn, "The Rio", [show("Stalker", 30), show("Mirror", 40)], NOW + timedelta(days=1)
+    )
+    seen = {s.title: s.first_seen for s in db.upcoming(conn, NOW)}
+    assert seen == {"Stalker": NOW, "Mirror": NOW + timedelta(days=1)}
+
+
+def test_old_database_gets_new_columns(tmp_path):
+    path = str(tmp_path / "old.db")
+    old = sqlite3.connect(path)
+    old.executescript("""
+        CREATE TABLE screenings (
+            id INTEGER PRIMARY KEY, venue TEXT NOT NULL, title TEXT NOT NULL,
+            starts_at TEXT NOT NULL, url TEXT NOT NULL, info_url TEXT, year INTEGER,
+            note TEXT, poster_url TEXT, UNIQUE (venue, title, starts_at)
+        );
+        INSERT INTO screenings (venue, title, starts_at, url)
+            VALUES ('The Rio', 'Stalker', '2026-10-19T08:00:00+00:00', 'https://x');
+    """)
+    old.close()
+    conn = db.connect(path)
+    [saved] = db.upcoming(conn, NOW)
+    assert saved.title == "Stalker" and saved.first_seen is None
+    # Syncing fills in the missing date rather than leaving it blank forever
+    db.sync_venue(conn, "The Rio", [saved], NOW)
+    assert db.upcoming(conn, NOW)[0].first_seen == NOW
+    conn.close()

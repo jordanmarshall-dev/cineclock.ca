@@ -5,15 +5,23 @@ from cineclock.enrich import letterboxd, omdb
 
 
 def test_letterboxd_page(fixture_text):
-    url, rating = letterboxd.parse_film_page(fixture_text("enrich/letterboxd_the_thing.html"))
-    assert url == "https://letterboxd.com/film/the-thing/"
-    assert rating == 4.35
+    found = letterboxd.parse_film_page(fixture_text("enrich/letterboxd_the_thing.html"))
+    assert found == letterboxd.LetterboxdFilm(
+        "https://letterboxd.com/film/the-thing/", 4.35, 1476132
+    )
+
+
+def test_letterboxd_structured_data_that_is_not_json():
+    page = '<script type="application/ld+json">/* <![CDATA[ */ {broken /* ]]> */</script>'
+    assert letterboxd.parse_film_page(page).rating_count is None
 
 
 def test_letterboxd_page_without_rating():
     # Films with too few ratings have no average yet.
     page = '<meta property="og:url" content="https://letterboxd.com/film/obscure/">'
-    assert letterboxd.parse_film_page(page) == ("https://letterboxd.com/film/obscure/", None)
+    assert letterboxd.parse_film_page(page) == letterboxd.LetterboxdFilm(
+        "https://letterboxd.com/film/obscure/"
+    )
 
 
 def test_letterboxd_lookup_follows_the_redirect(fixture_text):
@@ -25,7 +33,12 @@ def test_letterboxd_lookup_follows_the_redirect(fixture_text):
         return httpx.Response(200, text=fixture_text("enrich/letterboxd_the_thing.html"))
 
     with httpx.Client(transport=httpx.MockTransport(handler), follow_redirects=True) as client:
-        assert letterboxd.lookup(client, 1091) == ("https://letterboxd.com/film/the-thing/", 4.35)
+        found = letterboxd.lookup(client, 1091)
+    assert (found.url, found.rating, found.rating_count) == (
+        "https://letterboxd.com/film/the-thing/",
+        4.35,
+        1476132,
+    )
 
 
 def test_letterboxd_blocked_raises():

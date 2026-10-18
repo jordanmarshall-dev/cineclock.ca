@@ -85,3 +85,19 @@ def test_scrape_adds_details_and_drops_past(fixture_text):
     assert all(s.starts_at >= now for s in screenings)
     daughters = [s for s in screenings if s.title == "Daughters of Darkness"]
     assert daughters and all(s.year == 1971 for s in daughters)
+
+
+def test_film_page_format(fixture_text):
+    details = cinematheque.parse_film_page(
+        fixture_text("cinematheque/film_daughters-darkness.html")
+    )
+    assert details.film_format == "DCP"
+
+
+def test_shorts_program_has_no_format(fixture_text):
+    assert (
+        cinematheque.parse_film_page(
+            fixture_text("cinematheque/film_sfmf-series-2.html")
+        ).film_format
+        is None
+    )
