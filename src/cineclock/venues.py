@@ -227,7 +227,7 @@ VENUES = [
             ),
         ),
         mark="dunbar-mark.png",
-        full_logo="dunbar-mark.png",
+        full_logo="dunbar-full.png",
         about=(
             "Built in 1935 and one of the last neighbourhood movie houses in Vancouver.",
             "Run independently by Ken Charko since 1998, with a focus on first-run films.",

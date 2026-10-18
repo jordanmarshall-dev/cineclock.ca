@@ -5,15 +5,15 @@
 {%- endmacro %}
 
 {# A theatre pill: the theatre's own compact logo, or its initials if the file is missing. #}
-{% macro venue_badge(v, root) -%}
+{% macro venue_badge(v, root, scale=1) -%}
 <span class="venue-pill" title="{{ v.name }}">
-  {%- if v.mark and has_asset("logos/" ~ v.mark) %}{% set w, h = logo_size("logos/" ~ v.mark, 900 * v.mark_scale ** 2, 12 * v.mark_scale) %}<img src="{{ root }}static/logos/{{ v.mark }}" alt="{{ v.name }}" width="{{ w }}" height="{{ h }}">{% else %}<span class="monogram" role="img" aria-label="{{ v.name }}">{{ v.monogram }}</span>{% endif -%}
+  {%- if v.mark and has_asset("logos/" ~ v.mark) %}{% set w, h = logo_size("logos/" ~ v.mark, 900 * (v.mark_scale * scale) ** 2, 12 * v.mark_scale * scale) %}<img src="{{ root }}static/logos/{{ v.mark }}" alt="{{ v.name }}" width="{{ w }}" height="{{ h }}">{% else %}<span class="monogram" role="img" aria-label="{{ v.name }}">{{ v.monogram }}</span>{% endif -%}
 </span>
 {%- endmacro %}
 
 {# The theatre's logo stands in for its name; the name shows only when there's no logo file. #}
 {% macro venue_label(v, root) -%}
-{%- if v.mark and has_asset("logos/" ~ v.mark) %}{{ venue_badge(v, root) }}{% else %}<span>{{ v.name }}</span>{% endif -%}
+{%- if v.mark and has_asset("logos/" ~ v.mark) %}{{ venue_badge(v, root, scale=1.6) }}{% else %}<span>{{ v.name }}</span>{% endif -%}
 {%- endmacro %}
 
 {# A room pill, only for rooms other than the theatre's main one. #}
@@ -98,7 +98,7 @@
 <section class="rail" aria-labelledby="rail-{{ r.title | tagslug }}">
   <div class="rail-head">
     <h2 id="rail-{{ r.title | tagslug }}"><a href="{{ root }}{{ r.more }}">{{ r.title }}</a></h2>
-    <a class="see-all" href="{{ root }}{{ r.more }}">See all</a>
+    <a class="see-all" href="{{ root }}{{ r.more }}" aria-label="See all: {{ r.title }}"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
   </div>
   <ul class="rail-cards">
     {% for c in r.cards %}

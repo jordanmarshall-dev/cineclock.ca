@@ -20,7 +20,7 @@
         {%- if film and film.director %}{% if page.year %}, {% endif %}directed by <b>{{ film.director }}</b>{% endif -%}
         {%- if film and film.runtime %}<br>{{ film.runtime }} min{% endif -%}
       </p>
-      {% if page.genres %}<p class="genres">{{ page.genres | join(", ") }}</p>{% endif %}
+      {% if page.genres %}<p class="genres">{% for g in page.genres %}<span class="genre">{{ g }}</span>{% endfor %}</p>{% endif %}
       {{ tag_list(page.tags) }}
     </div>
   </div>
