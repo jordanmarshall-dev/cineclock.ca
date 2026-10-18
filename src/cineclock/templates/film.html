@@ -23,23 +23,15 @@
     </div>
   </div>
 
-  {% if film and (film.letterboxd_rating or film.imdb_rating or film.rt_score is not none) %}
+  {% if film %}
   <ul class="scores" aria-label="Ratings">
-    {% if film.letterboxd_rating %}<li><a href="{{ film.letterboxd_link }}"><span class="score-value">{{ "%.1f" | format(film.letterboxd_rating) }}</span><span class="score-source">Letterboxd</span></a></li>{% endif %}
-    {% if film.imdb_rating %}<li><a href="{{ film.imdb_link }}"><span class="score-value">{{ "%.1f" | format(film.imdb_rating) }}</span><span class="score-source">IMDb</span></a></li>{% endif %}
-    {% if film.rt_score is not none %}<li><a href="{{ film.rt_link }}"><span class="score-value">{{ film.rt_score }}%</span><span class="score-source">Rotten Tomatoes</span></a></li>{% endif %}
+    {% if film.letterboxd_link %}<li><a href="{{ film.letterboxd_link }}"><span class="score-value">{{ "%.1f" | format(film.letterboxd_rating) if film.letterboxd_rating else "–" }}</span><span class="score-source">Letterboxd</span></a></li>{% endif %}
+    {% if film.imdb_link %}<li><a href="{{ film.imdb_link }}"><span class="score-value">{{ "%.1f" | format(film.imdb_rating) if film.imdb_rating else "–" }}</span><span class="score-source">IMDb</span></a></li>{% endif %}
+    {% if film.rt_link %}<li><a href="{{ film.rt_link }}"><span class="score-value">{{ film.rt_score ~ "%" if film.rt_score is not none else "–" }}</span><span class="score-source">Rotten Tomatoes</span></a></li>{% endif %}
   </ul>
   {% endif %}
 
   {% if film and film.overview %}<p class="synopsis">{{ film.overview }}</p>{% endif %}
-
-  {% if film %}
-  <ul class="links" aria-label="Elsewhere">
-    {% if film.letterboxd_link %}<li><a href="{{ film.letterboxd_link }}">Letterboxd</a></li>{% endif %}
-    {% if film.imdb_link %}<li><a href="{{ film.imdb_link }}">IMDb</a></li>{% endif %}
-    {% if film.rt_link %}<li><a href="{{ film.rt_link }}">Rotten Tomatoes</a></li>{% endif %}
-  </ul>
-  {% endif %}
 
   <h2 class="section-heading">Showtimes</h2>
   {% for day in days %}
@@ -50,7 +42,6 @@
         {% for r in group.rows %}
           {% if r.note %}<p class="meta">{{ r.note }}</p>{% endif %}
           <div class="times">{% for s in r.showtimes %}{{ showtime(s, page.title) }}{% endfor %}</div>
-          {% if r.showtimes[0].info_url %}<a class="subtle-link" href="{{ r.showtimes[0].info_url }}">See it on {{ group.venue.name }}'s website</a>{% endif %}
         {% endfor %}
       </div>
     {% endfor %}

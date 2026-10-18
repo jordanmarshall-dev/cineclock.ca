@@ -199,11 +199,24 @@ def test_film_page_shows_details_ratings_and_links(conn):
         'href="https://www.imdb.com/title/tt0084787/"',
         "rottentomatoes.com/search?search=The+Thing",
         'href="https://tix/VIFF Lochmaddy/The Thing/311740"',
-        'href="https://viff/thing"',
         'src="https://tmdb/b.jpg"',
         "has-backdrop",
     ]:
         assert expected in page, expected
+
+
+def test_film_page_links_go_through_score_tiles(conn):
+    save(
+        conn, show("The Thing", at(31, 17, 40), "VIFF Lochmaddy", year=1982, info="https://viff/x")
+    )
+    db.save_film(conn, film("The Thing", 1982, 1091, imdb_id="tt0084787"))
+    page = pages(conn, NOW)["films/the-thing-1982/index.html"]
+    # No scores yet, but each tile still links out
+    assert page.count('class="score-value">–<') == 3
+    assert 'href="https://letterboxd.com/tmdb/1091/"' in page
+    assert 'class="links"' not in page
+    assert "https://viff/x" not in page
+    assert 'href="../../venues/viff-lochmaddy/">VIFF Lochmaddy</a>' in page
 
 
 def test_unmatched_film_page_still_has_showtimes(conn):
