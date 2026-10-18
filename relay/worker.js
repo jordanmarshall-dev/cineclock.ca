@@ -87,7 +87,8 @@ export async function readProfile(user, fetcher = fetch) {
 function respond(body, status, origin) {
   const headers = {
     "Content-Type": "application/json",
-    "Cache-Control": `public, max-age=${CACHE_SECONDS}`,
+    // Only a good answer is worth keeping; an error should be retried.
+    "Cache-Control": status === 200 ? `public, max-age=${CACHE_SECONDS}` : "no-store",
     Vary: "Origin",
   };
   if (ALLOWED_ORIGINS.includes(origin)) headers["Access-Control-Allow-Origin"] = origin;
