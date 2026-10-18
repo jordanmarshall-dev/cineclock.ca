@@ -305,7 +305,8 @@ a:focus-visible {
 
 .film-sub > span { display: inline-flex; align-items: center; gap: 0.3125rem; }
 
-.theatre-text .meta { display: flex; align-items: center; gap: 0.25rem; }
+.theatre-text .meta { display: flex; align-items: flex-start; gap: 0.25rem; }
+.theatre-text .meta .icon { margin-top: 0.1875rem; }
 
 .film-sub b { color: var(--bright); font-weight: 500; }
 
@@ -422,10 +423,6 @@ a:focus-visible {
 .tagline {
   margin: 1.25rem 0 0;
   color: var(--text);
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
 }
 
 .tagline + .rail, .quick-filters + .rail { margin-top: 0.75rem; }
@@ -968,9 +965,6 @@ a:focus-visible {
   display: block;
   width: 100%;
   height: auto;
-  max-height: 4rem;
-  object-fit: contain;
-  object-position: left center;
 }
 
 .theatre-logo span {
