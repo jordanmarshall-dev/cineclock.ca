@@ -1,0 +1,12 @@
+{
+  "Title": "The Thing",
+  "Year": "1982",
+  "imdbID": "tt0084787",
+  "imdbRating": "8.2",
+  "Ratings": [
+    {"Source": "Internet Movie Database", "Value": "8.2/10"},
+    {"Source": "Rotten Tomatoes", "Value": "84%"},
+    {"Source": "Metacritic", "Value": "57/100"}
+  ],
+  "Response": "True"
+}

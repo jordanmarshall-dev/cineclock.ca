@@ -4,6 +4,7 @@ import os
 from datetime import UTC, datetime
 
 from cineclock import db
+from cineclock.enrich import enrich
 from cineclock.scrapers import cinematheque, make_client, park, rio, viff
 
 # Each scraper and the venues it covers. VIFF's one listings feed has two screens.
@@ -34,6 +35,15 @@ def main():
     now = datetime.now(UTC)
     with make_client() as client:
         run_scrapers(conn, client, now)
+        tmdb_key = os.environ.get("TMDB_API_KEY")
+        if tmdb_key:
+            result = enrich(conn, client, now, tmdb_key, os.environ.get("OMDB_API_KEY"))
+            print(
+                f"Film details: {result.looked_up} looked up, {result.matched} matched, "
+                f"{result.failed} failed"
+            )
+        else:
+            print("Film details: skipped (no TMDB_API_KEY)")
     conn.close()
 
 

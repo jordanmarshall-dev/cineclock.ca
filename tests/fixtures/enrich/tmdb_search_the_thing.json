@@ -1,0 +1,10 @@
+{
+  "page": 1,
+  "results": [
+    {"id": 60935, "title": "The Thing", "original_title": "The Thing", "release_date": "2011-10-12", "popularity": 30.1},
+    {"id": 1091, "title": "The Thing", "original_title": "The Thing", "release_date": "1982-06-25", "popularity": 45.7},
+    {"id": 10830, "title": "The Thing from Another World", "original_title": "The Thing from Another World", "release_date": "1951-04-06", "popularity": 12.4}
+  ],
+  "total_pages": 1,
+  "total_results": 3
+}

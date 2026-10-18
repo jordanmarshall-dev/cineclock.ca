@@ -1,0 +1,19 @@
+{
+  "id": 1091,
+  "imdb_id": "tt0084787",
+  "title": "The Thing",
+  "original_title": "The Thing",
+  "release_date": "1982-06-25",
+  "runtime": 109,
+  "overview": "Members of an American scientific research outpost in Antarctica find themselves battling a parasitic alien organism capable of perfectly imitating its victims.",
+  "poster_path": "/tzGY49kseSE9QAKk47uuDGwnSCu.jpg",
+  "backdrop_path": "/fTaHcHkfCZJ1qNBr4XEnLV1MQHA.jpg",
+  "external_ids": {"imdb_id": "tt0084787"},
+  "credits": {
+    "cast": [{"name": "Kurt Russell", "character": "MacReady"}],
+    "crew": [
+      {"name": "John Carpenter", "job": "Director"},
+      {"name": "Bill Lancaster", "job": "Screenplay"}
+    ]
+  }
+}

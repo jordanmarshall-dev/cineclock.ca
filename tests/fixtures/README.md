@@ -11,3 +11,4 @@ Saved venue responses, so tests never touch the network.
 - `park/page1.html`, `park/page2.html`: both pages of the Park's listings, Oct 18 2026. Page 1 includes a dateless bundle and a listing with no ticket button.
 - `cinematheque/calendar.html`: the Cinematheque's calendar, Oct 18 2026, with rentals, an AGM notice and closed days mixed in.
 - `cinematheque/film_*.html`: a feature and a shorts program with no year, Oct 18 2026.
+- `enrich/*`: hand-made samples in the documented response shapes of TMDB, Letterboxd and OMDb (their APIs need keys, and Letterboxd wasn't reachable when these were written). Swap in real captures when convenient.

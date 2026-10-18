@@ -7,9 +7,10 @@ Past screenings are never touched, so they stay as history.
 """
 
 import sqlite3
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, fields
 from datetime import UTC, datetime
 
+from cineclock.films import Film
 from cineclock.models import Screening
 
 SCHEMA = """
@@ -26,6 +27,26 @@ CREATE TABLE IF NOT EXISTS screenings (
     UNIQUE (venue, title, starts_at)
 );
 CREATE INDEX IF NOT EXISTS screenings_starts_at ON screenings (starts_at);
+
+-- Details looked up for each venue title and year. Kept separately from
+-- screenings so lookups happen once a week per film, not on every scrape.
+CREATE TABLE IF NOT EXISTS films (
+    match_key TEXT PRIMARY KEY,
+    fetched_at TEXT NOT NULL,
+    tmdb_id INTEGER,
+    imdb_id TEXT,
+    title TEXT,
+    year INTEGER,
+    director TEXT,
+    runtime INTEGER,
+    overview TEXT,
+    poster_url TEXT,
+    backdrop_url TEXT,
+    letterboxd_url TEXT,
+    letterboxd_rating REAL,
+    imdb_rating REAL,
+    rt_score INTEGER
+);
 """
 
 FIELDS = ("venue", "title", "starts_at", "url", "info_url", "year", "note", "poster_url")
@@ -128,3 +149,29 @@ def upcoming(conn: sqlite3.Connection, now: datetime) -> list[Screening]:
         (_utc_text(now),),
     )
     return [_from_row(row) for row in rows]
+
+
+FILM_FIELDS = [f.name for f in fields(Film)]
+
+
+def get_film(conn: sqlite3.Connection, key: str) -> Film | None:
+    row = conn.execute("SELECT * FROM films WHERE match_key = ?", (key,)).fetchone()
+    if not row:
+        return None
+    data = {name: row[name] for name in FILM_FIELDS}
+    data["fetched_at"] = datetime.fromisoformat(data["fetched_at"])
+    return Film(**data)
+
+
+def save_film(conn: sqlite3.Connection, film: Film) -> None:
+    data = asdict(film)
+    data["fetched_at"] = _utc_text(film.fetched_at)
+    columns = ", ".join(FILM_FIELDS)
+    placeholders = ", ".join(f":{name}" for name in FILM_FIELDS)
+    with conn:
+        conn.execute(f"INSERT OR REPLACE INTO films ({columns}) VALUES ({placeholders})", data)
+
+
+def films_by_key(conn: sqlite3.Connection) -> dict[str, Film]:
+    rows = conn.execute("SELECT match_key FROM films").fetchall()
+    return {row["match_key"]: get_film(conn, row["match_key"]) for row in rows}
