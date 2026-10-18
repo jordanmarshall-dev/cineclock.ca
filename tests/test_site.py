@@ -376,6 +376,7 @@ def test_leaving_soon_lists_films_whose_last_showing_is_this_week(conn):
     # A single screening isn't a run that's ending, so "Once" stays out
     assert [c.page.title for c in rail.cards] == ["Goes", "Goes Later"]
     assert rail.cards[0].why == "Ends Tue 20"
+    assert rail.cards[0].next_label == "Ends Tue 20"
     assert rail.more == "films/?sort=leaving"
 
 

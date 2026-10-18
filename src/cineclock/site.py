@@ -462,16 +462,23 @@ def rails(
         key=lambda p: (-len(p.screenings), soonest(p)),
     )
 
-    def cards(pages, why=None):
+    # `why` is kept on each card for reference but not drawn; the rail's title says it.
+    # A rail can swap the date line for its own (Leaving soon shows when it ends).
+    def cards(pages, why=None, label=None):
         return [
-            Card(p, when(p.next_showing, now), why(p) if why else None) for p in pages[:RAIL_LENGTH]
+            Card(p, label(p) if label else when(p.next_showing, now), why(p) if why else None)
+            for p in pages[:RAIL_LENGTH]
         ]
 
     found = [
         Rail("On today", cards(on_today), f"showtimes/#d{today:%Y%m%d}"),
         Rail(
             "Leaving soon",
-            cards(leaving, lambda p: f"Ends {last_day(p.last_showing, now)}"),
+            cards(
+                leaving,
+                lambda p: f"Ends {last_day(p.last_showing, now)}",
+                label=lambda p: f"Ends {last_day(p.last_showing, now)}",
+            ),
             "films/?sort=leaving",
         ),
         Rail("This week", cards(this_week), "films/"),

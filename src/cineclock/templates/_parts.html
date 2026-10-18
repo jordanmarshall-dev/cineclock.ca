@@ -177,8 +177,8 @@
 
 {# The poster card: home rails, theatre rails, the Films grid and the watchlist shelf all use it.
    Every card has the same fixed lines, so each detail is always in the same spot:
-   title (one line), year with the score at the right, when it's on, then the rail's reason. #}
-{% macro film_card(p, root, when, why=None, attrs="") -%}
+   title (one line), year with the score (or a tag) at the right, then when it's on. #}
+{% macro film_card(p, root, when, attrs="") -%}
 {% set rare = p.tags | select("in", RARE) | list %}
 <li class="card" data-film="{{ p.slug }}" {{ attrs | safe }}>
   <a href="{{ root }}films/{{ p.slug }}/">
@@ -194,7 +194,6 @@
       {%- if score %}{{ score }}{% elif badge %}<span class="card-tag" title="{{ badge }}">{{ icon(TAG_ICONS.get(badge, "screen"), 10) }}{{ badge }}</span>{% endif -%}
     </span>
     <span class="card-next{% if rare %} rare{% endif %}"{% if rare %} title="{{ rare[0] }}"{% endif %}>{{ icon("star" if rare else "calendar", 12) }}{{ when }}</span>
-    {% if why %}<span class="card-why">{% if why in TAG_ICONS %}{{ icon(TAG_ICONS[why], 11) }}{% endif %}{{ why }}</span>{% endif %}
   </a>
 </li>
 {%- endmacro %}
@@ -206,7 +205,7 @@
     <a class="see-all" href="{{ root }}{{ r.more }}" aria-label="See all: {{ r.title }}">{{ icon("chevron", 22) }}</a>
   </div>
   <ul class="rail-cards">
-    {% for c in r.cards %}{{ film_card(c.page, root, c.next_label, c.why) }}{% endfor %}
+    {% for c in r.cards %}{{ film_card(c.page, root, c.next_label) }}{% endfor %}
   </ul>
 </section>
 {%- endmacro %}
