@@ -9,7 +9,7 @@ Vancouver showtimes for film lovers. Indie and rep cinemas in one place.
 Early days. Version 1 covers The Cinematheque, VIFF Centre, the Park and the Rio:
 
 - [x] Project skeleton, tests and CI
-- [ ] Rio scraper
+- [x] Rio scraper (showtimes, year and poster from each film page)
 - [ ] What's playing page, by day and venue
 - [ ] Add to calendar (.ics)
 - [ ] VIFF, Cinematheque and Park scrapers
@@ -25,6 +25,12 @@ pip install -e ".[dev]"
 pytest
 ruff check .
 fastapi dev src/cineclock/app.py
+```
+
+To see what's on at the Rio right now:
+
+```sh
+python -m cineclock.scrapers.rio
 ```
 
 ## How it's built

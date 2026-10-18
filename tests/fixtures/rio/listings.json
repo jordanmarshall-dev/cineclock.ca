@@ -1,0 +1,41 @@
+[
+  {
+    "id": 349130,
+    "event": {
+      "id": 223469,
+      "title": "John Woo's 'A Better Tomorrow' (40th Anniversary Restoration)",
+      "link": "https://riotheatre.ca/movie/a-better-tomorrow-2025-restoration/"
+    },
+    "start_time": "2026-05-31T19:00:00-07:00",
+    "end_time": "2026-05-31T19:00:00-07:00",
+    "extra": "",
+    "premiere": false,
+    "tickets_link": "https://riotheatretickets.ca/events/41803-john-woo-s-a-better-tomorrow-40th-anniversary-restoration"
+  },
+  {
+    "id": 349032,
+    "event": {
+      "id": 223526,
+      "title": "Beat Street",
+      "link": "https://riotheatre.ca/movie/beat-street/"
+    },
+    "start_time": "2026-05-31T21:30:00-07:00",
+    "end_time": "2026-05-31T21:30:00-07:00",
+    "extra": "",
+    "premiere": false,
+    "tickets_link": "https://www.youtube.com/watch?v=7bYXW4x7RXk"
+  },
+  {
+    "id": 349405,
+    "event": {
+      "id": 213182,
+      "title": "Private Event",
+      "link": "https://riotheatre.ca/event/private-event/"
+    },
+    "start_time": "2026-06-14T12:00:00-07:00",
+    "end_time": "2026-06-14T12:00:00-07:00",
+    "extra": "",
+    "premiere": false,
+    "tickets_link": ""
+  }
+]

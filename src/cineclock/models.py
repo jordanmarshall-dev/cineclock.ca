@@ -18,8 +18,10 @@ class Screening:
     title: str
     starts_at: datetime
     url: str
+    info_url: str | None = None
     year: int | None = None
     note: str | None = None
+    poster_url: str | None = None
 
     def __post_init__(self):
         # Scrapers must hand us a real moment in time, not a bare clock reading.
