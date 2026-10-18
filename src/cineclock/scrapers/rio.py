@@ -11,6 +11,7 @@ from cineclock.titles import clean_title, credits_year, split_year
 
 VENUE = "The Rio"
 VENUES = (VENUE,)
+ROOM = "rio-main"
 LISTINGS_URL = "https://riotheatre.ca/wp-json/barker/v1/listings"
 
 
@@ -26,6 +27,7 @@ def parse_listings(data: list[dict]) -> list[Screening]:
         screenings.append(
             Screening(
                 venue=VENUE,
+                room=ROOM,
                 title=title,
                 year=year,
                 note=note,

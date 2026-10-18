@@ -31,7 +31,7 @@
           <span class="film-dates">{{ p.date_range }}<span class="film-count">{{ p.screenings | length }} {{ "screening" if p.screenings | length == 1 else "screenings" }}</span></span>
           {{ ratings(p.film, root) }}
           {{ tag_list(p.tags) }}
-          <span class="card-venues">{% for v in p.badges %}{{ venue_badge(v, root) }}{% endfor %}</span>
+          <span class="card-venues">{% for v in p.venues %}{{ venue_badge(v, root) }}{% endfor %}</span>
         </span>
       </a>
     </li>

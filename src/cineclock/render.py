@@ -7,12 +7,14 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 
 from cineclock.tags import slug
 from cineclock.timefmt import clock
+from cineclock.venues import room_label
 
 STATIC = Path(__file__).parent / "static"
 
 env = Environment(loader=PackageLoader("cineclock"), autoescape=select_autoescape())
 env.filters["clock"] = clock
 env.filters["tagslug"] = slug
+env.filters["room_label"] = lambda s: room_label(s.venue, s.room)
 
 
 def asset_version(name: str) -> str:

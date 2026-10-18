@@ -18,6 +18,8 @@ class Screening:
     title: str
     starts_at: datetime
     url: str
+    # Which room in the venue, by its stable ID ("viff-lochmaddy"). None if unknown.
+    room: str | None = None
     info_url: str | None = None
     year: int | None = None
     note: str | None = None

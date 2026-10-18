@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS screenings (
     title TEXT NOT NULL,
     starts_at TEXT NOT NULL,
     url TEXT NOT NULL,
+    room TEXT,
     info_url TEXT,
     year INTEGER,
     note TEXT,
@@ -55,7 +56,8 @@ CREATE TABLE IF NOT EXISTS films (
 """
 
 FIELDS = (
-    "venue", "title", "starts_at", "url", "info_url", "year", "note", "poster_url", "film_format",
+    "venue", "title", "starts_at", "url", "room", "info_url", "year", "note", "poster_url",
+    "film_format",
 )  # fmt: skip
 
 
@@ -69,7 +71,7 @@ class SyncResult:
 # Columns added after the first release. A database saved by an older version
 # (like the one the deploy keeps between runs) gets them added on connect.
 ADDED_COLUMNS = {
-    "screenings": {"first_seen": "TEXT", "film_format": "TEXT"},
+    "screenings": {"first_seen": "TEXT", "film_format": "TEXT", "room": "TEXT"},
     "films": {"letterboxd_count": "INTEGER", "genres": "TEXT", "metacritic": "INTEGER"},
 }
 
@@ -89,6 +91,12 @@ def upgrade(conn: sqlite3.Connection) -> None:
         for name, kind in columns.items():
             if name not in have:
                 conn.execute(f"ALTER TABLE {table} ADD COLUMN {name} {kind}")
+    # VIFF's studio was once its own venue; it's now a room of VIFF Centre.
+    conn.execute(
+        "UPDATE OR IGNORE screenings SET venue = 'VIFF Centre', room = 'viff-lochmaddy' "
+        "WHERE venue = 'VIFF Lochmaddy'"
+    )
+    conn.execute("DELETE FROM screenings WHERE venue = 'VIFF Lochmaddy'")
     conn.commit()
 
 
@@ -104,6 +112,7 @@ def _to_row(s: Screening) -> tuple:
         s.title,
         _utc_text(s.starts_at),
         s.url,
+        s.room,
         s.info_url,
         s.year,
         s.note,
@@ -151,9 +160,10 @@ def sync_venue(
         conn.executemany(
             f"""
             INSERT INTO screenings ({", ".join(FIELDS)}, first_seen)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT (venue, title, starts_at) DO UPDATE SET
                 url = excluded.url,
+                room = excluded.room,
                 info_url = excluded.info_url,
                 year = excluded.year,
                 note = excluded.note,

@@ -44,7 +44,6 @@ jobs:
           path: cineclock.db
           key: db-${{ github.run_id }}
 
-      - run: python -m cineclock.assets
       - run: python -m cineclock.build
       - uses: actions/upload-pages-artifact@v3
         with:

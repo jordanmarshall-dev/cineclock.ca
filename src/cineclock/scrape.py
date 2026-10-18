@@ -5,14 +5,15 @@ from datetime import UTC, datetime
 
 from cineclock import db
 from cineclock.enrich import enrich
-from cineclock.scrapers import cinematheque, make_client, park, rio, viff
+from cineclock.scrapers import cinematheque, dunbar, make_client, park, rio, viff
 
-# Each scraper and the venues it covers. VIFF's one listings feed has two screens.
+# Each scraper and the venues it covers.
 SCRAPERS = [
     (rio.scrape, rio.VENUES),
     (park.scrape, park.VENUES),
     (cinematheque.scrape, cinematheque.VENUES),
     (viff.scrape, viff.VENUES),
+    (dunbar.scrape, dunbar.VENUES),
 ]
 
 

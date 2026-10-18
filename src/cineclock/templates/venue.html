@@ -7,13 +7,13 @@
 {% block main %}
 <div class="wrap">
   <div class="theatre-head">
-    <span class="theatre-logo large{% if venue.logo_on_light %} on-light{% endif %}">
-      {%- if venue.logo and has_asset("logos/" ~ venue.logo) %}<img src="{{ root }}static/logos/{{ venue.logo }}" alt="">{% else %}<span>{{ venue.monogram }}</span>{% endif -%}
-    </span>
-    <div>
+    {% if venue.full_logo and has_asset("logos/" ~ venue.full_logo) %}
+      <img class="theatre-full-logo" src="{{ root }}static/logos/{{ venue.full_logo }}" alt="{{ venue.name }}">
+      <h1 class="visually-hidden">{{ venue.name }}</h1>
+    {% else %}
       <h1 class="venue-title">{{ venue.name }}</h1>
-      <p class="meta">{{ venue.neighbourhood }}</p>
-    </div>
+    {% endif %}
+    <p class="meta">{{ venue.neighbourhood }}</p>
   </div>
   <p class="venue-blurb">{{ venue.blurb }}</p>
 
@@ -22,11 +22,25 @@
     {% if venue.website %}<li><a href="{{ venue.website }}">Website</a></li>{% endif %}
   </ul>
 
-  {% if venue.specs %}
-  <h2 class="section-heading">The room</h2>
-  <dl class="specs">
-    {% for label, value in venue.specs %}<div><dt>{{ label }}</dt><dd>{{ value }}</dd></div>{% endfor %}
-  </dl>
+  {% if spec_fields %}
+  <section class="rooms" aria-labelledby="room-h">
+    <div class="rooms-head">
+      <h2 class="section-heading" id="room-h">{{ "The rooms" if venue.rooms | length > 1 else "The room" }}</h2>
+      {% if venue.rooms | length > 1 %}
+      <select class="room-picker" aria-label="Choose a room" hidden>
+        {% for room in venue.rooms %}<option value="{{ room.id }}">{{ room.name }}</option>{% endfor %}
+      </select>
+      {% endif %}
+    </div>
+    {% for room in venue.rooms %}
+    <div class="room" data-room="{{ room.id }}">
+      {% if venue.rooms | length > 1 %}<h3 class="room-name">{{ room.name }}</h3>{% endif %}
+      <dl class="specs">
+        {% for f in spec_fields %}<div><dt>{{ f }}</dt><dd>{{ room.specs[f] }}</dd></div>{% endfor %}
+      </dl>
+    </div>
+    {% endfor %}
+  </section>
   {% endif %}
 
   {% if venue.about %}
@@ -42,4 +56,21 @@
     <p class="empty">Nothing listed here right now. Check the <a href="{{ venue.website }}">theatre's website</a>.</p>
   {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+{% if venue.rooms | length > 1 and spec_fields %}
+<script>
+  // Without JavaScript every room's specs are listed; with it, a picker shows one at a time.
+  (() => {
+    const picker = document.querySelector(".room-picker");
+    const rooms = document.querySelectorAll(".room");
+    picker.hidden = false;
+    document.querySelectorAll(".room-name").forEach((h) => (h.hidden = true));
+    const show = () => rooms.forEach((r) => (r.hidden = r.dataset.room !== picker.value));
+    picker.addEventListener("change", show);
+    show();
+  })();
+</script>
+{% endif %}
 {% endblock %}

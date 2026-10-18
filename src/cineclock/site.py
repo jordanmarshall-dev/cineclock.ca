@@ -18,7 +18,7 @@ from cineclock.models import VANCOUVER, Screening
 from cineclock.render import env
 from cineclock.tags import screening_tags, sort_tags
 from cineclock.timefmt import clock, day_label, short_day
-from cineclock.venues import BY_NAME, VENUES, Venue, order
+from cineclock.venues import BY_NAME, VENUES, Room, Venue, order, shown_specs
 
 RAIL_LENGTH = 15
 # Below this many Letterboxd ratings, an average says little.
@@ -37,7 +37,10 @@ def choose_poster(screening: Screening, film: Film | None) -> str | None:
 
 def venue_for(name: str) -> Venue:
     # A venue missing from the registry still gets a page rather than crashing the build.
-    return BY_NAME.get(name) or Venue(name, name, slugify(name), "", "", "", "")
+    if name in BY_NAME:
+        return BY_NAME[name]
+    slug = slugify(name)
+    return Venue(name, name, slug, "", "", "", "", rooms=(Room(f"{slug}-main", "Main"),))
 
 
 def tags_for(s: Screening) -> list[str]:
@@ -85,17 +88,6 @@ class FilmPage:
     def venues(self) -> list[Venue]:
         names = sorted({s.venue for s in self.screenings}, key=lambda n: (order(n), n))
         return [venue_for(n) for n in names]
-
-    @property
-    def badges(self) -> list[Venue]:
-        """One badge per logo: a film on both VIFF screens shows VIFF once."""
-        seen, out = set(), []
-        for v in self.venues:
-            key = v.logo or v.name
-            if key not in seen:
-                seen.add(key)
-                out.append(v)
-        return out
 
     @property
     def genres(self) -> list[str]:
@@ -370,6 +362,7 @@ def pages(conn: Connection, now: datetime) -> dict[str, str]:
             "venue.html",
             path,
             venue=venue,
+            spec_fields=shown_specs(),
             current="theatres",
             days=group_days(mine, page_of, films, now),
         )

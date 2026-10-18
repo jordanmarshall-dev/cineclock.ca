@@ -162,3 +162,25 @@ def test_old_database_gets_new_columns(tmp_path):
     db.sync_venue(conn, "The Rio", [saved], NOW)
     assert db.upcoming(conn, NOW)[0].first_seen == NOW
     conn.close()
+
+
+def test_old_viff_lochmaddy_rows_become_a_room_of_viff_centre(tmp_path):
+    path = str(tmp_path / "old.db")
+    old = sqlite3.connect(path)
+    old.executescript("""
+        CREATE TABLE screenings (
+            id INTEGER PRIMARY KEY, venue TEXT NOT NULL, title TEXT NOT NULL,
+            starts_at TEXT NOT NULL, url TEXT NOT NULL, info_url TEXT, year INTEGER,
+            note TEXT, poster_url TEXT, UNIQUE (venue, title, starts_at)
+        );
+        INSERT INTO screenings (venue, title, starts_at, url) VALUES
+            ('VIFF Lochmaddy', 'Pulse', '2026-10-19T08:00:00+00:00', 'https://x'),
+            ('VIFF Lochmaddy', 'Cure', '2026-10-20T08:00:00+00:00', 'https://y'),
+            ('VIFF Centre', 'Cure', '2026-10-20T08:00:00+00:00', 'https://y');
+    """)
+    old.close()
+    conn = db.connect(path)
+    saved = [(s.venue, s.title, s.room) for s in db.upcoming(conn, NOW)]
+    # The Cure row already existed under VIFF Centre, so the duplicate is dropped
+    assert saved == [("VIFF Centre", "Pulse", "viff-lochmaddy"), ("VIFF Centre", "Cure", None)]
+    conn.close()

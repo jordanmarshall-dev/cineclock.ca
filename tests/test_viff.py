@@ -26,11 +26,20 @@ def test_parse_instances_skips_live_shows(fixture_json):
     ]
 
 
-def test_screens_become_separate_venues(fixture_json):
+def test_screens_become_rooms_of_one_venue(fixture_json):
     screenings = viff.parse_instances(fixture_json("viff/instances_2026-10.json"))
-    venues = {s.title: s.venue for s in screenings}
-    assert venues["Day of Wrath"] == "VIFF Centre"
-    assert venues["The Thing"] == "VIFF Lochmaddy"
+    assert {s.venue for s in screenings} == {"VIFF Centre"}
+    rooms = {s.title: s.room for s in screenings}
+    assert rooms["Day of Wrath"] == "viff-main"
+    assert rooms["The Thing"] == "viff-lochmaddy"
+
+
+def test_unknown_centre_room_is_kept_and_logged(caplog):
+    item = {"start": "2026-12-05T19:00:00", "eventType": "Film", "title": card()}
+    item["resourceId"] = "viff-centre-new-room"
+    [s] = viff.parse_instances([item])
+    assert (s.venue, s.room) == ("VIFF Centre", None)
+    assert "viff-centre-new-room" in caplog.text
 
 
 def test_events_at_other_locations_are_skipped():

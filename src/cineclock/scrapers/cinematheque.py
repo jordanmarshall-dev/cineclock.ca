@@ -16,6 +16,7 @@ from cineclock.titles import clean_title, split_year
 
 VENUE = "The Cinematheque"
 VENUES = (VENUE,)
+ROOM = "cinematheque-main"
 CALENDAR_URL = "https://thecinematheque.ca/films/calendar"
 HEADERS = {"Accept": "text/html,application/xhtml+xml"}
 
@@ -72,6 +73,7 @@ def parse_calendar(page: str) -> list[Screening]:
             screenings.append(
                 Screening(
                     venue=VENUE,
+                    room=ROOM,
                     title=title,
                     year=title_year,
                     note=note,

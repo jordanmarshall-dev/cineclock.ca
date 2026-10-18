@@ -6,6 +6,7 @@ fresh one before asking for listings.
 """
 
 import json
+import logging
 import re
 from datetime import datetime
 
@@ -16,12 +17,19 @@ from cineclock.models import VANCOUVER, Screening
 from cineclock.scrapers import FilmDetails, add_details, make_client
 from cineclock.titles import clean_title, split_year
 
-# VIFF's two screens, by the API's room IDs. Events elsewhere (festival venues) are skipped.
+VENUE = "VIFF Centre"
+VENUES = (VENUE,)
+
+# Each listing names its room explicitly in "resourceId". These map VIFF's IDs
+# to ours. Anything else at the VIFF Centre is kept with no room rather than
+# guessed; anything elsewhere (festival venues) isn't the VIFF Centre at all.
 ROOMS = {
-    "viff-centre-viff-cinema": "VIFF Centre",
-    "viff-centre-lochmaddy-studio-theatre": "VIFF Lochmaddy",
+    "viff-centre-viff-cinema": "viff-main",
+    "viff-centre-lochmaddy-studio-theatre": "viff-lochmaddy",
 }
-VENUES = tuple(ROOMS.values())
+CENTRE_PREFIX = "viff-centre-"
+
+log = logging.getLogger(__name__)
 CALENDAR_URL = "https://viff.org/whats-on-calendar/"
 INSTANCES_URL = "https://viff.org/wp-json/v1/attendable/calendar/instances"
 
@@ -48,8 +56,16 @@ def parse_instances(data: list[dict]) -> list[Screening]:
     screenings = []
     for item in data:
         # "VIFF Live" is concerts and cabaret, not films.
-        venue = ROOMS.get(item.get("resourceId", ""))
-        if item.get("eventType") != "Film" or not venue:
+        if item.get("eventType") != "Film":
+            continue
+        resource = item.get("resourceId") or ""
+        if resource in ROOMS:
+            room = ROOMS[resource]
+        elif resource.startswith(CENTRE_PREFIX):
+            log.warning("VIFF Centre room %r isn't known; keeping it unassigned", resource)
+            room = None
+        else:
+            log.info("Skipping a VIFF listing outside the VIFF Centre: %r", resource)
             continue
         card = BeautifulSoup(item["title"], "html.parser")
         heading = card.select_one(".c-calendar-instance__title")
@@ -61,7 +77,8 @@ def parse_instances(data: list[dict]) -> list[Screening]:
         title, year = split_year(title)
         screenings.append(
             Screening(
-                venue=venue,
+                venue=VENUE,
+                room=room,
                 title=title,
                 year=year,
                 note=note,

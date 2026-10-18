@@ -1,3 +1,4 @@
+import re
 from datetime import UTC, date, datetime, timedelta
 
 import pytest
@@ -7,6 +8,7 @@ from cineclock.films import Film, match_key
 from cineclock.models import VANCOUVER, Screening
 from cineclock.site import choose_poster, compact, film_pages, group_days, pages, rails, stats
 from cineclock.timefmt import clock, day_label, short_day
+from cineclock.venues import VENUES, shown_specs
 
 NOW = datetime(2026, 10, 18, 8, 0, tzinfo=UTC)  # 1am Oct 18 in Vancouver
 
@@ -15,10 +17,10 @@ def at(day, hour, minute=0):
     return datetime(2026, 10, day, hour, minute, tzinfo=VANCOUVER)
 
 
-def show(title, starts, venue="The Rio", year=None, note=None, poster=None, info=None):
+def show(title, starts, venue="The Rio", year=None, note=None, poster=None, info=None, room=None):
     return Screening(
         venue, title, starts, f"https://tix/{venue}/{title}/{starts:%d%H%M}",
-        info_url=info, year=year, note=note, poster_url=poster,
+        info_url=info, year=year, note=note, poster_url=poster, room=room,
     )  # fmt: skip
 
 
@@ -126,7 +128,7 @@ def test_late_show_stays_on_its_local_day():
 
 def test_venues_follow_the_set_order():
     shows = [
-        show("Mirror", at(18, 19), "VIFF Lochmaddy"),
+        show("Mirror", at(18, 19), "The Dunbar"),
         show("Mirror", at(18, 18), "VIFF Centre"),
         show("Pulse", at(18, 20), "The Cinematheque"),
         show("Tony", at(18, 13), "The Park"),
@@ -134,7 +136,7 @@ def test_venues_follow_the_set_order():
     ]
     [day] = group_days(shows, film_pages(shows, {}), {}, NOW)
     assert [g.venue.name for g in day.groups] == [
-        "The Rio", "The Park", "The Cinematheque", "VIFF Centre", "VIFF Lochmaddy",
+        "The Rio", "The Park", "The Cinematheque", "VIFF Centre", "The Dunbar",
     ]  # fmt: skip
 
 
@@ -164,7 +166,7 @@ def test_pages_cover_home_films_and_every_venue(conn):
     assert "theatres/index.html" in built
     assert "films/musk/index.html" in built
     assert "films/pulse-2001/index.html" in built
-    for slug in ("rio", "park", "cinematheque", "viff-centre", "viff-lochmaddy"):
+    for slug in ("rio", "park", "cinematheque", "viff-centre", "dunbar"):
         assert f"theatres/{slug}/index.html" in built
 
 
@@ -178,7 +180,7 @@ def test_links_are_relative_to_each_page(conn):
 
 
 def test_film_page_shows_details_ratings_and_links(conn):
-    s = show("The Thing", at(31, 17, 40), "VIFF Lochmaddy", year=1982, info="https://viff/thing")
+    s = show("The Thing", at(31, 17, 40), "VIFF Centre", year=1982, info="https://viff/thing")
     save(conn, s)
     db.save_film(
         conn,
@@ -201,7 +203,7 @@ def test_film_page_shows_details_ratings_and_links(conn):
         'href="https://letterboxd.com/film/the-thing/"',
         'href="https://www.imdb.com/title/tt0084787/"',
         "rottentomatoes.com/search?search=The+Thing",
-        'href="https://tix/VIFF Lochmaddy/The Thing/311740"',
+        'href="https://tix/VIFF Centre/The Thing/311740"',
         'src="https://tmdb/b.jpg"',
         "has-backdrop",
     ]:
@@ -209,17 +211,28 @@ def test_film_page_shows_details_ratings_and_links(conn):
 
 
 def test_film_page_links_go_through_score_tiles(conn):
-    save(
-        conn, show("The Thing", at(31, 17, 40), "VIFF Lochmaddy", year=1982, info="https://viff/x")
-    )
-    db.save_film(conn, film("The Thing", 1982, 1091, imdb_id="tt0084787"))
+    save(conn, show("The Thing", at(31, 17, 40), "VIFF Centre", year=1982, info="https://viff/x"))
+    db.save_film(conn, film("The Thing", 1982, 1091, imdb_id="tt0084787", letterboxd_rating=4.35))
     page = pages(conn, NOW)["films/the-thing-1982/index.html"]
-    # No scores yet, but each tile still links out
-    assert page.count('class="score-value">–<') == 4
     assert 'href="https://letterboxd.com/tmdb/1091/"' in page
     assert 'class="links"' not in page
     assert "https://viff/x" not in page
-    assert 'href="../../theatres/viff-lochmaddy/">' in page
+    assert 'href="../../theatres/viff-centre/">' in page
+
+
+def test_film_page_hides_ratings_it_does_not_have(conn):
+    save(conn, show("The Thing", at(31, 17, 40), year=1982))
+    db.save_film(conn, film("The Thing", 1982, 1091, imdb_id="tt0084787", imdb_rating=8.2))
+    page = pages(conn, NOW)["films/the-thing-1982/index.html"]
+    assert "rating-imdb" in page
+    for missing in ("rating-letterboxd", "rating-rt", "rating-metacritic", "–<"):
+        assert missing not in page.split("<main>")[1].split("</main>")[0], missing
+
+
+def test_film_page_without_any_ratings_has_no_score_row(conn):
+    save(conn, show("The Thing", at(31, 17, 40), year=1982))
+    db.save_film(conn, film("The Thing", 1982, 1091))
+    assert 'class="scores"' not in pages(conn, NOW)["films/the-thing-1982/index.html"]
 
 
 def test_unmatched_film_page_still_has_showtimes(conn):
@@ -239,7 +252,7 @@ def test_venue_page_lists_only_its_shows(conn):
 
 
 def test_empty_venue_page_points_to_its_website(conn):
-    page = pages(conn, NOW)["theatres/viff-lochmaddy/index.html"]
+    page = pages(conn, NOW)["theatres/dunbar/index.html"]
     assert "Nothing listed here right now" in page
 
 
@@ -250,11 +263,11 @@ def test_titles_are_escaped(conn):
 
 
 def test_stats(conn):
-    save(conn, show("The Thing", at(31, 17), "VIFF Lochmaddy", year=1982), show("SFMF", at(18, 13)))
+    save(conn, show("The Thing", at(31, 17), "VIFF Centre", year=1982), show("SFMF", at(18, 13)))
     db.save_film(conn, film("The Thing", 1982, 1091, letterboxd_rating=4.35))
     summary = stats(conn, NOW)
     assert summary["screenings"] == 2
-    assert summary["per_venue"] == {"The Rio": 1, "VIFF Lochmaddy": 1}
+    assert summary["per_venue"] == {"The Rio": 1, "VIFF Centre": 1}
     assert (summary["matched"], summary["with_letterboxd_rating"]) == (1, 1)
     assert summary["unmatched"] == ["sfmf|"]
 
@@ -414,7 +427,7 @@ def test_films_page_genre_filter_data(conn):
 
 def test_theatres_page_lists_every_venue(conn):
     page = pages(conn, NOW)["theatres/index.html"]
-    for name in ("The Rio", "The Park", "The Cinematheque", "VIFF Centre", "VIFF Lochmaddy"):
+    for name in ("The Rio", "The Park", "The Cinematheque", "VIFF Centre", "The Dunbar"):
         assert name in page
 
 
@@ -434,20 +447,45 @@ def test_badge_falls_back_to_initials_without_a_logo(conn, monkeypatch, tmp_path
         shutil.copy(render.STATIC / name, tmp_path / name)
     monkeypatch.setattr(render, "STATIC", tmp_path)
     save(conn, show("Musk", at(18, 12)))
-    assert '<span aria-label="The Rio">R</span>' in pages(conn, NOW)["index.html"]
+    page = pages(conn, NOW)["index.html"]
+    assert '<span class="monogram" role="img" aria-label="The Rio">R</span>' in page
 
 
-def test_rating_sources_can_be_switched_off(conn):
+def test_ratings_show_on_listings_without_toggles(conn):
     save(conn, show("The Thing", at(18, 20), year=1982))
     db.save_film(conn, film("The Thing", 1982, 1091, imdb_rating=8.2, metacritic=57))
     page = pages(conn, NOW)["showtimes/index.html"]
     assert 'class="rating rating-imdb"' in page and 'class="rating rating-metacritic"' in page
-    assert 'value="metacritic" checked' in page
+    assert "rating-letterboxd" not in page
+    assert "rating-switches" not in page
 
 
-def test_both_viff_screens_share_one_badge(conn):
-    save(conn, show("NAZA", at(19, 16), "VIFF Centre"), show("NAZA", at(20, 16), "VIFF Lochmaddy"))
-    page = film_pages(db.upcoming(conn, NOW), {})
-    [p] = {id(x): x for x in page.values()}.values()
-    assert [v.name for v in p.venues] == ["VIFF Centre", "VIFF Lochmaddy"]
-    assert [v.name for v in p.badges] == ["VIFF Centre"]
+def test_viff_rooms_share_one_venue_and_label_the_studio(conn):
+    save(
+        conn,
+        show("NAZA", at(19, 16), "VIFF Centre", room="viff-main"),
+        show("NAZA", at(20, 16), "VIFF Centre", room="viff-lochmaddy"),
+    )
+    [p] = {id(x): x for x in film_pages(db.upcoming(conn, NOW), {}).values()}.values()
+    assert [v.name for v in p.venues] == ["VIFF Centre"]
+    page = pages(conn, NOW)["films/naza/index.html"]
+    assert page.count("<small>Lochmaddy</small>") == 1
+
+
+def test_every_theatre_page_shows_the_same_spec_fields(conn):
+    built = pages(conn, NOW)
+    for v in VENUES:
+        page = built[f"theatres/{v.slug}/index.html"]
+        assert re.findall(r"<dt>(\w+)</dt>", page) == shown_specs() * len(v.rooms), v.name
+
+
+def test_viff_page_has_a_room_picker(conn):
+    page = pages(conn, NOW)["theatres/viff-centre/index.html"]
+    assert '<option value="viff-lochmaddy">Lochmaddy Studio Theatre</option>' in page
+    assert "<dt>Seats</dt><dd>41</dd>" in page
+    assert "room-picker" not in pages(conn, NOW)["theatres/rio/index.html"]
+
+
+def test_theatre_page_uses_its_full_logo(conn):
+    page = pages(conn, NOW)["theatres/park/index.html"]
+    assert 'class="theatre-full-logo" src="../../static/logos/park-full.png"' in page

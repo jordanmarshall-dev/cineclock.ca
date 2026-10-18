@@ -25,12 +25,12 @@
     </div>
   </div>
 
-  {% if film %}
+  {% if film and (film.letterboxd_rating or film.imdb_rating or film.rt_score is not none or film.metacritic is not none) %}
   <ul class="scores" aria-label="Ratings">
-    {% if film.letterboxd_link %}<li class="rating-letterboxd"><a href="{{ film.letterboxd_link }}"><span class="score-value">{{ "%.1f" | format(film.letterboxd_rating) if film.letterboxd_rating else "–" }}</span><span class="score-source">{{ source_mark("letterboxd", root) }} Letterboxd</span></a></li>{% endif %}
-    {% if film.imdb_link %}<li class="rating-imdb"><a href="{{ film.imdb_link }}"><span class="score-value">{{ "%.1f" | format(film.imdb_rating) if film.imdb_rating else "–" }}</span><span class="score-source">IMDb</span></a></li>{% endif %}
-    {% if film.rt_link %}<li class="rating-rt"><a href="{{ film.rt_link }}"><span class="score-value">{{ film.rt_score ~ "%" if film.rt_score is not none else "–" }}</span><span class="score-source">Rotten Tomatoes</span></a></li>{% endif %}
-    {% if film.metacritic_link %}<li class="rating-metacritic"><a href="{{ film.metacritic_link }}"><span class="score-value">{{ film.metacritic if film.metacritic is not none else "–" }}</span><span class="score-source">Metacritic</span></a></li>{% endif %}
+    {% if film.letterboxd_rating %}<li class="rating-letterboxd"><a href="{{ film.letterboxd_link }}">{{ source_mark("letterboxd", root) }}<span class="score-value">{{ "%.1f" | format(film.letterboxd_rating) }}</span></a></li>{% endif %}
+    {% if film.imdb_rating %}<li class="rating-imdb"><a href="{{ film.imdb_link }}">{{ source_mark("imdb", root) }}<span class="score-value">{{ "%.1f" | format(film.imdb_rating) }}</span></a></li>{% endif %}
+    {% if film.rt_score is not none %}<li class="rating-rt"><a href="{{ film.rt_link }}">{{ source_mark("rt", root) }}<span class="score-value">{{ film.rt_score }}%</span></a></li>{% endif %}
+    {% if film.metacritic is not none %}<li class="rating-metacritic"><a href="{{ film.metacritic_link }}">{{ source_mark("metacritic", root) }}<span class="score-value">{{ film.metacritic }}</span></a></li>{% endif %}
   </ul>
   {% endif %}
 
@@ -41,7 +41,7 @@
     <h3 class="day-heading">{{ day.label }}</h3>
     {% for group in day.groups %}
       <div class="showtime-venue">
-        <h4><a href="{{ root }}theatres/{{ group.venue.slug }}/">{{ venue_badge(group.venue, root) }}{{ group.venue.name }}</a></h4>
+        <h4><a href="{{ root }}theatres/{{ group.venue.slug }}/">{{ venue_badge(group.venue, root) }}<span>{{ group.venue.name }}</span></a></h4>
         {% for r in group.rows %}
           {% if r.note %}<p class="meta">{{ r.note }}</p>{% endif %}
           <div class="times">{% for s in r.showtimes %}{{ showtime(s, page.title) }}{% endfor %}</div>

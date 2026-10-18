@@ -1,12 +1,27 @@
-"""Every venue cineclock covers, in the order they're shown.
+"""Every theatre cineclock covers, its rooms, and what's known about each room.
 
-Facts come from each venue's own website (and Wikipedia for the Park's
-history), checked Oct 2026. Anything not stated there is left out rather than
-guessed.
+Theatre -> room -> showtime. A single-screen theatre still has one room, so
+every theatre works the same way and a multiplex would just have more rooms.
+
+Specs are only recorded when a source states them, with that source alongside.
+A spec is shown on the site only once every room has it (see shown_specs), so
+theatre pages stay comparable and nothing is filled in by guesswork.
 """
 
 from dataclasses import dataclass, field
 from urllib.parse import quote_plus
+
+# The order specs appear in on theatre pages.
+SPEC_FIELDS = ["Seats", "Screen", "Projection", "Sound"]
+
+
+@dataclass(frozen=True)
+class Room:
+    id: str  # stable, never shown; e.g. "viff-lochmaddy"
+    name: str  # e.g. "Lochmaddy Studio Theatre"
+    short: str = ""  # shown next to the theatre badge when it isn't the main room
+    specs: dict[str, str] = field(default_factory=dict)
+    sources: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -18,13 +33,20 @@ class Venue:
     address: str
     website: str
     blurb: str
+    rooms: tuple[Room, ...]
+    # Logo files in static/logos: a compact mark for pills, a full logo for its page.
+    mark: str | None = None
+    full_logo: str | None = None
     # The Rio and the Park make their own posters, which beat generic ones.
     own_posters: bool = False
-    # Logo file in static/logos, and whether it needs a light tile to show up.
-    logo: str | None = None
-    logo_on_light: bool = False
-    specs: list[tuple[str, str]] = field(default_factory=list)
-    about: list[str] = field(default_factory=list)
+    about: tuple[str, ...] = ()
+
+    @property
+    def main_room(self) -> Room:
+        return self.rooms[0]
+
+    def room(self, room_id: str | None) -> Room | None:
+        return next((r for r in self.rooms if r.id == room_id), None)
 
     @property
     def map_url(self) -> str:
@@ -32,7 +54,7 @@ class Venue:
 
     @property
     def monogram(self) -> str:
-        """Fallback badge text when there's no logo file: Rio -> R, VIFF Lochmaddy -> VL"""
+        """Fallback badge text when there's no logo file: Rio -> R."""
         return "".join(word[0] for word in self.short.split()[:2]).upper()
 
 
@@ -45,22 +67,22 @@ VENUES = [
         address="1660 East Broadway, Vancouver, BC V5N 1W1",
         website="https://riotheatre.ca/",
         blurb="A 1938 single-screen mixing cult films, new releases and live shows.",
+        rooms=(
+            Room(
+                "rio-main",
+                "Main auditorium",
+                specs={"Seats": "409", "Projection": "Digital", "Sound": "Surround"},
+                sources=("https://riotheatre.ca/",),
+            ),
+        ),
+        mark="rio-mark.png",
+        full_logo="rio-full.png",
         own_posters=True,
-        logo="rio.png",
-        specs=[
-            ("Opened", "1938"),
-            ("Screens", "1"),
-            ("Seats", "409"),
-            ("Projection", "Digital"),
-            ("Sound", "Surround"),
-            ("Stage", "Yes, for live shows"),
-        ],
-        about=[
-            "Restored with a digital projector, surround sound and a large stage, so "
-            "nights here swing between repertory screenings, burlesque and comedy.",
+        about=(
+            "Built in 1938 and restored with a digital projector, surround sound and a large "
+            "stage, so nights here swing between repertory screenings, burlesque and comedy.",
             "Every ticket includes a membership in the Vancouver Art House Society.",
-            "Runs the Park on Cambie with the same team.",
-        ],
+        ),
     ),
     Venue(
         name="The Park",
@@ -70,21 +92,22 @@ VENUES = [
         address="3440 Cambie Street, Vancouver, BC V5Z 2W8",
         website="https://tickets.theparktheatre.ca/",
         blurb="A 1941 neighbourhood single-screen, reopened in 2026 by the Rio's team.",
+        rooms=(
+            Room(
+                "park-main",
+                "Main auditorium",
+                specs={"Seats": "504", "Screen": "18 × 36 ft", "Sound": "Dolby Digital"},
+                sources=("https://en.wikipedia.org/wiki/Park_Theatre_(Vancouver)",),
+            ),
+        ),
+        mark="park-mark.png",
+        full_logo="park-full.png",
         own_posters=True,
-        logo="park.png",
-        specs=[
-            ("Opened", "1941"),
-            ("Screens", "1"),
-            ("Seats", "504"),
-            ("Screen size", "18 × 36 ft"),
-            ("Projection", "Digital and 70mm"),
-            ("Sound", "Dolby Digital"),
-        ],
-        about=[
+        about=(
             "Opened in August 1941. A 2005 renovation brought new seats, the larger screen "
             "and Dolby Digital sound.",
             "Closed under Cineplex in 2025 and reopened in 2026, run by the team behind the Rio.",
-        ],
+        ),
     ),
     Venue(
         name="The Cinematheque",
@@ -94,63 +117,93 @@ VENUES = [
         address="1131 Howe Street, Vancouver, BC V6Z 2L7",
         website="https://thecinematheque.ca/",
         blurb="Non-profit cinema showing repertory series, restorations and world cinema.",
-        logo="cinematheque.png",
-        logo_on_light=True,
-        specs=[
-            ("Screens", "1"),
-            ("Seats", "153"),
-            ("Projection", "Digital and 35mm"),
-            ("Ages", "18+ unless noted"),
-            ("Accessibility", "Wheelchair accessible"),
-        ],
-        about=[
-            "A non-profit film society and educational institution, supported by the "
-            "Canada Council, the BC Arts Council, the City of Vancouver, donors and volunteers.",
+        rooms=(
+            Room(
+                "cinematheque-main",
+                "Main auditorium",
+                specs={"Seats": "153", "Projection": "Digital and 35mm"},
+                sources=(
+                    "https://thecinematheque.ca/about/visit",
+                    "https://thecinematheque.ca/about",
+                ),
+            ),
+        ),
+        mark="cinematheque-mark.png",
+        full_logo="cinematheque-full.png",
+        about=(
+            "A non-profit film society and educational institution, supported by the Canada "
+            "Council, the BC Arts Council, the City of Vancouver, donors and volunteers.",
             "Buying a ticket makes you a member of the Pacific Cinémathèque Pacifique Society. "
             "That status lets it show films not reviewed by Consumer Protection BC, which is "
             "why most screenings are 18+.",
-            "Its projectionists still run 35mm prints alongside digital.",
-        ],
+        ),
     ),
     Venue(
         name="VIFF Centre",
-        short="VIFF Centre",
+        short="VIFF",
         slug="viff-centre",
         neighbourhood="Downtown, Seymour at Davie",
         address="1181 Seymour Street, Vancouver, BC V6B 3M7",
         website="https://viff.org/whats-on/",
-        blurb="The VIFF Cinema, the film festival's year-round main screen.",
-        logo="viff.svg",
-        specs=[
-            ("Screen", "33 ft"),
-            ("Sound", "Dolby surround"),
-            ("Bar", "Licensed, 19+"),
-        ],
-        about=[
+        blurb="The film festival's year-round home, with a main cinema and a studio room.",
+        rooms=(
+            Room(
+                "viff-main",
+                "VIFF Cinema",
+                specs={
+                    "Seats": "169",
+                    "Screen": "33 ft",
+                    "Projection": "4K digital",
+                    "Sound": "7.1 Dolby surround",
+                },
+                sources=("https://viff.org/rent-our-venue/",),
+            ),
+            Room(
+                "viff-lochmaddy",
+                "Lochmaddy Studio Theatre",
+                short="Lochmaddy",
+                specs={
+                    "Seats": "41",
+                    "Screen": "17 ft",
+                    "Projection": "2K digital",
+                    "Sound": "Dolby surround",
+                },
+                sources=("https://viff.org/rent-our-venue/lochmaddy-studio-theatre/",),
+            ),
+        ),
+        mark="viff.svg",
+        full_logo="viff.svg",
+        about=(
             "Home of the Vancouver International Film Festival, programming new releases, "
             "restorations and series all year.",
-            "The box office opens 30 minutes before the day's first screening.",
-        ],
+            "The bar is licensed, so patrons 19 and over can bring a drink into the film.",
+        ),
     ),
     Venue(
-        name="VIFF Lochmaddy",
-        short="Lochmaddy",
-        slug="viff-lochmaddy",
-        neighbourhood="Inside the VIFF Centre",
-        address="1181 Seymour Street, Vancouver, BC V6B 3M7",
-        website="https://viff.org/whats-on/",
-        blurb="The Lochmaddy Studio Theatre, a 41-seat room inside the VIFF Centre.",
-        logo="viff.svg",
-        specs=[
-            ("Seats", "41"),
-            ("Screen", "17 ft"),
-            ("Sound", "Dolby surround"),
-            ("Bar", "Licensed, 19+"),
-        ],
-        about=[
-            "An intimate studio for VIFF's wider range of programming, with the same "
-            "projection and Dolby sound standard as the main cinema.",
-        ],
+        name="The Dunbar",
+        short="Dunbar",
+        slug="dunbar",
+        neighbourhood="Dunbar-Southlands",
+        address="4555 Dunbar Street, Vancouver, BC",
+        website="https://ticketing.uswest.veezi.com/sessions/?siteToken=sap55z6c6aj6b96yshhtj7vyw4",
+        blurb="A 1935 neighbourhood single-screen showing first-run films.",
+        rooms=(
+            Room(
+                "dunbar-main",
+                "Main auditorium",
+                specs={"Seats": "350"},
+                sources=(
+                    "https://www.biv.com/news/entertainment-media-sports/"
+                    "vancouver-single-screen-cinema-has-force-8245070",
+                ),
+            ),
+        ),
+        mark="dunbar-mark.png",
+        full_logo="dunbar-mark.png",
+        about=(
+            "Built in 1935 and one of the last neighbourhood movie houses in Vancouver.",
+            "Run independently by Ken Charko since 1998, with a focus on first-run films.",
+        ),
     ),
 ]
 
@@ -162,3 +215,18 @@ def order(name: str) -> int:
     """Sort key that puts venues in the order above; unknown ones go last."""
     names = [v.name for v in VENUES]
     return names.index(name) if name in names else len(names)
+
+
+def shown_specs() -> list[str]:
+    """Spec fields known for every room, in display order. Only these are shown."""
+    rooms = [room for venue in VENUES for room in venue.rooms]
+    return [f for f in SPEC_FIELDS if all(room.specs.get(f) for room in rooms)]
+
+
+def room_label(venue_name: str, room_id: str | None) -> str | None:
+    """A room's short name for pills, when it isn't the theatre's main room."""
+    venue = BY_NAME.get(venue_name)
+    room = venue.room(room_id) if venue else None
+    if not room or room == venue.main_room:
+        return None
+    return room.short or room.name

@@ -4,18 +4,24 @@
 {% if href %}</a>{% else %}</div>{% endif %}
 {%- endmacro %}
 
-{# A small square badge for a theatre: its logo if we have the file, else its initials. #}
+{# A theatre pill: the theatre's own compact logo, or its initials if the file is missing. #}
 {% macro venue_badge(v, root) -%}
-<span class="venue-badge{% if v.logo_on_light %} on-light{% endif %}" title="{{ v.name }}">
-  {%- if v.logo and has_asset("logos/" ~ v.logo) %}<img src="{{ root }}static/logos/{{ v.logo }}" alt="{{ v.name }}">{% else %}<span aria-label="{{ v.name }}">{{ v.monogram }}</span>{% endif -%}
+<span class="venue-pill" title="{{ v.name }}">
+  {%- if v.mark and has_asset("logos/" ~ v.mark) %}<img src="{{ root }}static/logos/{{ v.mark }}" alt="{{ v.name }}">{% else %}<span class="monogram" role="img" aria-label="{{ v.name }}">{{ v.monogram }}</span>{% endif -%}
 </span>
 {%- endmacro %}
 
+{# A room pill, only for rooms other than the theatre's main one. #}
+{% macro room_pill(s) -%}
+{% set label = s | room_label %}{% if label %}<span class="room-pill">{{ label }}</span>{% endif %}
+{%- endmacro %}
+
 {% macro source_mark(source, root) -%}
-{% if source == "letterboxd" and has_asset("logos/letterboxd.svg") -%}
-<img class="source-logo" src="{{ root }}static/logos/letterboxd.svg" alt="Letterboxd">
+{% set names = {"letterboxd": "Letterboxd", "imdb": "IMDb", "rt": "Rotten Tomatoes", "metacritic": "Metacritic"} %}
+{%- if has_asset("logos/" ~ source ~ ".png") -%}
+<img class="source-logo source-{{ source }}" src="{{ root }}static/logos/{{ source }}.png" alt="{{ names[source] }}">
 {%- else -%}
-<span class="source-label">{{ {"letterboxd": "LB", "imdb": "IMDb", "rt": "RT", "metacritic": "MC"}[source] }}</span>
+<span class="source-label">{{ names[source] }}</span>
 {%- endif %}
 {%- endmacro %}
 
@@ -36,8 +42,8 @@
 {%- endmacro %}
 
 {% macro showtime(s, label=None) -%}
-<a class="time" href="{{ s.url }}" aria-label="Tickets for {{ label or s.title }}, {{ s.local_start.strftime('%A %B') }} {{ s.local_start.day }} at {{ s.starts_at | clock }}">
-  {{- s.starts_at | clock -}}
+<a class="time" href="{{ s.url }}" aria-label="Tickets for {{ label or s.title }}, {{ s.local_start.strftime('%A %B') }} {{ s.local_start.day }} at {{ s.starts_at | clock }}{% if s | room_label %}, {{ s | room_label }}{% endif %}">
+  {{- s.starts_at | clock -}}{% if s | room_label %}<small>{{ s | room_label }}</small>{% endif %}
 </a>
 {%- endmacro %}
 
@@ -97,7 +103,7 @@
         <span class="card-title">{{ c.page.title }}{% if c.page.year %} <span class="year">{{ c.page.year }}</span>{% endif %}</span>
         {% if c.why %}<span class="card-why">{{ c.why }}</span>{% endif %}
         <span class="card-next">{{ c.next_label }}</span>
-        <span class="card-venues">{% for v in c.page.badges %}{{ venue_badge(v, root) }}{% endfor %}</span>
+        <span class="card-venues">{% for v in c.page.venues %}{{ venue_badge(v, root) }}{% endfor %}</span>
       </a>
     </li>
     {% endfor %}

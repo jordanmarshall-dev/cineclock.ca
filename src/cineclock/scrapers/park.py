@@ -11,19 +11,18 @@ from urllib.parse import urljoin
 import httpx
 from bs4 import BeautifulSoup, Tag
 
-from cineclock.models import VANCOUVER, Screening
+from cineclock.dates import hour_24, month_number, resolve
+from cineclock.models import Screening
 from cineclock.scrapers import make_client
 from cineclock.titles import clean_title, credits_year, split_year
 
 VENUE = "The Park"
 VENUES = (VENUE,)
+ROOM = "park-main"
 LISTINGS_URL = "https://tickets.theparktheatre.ca/"
 # The site refuses requests that don't say they accept HTML.
 HEADERS = {"Accept": "text/html,application/xhtml+xml"}
 MAX_PAGES = 10
-
-MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 # "Sun, Oct 18, 1:15 pm" (weekday optional)
 DATE = re.compile(
@@ -34,36 +33,13 @@ DATE = re.compile(
 
 
 def parse_date(text: str, now: datetime) -> datetime | None:
-    """Read a Park date, which has no year, as Vancouver time.
-
-    The year is the one where the date lands on the listed weekday. A date
-    only falls on the same weekday once in any three years, so checking last
-    year, this year and next year finds exactly one match.
-    """
+    """Read a Park date like "Sun, Oct 18, 1:15 pm", which has no year, as Vancouver time."""
     match = DATE.search(text)
-    if not match or match["month"].title() not in MONTHS:
+    month = month_number(match["month"]) if match else None
+    if not month:
         return None
-    month = MONTHS.index(match["month"].title()) + 1
-    hour = int(match["hour"]) % 12 + (12 if match["ampm"].lower() == "pm" else 0)
-    today = now.astimezone(VANCOUVER)
-
-    candidates = []
-    for year in (today.year - 1, today.year, today.year + 1):
-        try:
-            candidates.append(
-                datetime(
-                    year, month, int(match["day"]), hour, int(match["minute"]), tzinfo=VANCOUVER
-                )
-            )
-        except ValueError:
-            continue  # Feb 29 in a non-leap year
-    if not candidates:
-        return None
-
-    weekday = (match["weekday"] or "").title()
-    on_weekday = [c for c in candidates if WEEKDAYS[c.weekday()] == weekday]
-    # Without a usable weekday, the closest date to now is the best guess.
-    return min(on_weekday or candidates, key=lambda c: abs(c - today))
+    hour = hour_24(int(match["hour"]), match["ampm"])
+    return resolve(month, int(match["day"]), hour, int(match["minute"]), match["weekday"], now)
 
 
 def listing_start(listing: Tag, now: datetime) -> datetime | None:
@@ -100,6 +76,7 @@ def parse_page(page: str, now: datetime) -> tuple[list[Screening], str | None]:
         screenings.append(
             Screening(
                 venue=VENUE,
+                room=ROOM,
                 title=title,
                 year=(credits_year(description.get_text(" ")) if description else None)
                 or title_year,

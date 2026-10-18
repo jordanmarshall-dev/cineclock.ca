@@ -19,7 +19,9 @@
   --text: #9ab;
   --bright: #dde5ed;
   --white: #fff;
-  --accent: #f5b942;
+  --accent: #8830df;
+  /* The brand purple is too dark for small text on this background, so text uses a lighter tint. */
+  --accent-text: #b98af0;
   --sans: "Instrument Sans", system-ui, sans-serif;
   --serif: "Source Serif 4", Georgia, serif;
   --gutter: 1rem;
@@ -63,14 +65,12 @@ a:focus-visible {
   min-height: 3.5rem;
 }
 
-.wordmark {
-  font: 700 1.25rem/1 var(--sans);
-  color: var(--white);
-  text-decoration: none;
-  letter-spacing: -0.01em;
-}
+.wordmark { display: block; line-height: 0; }
 
-.wordmark span { color: var(--accent); }
+.wordmark img {
+  width: auto;
+  height: 1.75rem;
+}
 
 .site-nav {
   display: flex;
@@ -226,7 +226,7 @@ a:focus-visible {
   line-height: 1.25;
 }
 
-.time:hover { border-color: var(--accent); color: var(--accent); }
+.time:hover { border-color: var(--accent-text); color: var(--accent-text); }
 
 .time small {
   font-size: 0.6875rem;
@@ -311,14 +311,19 @@ a:focus-visible {
 
 .scores a { display: block; text-decoration: none; }
 
+.scores .source-logo {
+  display: block;
+  width: auto;
+  height: 1.125rem;
+  margin-bottom: 0.375rem;
+}
+
 .score-value {
   display: block;
   font: 700 1.375rem/1.1 var(--sans);
   color: var(--white);
   font-variant-numeric: tabular-nums;
 }
-
-.score-source { font-size: 0.75rem; white-space: nowrap; }
 
 .synopsis {
   max-width: 38rem;
@@ -463,7 +468,7 @@ a:focus-visible {
 .card-why {
   display: block;
   margin-top: 0.1875rem;
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: 0.75rem;
   font-weight: 500;
   line-height: 1.3;
@@ -505,7 +510,7 @@ a:focus-visible {
 .tag { color: var(--text); }
 
 .tag-70mm, .tag-35mm, .tag-16mm, .tag-imax {
-  color: var(--accent);
+  color: var(--accent-text);
   font-weight: 600;
 }
 
@@ -516,37 +521,46 @@ a:focus-visible {
   font-size: 0.8125rem;
 }
 
-/* Theatre badges */
+/* Theatre pills: the theatre's own mark on a dark pill, sized by height so wide logos stay legible. */
 
-.venue-badge {
+.venue-pill {
   display: inline-flex;
   flex: none;
   align-items: center;
-  justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  border-radius: 5px;
+  height: 1.5rem;
+  padding: 0 0.4375rem;
+  border-radius: 999px;
   background: #0d1013;
-  box-shadow: inset 0 0 0 1px rgba(221, 238, 255, 0.12);
-  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(221, 238, 255, 0.14);
   vertical-align: middle;
 }
 
-.venue-badge img {
-  width: 100%;
-  height: 100%;
+.venue-pill img {
+  display: block;
+  width: auto;
+  max-width: 5.5rem;
+  height: 0.875rem;
   object-fit: contain;
-  padding: 2px;
 }
 
-.venue-badge.on-light { background: #f2f2ee; }
-.venue-badge.on-light img { padding: 0; }
-
-.venue-badge span {
+.monogram {
   color: var(--bright);
   font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.02em;
+}
+
+.room-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 1.5rem;
+  padding: 0 0.5rem;
+  border-radius: 999px;
+  background: var(--raised);
+  color: var(--bright);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  vertical-align: middle;
 }
 
 .venue-heading a {
@@ -557,6 +571,7 @@ a:focus-visible {
 
 .card-venues {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.25rem;
   margin-top: 0.375rem;
 }
@@ -584,36 +599,6 @@ a:focus-visible {
   line-height: 1.5;
   letter-spacing: 0.02em;
 }
-
-.score-source .source-logo { width: 1.25rem; vertical-align: -0.125rem; }
-
-.hide-letterboxd .rating-letterboxd,
-.hide-imdb .rating-imdb,
-.hide-rt .rating-rt,
-.hide-metacritic .rating-metacritic { display: none; }
-
-.rating-switches {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.375rem 1rem;
-  margin: 0 0 1.25rem;
-  padding: 0;
-  border: 0;
-}
-
-.rating-switches legend {
-  margin-bottom: 0.375rem;
-  color: var(--bright);
-  font-weight: 600;
-}
-
-.rating-switches label {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-}
-
-.rating-switches input { accent-color: var(--accent); }
 
 /* Showtimes page */
 
@@ -678,7 +663,7 @@ a:focus-visible {
 
 .filter-menus details[open] summary::after { transform: translateY(1px) rotate(-135deg); }
 
-.filter-menus details.active summary { border-color: var(--accent); color: var(--accent); }
+.filter-menus details.active summary { border-color: var(--accent-text); color: var(--accent-text); }
 
 .count:empty { display: none; }
 
@@ -747,7 +732,7 @@ a:focus-visible {
 .chip:hover { border-color: var(--text); }
 
 .chip[aria-pressed="true"] {
-  border-color: var(--accent);
+  border-color: var(--accent-text);
   background: var(--accent);
   color: var(--bg);
 }
@@ -816,41 +801,36 @@ a:focus-visible {
 
 .theatre-item {
   display: grid;
-  grid-template-columns: 4rem 1fr;
+  grid-template-columns: 5.5rem 1fr;
   gap: 1rem;
-  align-items: center;
+  align-items: start;
   padding: 1rem 0;
   text-decoration: none;
 }
 
 .theatre-logo {
   display: flex;
+  flex: none;
   align-items: center;
   justify-content: center;
-  width: 4rem;
-  height: 4rem;
+  width: 5.5rem;
+  height: 3.5rem;
+  padding: 0.5rem;
   border-radius: 8px;
   background: #0d1013;
   box-shadow: inset 0 0 0 1px rgba(221, 238, 255, 0.12);
-  overflow: hidden;
 }
 
 .theatre-logo img {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  padding: 0.375rem;
 }
-
-.theatre-logo.on-light { background: #f2f2ee; }
-.theatre-logo.on-light img { padding: 0; }
 
 .theatre-logo span {
   color: var(--bright);
   font-weight: 700;
 }
-
-.theatre-logo.large { width: 4.5rem; height: 4.5rem; }
 
 .theatre-text > * { display: block; }
 
@@ -867,15 +847,52 @@ a:focus-visible {
   font-size: 0.875rem;
 }
 
-.theatre-head {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-top: 2rem;
-}
+.theatre-head { margin-top: 2rem; }
 
 .theatre-head .venue-title { margin: 0; }
-.theatre-head .meta { margin-top: 0.25rem; }
+.theatre-head .meta { margin-top: 0.75rem; }
+
+.theatre-full-logo {
+  display: block;
+  width: auto;
+  height: 4rem;
+  max-width: 100%;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.rooms-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+}
+
+.room-picker {
+  padding: 0.375rem 0.625rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--raised);
+  color: var(--bright);
+  font: inherit;
+  font-size: 0.875rem;
+}
+
+.room-name {
+  margin: 1.25rem 0 0;
+  color: var(--bright);
+  font-size: 0.9375rem;
+}
 
 .specs {
   display: grid;
