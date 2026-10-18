@@ -876,3 +876,10 @@ def test_a_card_with_a_score_still_shows_its_badge(conn):
     # Where it's playing is the card's last line, below the poster.
     card = page.split('<li class="card"', 1)[1]
     assert card.index("card-next") < card.index("card-venues")
+
+
+def test_no_card_has_an_empty_score_spot(conn):
+    save(conn, show("Five Films by Somebody", at(19, 19), note="Shorts"))
+    page = plain(pages(conn, NOW)["films/index.html"])
+    assert 'class="card-badge" title="Shorts">Shorts<' in page
+    assert '<span class="card-tag card-unrated">Unrated</span>' in page

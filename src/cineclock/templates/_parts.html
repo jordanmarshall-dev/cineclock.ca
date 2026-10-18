@@ -189,11 +189,10 @@
       {%- if badge %}<span class="card-badge" title="{{ badge }}">{{ icon(TAG_ICONS.get(badge, "screen"), 10) }}{{ badge }}</span>{% endif -%}
     </span>
     <span class="card-title" title="{{ p.title }}{% if p.year %} ({{ p.year }}){% endif %}">{{ p.title }}</span>
-    {# A special screening's badge is on the poster, so the score spot is left
-       empty for it; a plain film with no score says Unrated. #}
+    {# The score spot is never empty, so no card has a blank line. #}
     {% set score = card_rating(p.film, root) | trim %}
     <span class="card-sub"><span class="year">{{ p.year or "" }}</span>
-      {%- if score %}{{ score }}{% elif not badge %}<span class="card-tag card-unrated">Unrated</span>{% endif -%}
+      {%- if score %}{{ score }}{% else %}<span class="card-tag card-unrated">Unrated</span>{% endif -%}
     </span>
     <span class="card-next{% if rare %} rare{% endif %}"{% if rare %} title="{{ rare[0] }}"{% endif %}>{{ icon("star" if rare else "calendar", 12) }}{{ when }}</span>
     <span class="card-venues">{% for v in p.venues %}{{ venue_badge(v, root) }}{% endfor %}</span>
