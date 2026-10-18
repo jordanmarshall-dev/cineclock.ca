@@ -10,7 +10,7 @@ import sys
 
 from PIL import Image, ImageEnhance, ImageOps
 
-MAX_WIDTH = 1400
+MAX_SIDE = 1400
 
 
 def grade(image: Image.Image) -> Image.Image:
@@ -22,8 +22,7 @@ def grade(image: Image.Image) -> Image.Image:
 
 def main(src: str, dest: str) -> None:
     out = grade(Image.open(src))
-    if out.width > MAX_WIDTH:
-        out = out.resize((MAX_WIDTH, round(out.height * MAX_WIDTH / out.width)), Image.LANCZOS)
+    out.thumbnail((MAX_SIDE, MAX_SIDE), Image.LANCZOS)
     out.save(dest, quality=80, optimize=True, progressive=True)
 
 
