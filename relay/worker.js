@@ -16,7 +16,13 @@ const ALLOWED_ORIGINS = ["https://yogzoth.github.io", "http://localhost:8000", "
 const CACHE_SECONDS = 6 * 60 * 60;
 // Cloudflare's free plan allows 50 fetches per request; leave room for the rest.
 const MAX_WATCHLIST_PAGES = 45;
-const HEADERS = { "User-Agent": "cineclock relay (+https://github.com/yogzoth/cineclock)" };
+// The headers a browser sends; Letterboxd's bot protection is stricter without them.
+const HEADERS = {
+  "User-Agent":
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0 Safari/537.36 cineclock-relay",
+  Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+  "Accept-Language": "en-CA,en;q=0.9",
+};
 
 export function parseGrid(page) {
   // Each film in a poster grid is an <li class="griditem ..."> with its slug in
@@ -52,7 +58,7 @@ async function get(fetcher, url) {
 export async function readProfile(user, fetcher = fetch) {
   const first = await get(fetcher, `${BASE}/${user}/watchlist/`);
   if (first.status === 404) return null;
-  if (!first.ok) throw new Error(`watchlist: ${first.status}`);
+  if (!first.ok) throw new Error(`Letterboxd answered ${first.status}`);
   const page1 = parseGrid(await first.text());
   const watchlist = new Set(Object.keys(page1.films));
   const last = Math.min(page1.lastPage, MAX_WATCHLIST_PAGES);
@@ -111,7 +117,8 @@ export default {
       if (cache && ctx) ctx.waitUntil(cache.put(key, response.clone()));
       return response;
     } catch (error) {
-      return respond({ error: "Letterboxd didn't answer" }, 502, origin);
+      // Say what went wrong, so a block is easy to tell from an outage.
+      return respond({ error: "Letterboxd didn't answer", detail: String(error.message || error) }, 502, origin);
     }
   },
 };
