@@ -524,11 +524,13 @@ def test_every_theatre_page_shows_the_same_spec_fields(conn):
         assert re.findall(r"<dt>(\w+)</dt>", plain(page)) == shown_specs() * len(v.rooms), v.name
 
 
-def test_viff_page_has_a_room_picker(conn):
+def test_viff_rooms_are_swipe_cards(conn):
     page = pages(conn, NOW)["theatres/viff-centre/index.html"]
-    assert '<option value="viff-lochmaddy">Lochmaddy Studio Theatre</option>' in page
+    assert 'class="room-swipe"' in page and "<select" not in page
+    assert '<h3 class="room-name">Lochmaddy Studio Theatre</h3>' in page
     assert "<dt>Seats</dt><dd>41</dd>" in plain(page)
-    assert "room-picker" not in pages(conn, NOW)["theatres/rio/index.html"]
+    rio = pages(conn, NOW)["theatres/rio/index.html"]
+    assert 'class="room-single"' in rio and "room-name" not in rio
 
 
 def test_theatre_page_uses_its_full_logo(conn):

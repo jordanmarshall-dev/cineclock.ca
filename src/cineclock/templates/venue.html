@@ -31,27 +31,24 @@
   </ul>
 
   {% if spec_fields %}
+  {% set multi = venue.rooms | length > 1 %}
   <section class="rooms" aria-labelledby="room-h">
-    <div class="rooms-head">
-      <h2 class="section-heading" id="room-h">{{ "The rooms" if venue.rooms | length > 1 else "The room" }}</h2>
-      {% if venue.rooms | length > 1 %}
-      <select class="room-picker" aria-label="Choose a room" hidden>
-        {% for room in venue.rooms %}<option value="{{ room.id }}">{{ room.name }}</option>{% endfor %}
-      </select>
-      {% endif %}
-    </div>
+    <h2 class="section-heading" id="room-h">{{ "The rooms" if multi else "The room" }}</h2>
+    {# Several rooms swipe sideways, with the next one peeking in so it's clear there's more. #}
+    <div class="{{ 'room-swipe' if multi else 'room-single' }}">
     {% for room in venue.rooms %}
     {% set room_photo = "rooms/" ~ room.id ~ ".jpg" %}
     <div class="room" data-room="{{ room.id }}">
-      {% if venue.rooms | length > 1 %}<h3 class="room-name">{{ room.name }}</h3>{% endif %}
+      {% if multi %}<h3 class="room-name">{{ room.name }}</h3>{% endif %}
       <div class="room-layout{% if has_asset(room_photo) %} has-photo{% endif %}">
-        {% if has_asset(room_photo) %}<figure class="room-photo"><img src="{{ root }}static/{{ room_photo }}" alt="Inside {{ room.name if venue.rooms | length > 1 else venue.name }}" loading="lazy"></figure>{% endif %}
+        {% if has_asset(room_photo) %}<figure class="room-photo"><img src="{{ root }}static/{{ room_photo }}" alt="Inside {{ room.name if multi else venue.name }}" loading="lazy"></figure>{% endif %}
         <dl class="specs">
           {% for f in spec_fields %}<div><dt>{{ icon(SPEC_ICONS[f]) }}{{ f }}</dt><dd>{{ room.specs[f] }}</dd></div>{% endfor %}
         </dl>
       </div>
     </div>
     {% endfor %}
+    </div>
   </section>
   {% endif %}
 
@@ -70,21 +67,4 @@
     <p class="empty">Nothing listed here right now. Check the <a href="{{ venue.website }}">theatre's website</a>.</p>
   {% endif %}
 </div>
-{% endblock %}
-
-{% block scripts %}
-{% if venue.rooms | length > 1 and spec_fields %}
-<script>
-  // Without JavaScript every room's specs are listed; with it, a picker shows one at a time.
-  (() => {
-    const picker = document.querySelector(".room-picker");
-    const rooms = document.querySelectorAll(".room");
-    picker.hidden = false;
-    document.querySelectorAll(".room-name").forEach((h) => (h.hidden = true));
-    const show = () => rooms.forEach((r) => (r.hidden = r.dataset.room !== picker.value));
-    picker.addEventListener("change", show);
-    show();
-  })();
-</script>
-{% endif %}
 {% endblock %}

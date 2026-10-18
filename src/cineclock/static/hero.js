@@ -25,9 +25,10 @@
   hero.querySelectorAll("[hidden]").forEach((el) => (el.hidden = false));
 
   let pos = 1;
+  // Slides are narrower than the hero, so move by each slide's real position.
   const place = (animate, offset = 0) => {
     track.style.transition = animate ? "" : "none";
-    track.style.transform = `translateX(calc(${-pos * 100}% + ${offset}px))`;
+    track.style.transform = `translateX(${offset - track.children[pos].offsetLeft}px)`;
   };
   const show = (n) => {
     pos = n;
@@ -77,4 +78,5 @@
 
   show(1);
   place(false);
+  addEventListener("resize", () => place(false));
 })();
