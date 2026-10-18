@@ -40,8 +40,10 @@ def test_rio_and_park_prices(fixture_text):
         ("Member, senior or student", "$13"),
         ("Rio and Park membership", "$30 a year"),
     ]
+    # The Park publishes no prices, so it shows the Rio's and says so.
     park = prices.parse_park(page)
-    assert amounts(park) == [("Rio and Park membership", "$30 a year")]
+    assert amounts(park) == amounts(prices.parse_rio(page))
+    assert park.origin.startswith("The Park doesn't publish its prices")
     assert park.deals[0].detail.startswith("$3 off regular films at both theatres")
 
 

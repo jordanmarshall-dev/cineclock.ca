@@ -5,8 +5,8 @@ saved copy is over 30 days old. A page that can't be read, or no longer reads
 the way the parser expects, leaves the last good prices in place; until a
 theatre's prices have been read once, its page shows the copy in venues.py.
 
-The Park only publishes the membership it shares with the Rio (its ticket prices
-show at checkout), so it reads the Rio's page. The Dunbar's ticketing site
+The Park publishes no prices (they show at checkout), so its page shows the
+Rio's published prices, labelled as such: same team, same membership. The Dunbar's ticketing site
 blocks automated visits, so its prices stay as recorded in venues.py.
 """
 
@@ -122,16 +122,25 @@ def parse_rio(page: str) -> Prices | None:
     )
 
 
+# The Park publishes no prices of its own (they show at checkout, behind a
+# reCAPTCHA). It's run by the Rio's team and shares the Rio's membership, so the
+# Park's page shows the Rio's published prices and says that's what they are.
+PARK_ORIGIN = (
+    "The Park doesn't publish its prices; these are the Rio's, from the same team"
+    " and membership. The Park's checkout shows the exact price."
+)
+
+
 def parse_park(page: str) -> Prices | None:
-    membership = rio_membership(text_of(page))
-    if not membership:
+    rio = parse_rio(page)
+    if not rio:
         return None
-    return Prices(
-        deals=(membership,),
-        note="The Park shows ticket prices when you buy on its site.",
+    return replace(
+        rio,
+        origin=PARK_ORIGIN,
         sources=(
             ("Park tickets", "https://tickets.theparktheatre.ca/"),
-            ("Membership details", RIO_URL),
+            ("Rio ticket info", RIO_URL),
         ),
     )
 

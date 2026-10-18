@@ -50,7 +50,7 @@
       </dl>
       {% endfor %}
       {% if pr.note %}<p class="meta fold-note">{{ pr.note }}</p>{% endif %}
-      <p class="meta fold-note">{% if pr.origin %}{{ pr.origin }}{% else %}From {{ venue.name }}'s own website, checked {{ pr.checked }}. Prices change, so check before you go.{% endif %}</p>
+      <p class="meta fold-note">{% if pr.origin %}{{ pr.origin }}{% if pr.checked and pr.checked[-4:] != "2024" %} Checked {{ pr.checked }}.{% endif %}{% else %}From {{ venue.name }}'s own website, checked {{ pr.checked }}. Prices change, so check before you go.{% endif %}</p>
       <ul class="links">{% for text, url in pr.sources %}<li><a href="{{ url }}">{{ icon("external") }}{{ text }}</a></li>{% endfor %}</ul>
     </div>
   </details>

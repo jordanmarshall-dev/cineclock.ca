@@ -127,12 +127,14 @@ RIO_PRICES = Prices(
 )
 
 PARK_PRICES = Prices(
+    tickets=RIO_PRICES.tickets,
     deals=(RIO_PARK_MEMBERSHIP,),
-    note="The Park shows ticket prices when you buy on its site.",
     checked=CHECKED,
+    origin="The Park doesn't publish its prices; these are the Rio's, from the same team"
+    " and membership. The Park's checkout shows the exact price.",
     sources=(
         ("Park tickets", "https://tickets.theparktheatre.ca/"),
-        ("Membership details", "https://riotheatre.ca/ticket-info/"),
+        ("Rio ticket info", "https://riotheatre.ca/ticket-info/"),
     ),
 )
 
