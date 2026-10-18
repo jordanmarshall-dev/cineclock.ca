@@ -483,13 +483,22 @@ def test_badge_falls_back_to_initials_without_a_logo(conn, monkeypatch, tmp_path
     assert '<span class="monogram" role="img" aria-label="The Rio">R</span>' in page
 
 
+def test_cards_show_letterboxd_before_any_other_score(conn):
+    save(conn, show("Alien", at(18, 20), year=1979), show("Obscure", at(18, 21), year=2001))
+    db.save_film(conn, film("Alien", 1979, 1, letterboxd_rating=4.2, imdb_rating=8.5))
+    db.save_film(conn, film("Obscure", 2001, 2, rt_score=71, metacritic=60))
+    page = pages(conn, NOW)["films/index.html"]
+    assert 'title="4.2 on Letterboxd"' in page and "8.5" not in page
+    assert 'title="71% on Rotten Tomatoes"' in page
+
+
 def test_ratings_show_on_listings_without_toggles(conn):
     save(conn, show("The Thing", at(18, 20), year=1982))
     db.save_film(conn, film("The Thing", 1982, 1091, imdb_rating=8.2, metacritic=57))
     page = pages(conn, NOW)["showtimes/index.html"]
-    # Listings carry only the Letterboxd score; the film page has the rest.
-    assert "rating-imdb" not in page and "rating-metacritic" not in page
-    assert "lb-rating" not in page
+    # Listings carry one score: Letterboxd, or the next source that has one.
+    assert 'class="card-rating card-rating-imdb" title="8.2 on IMDb"' in page
+    assert "metacritic" not in page.split("<footer")[0].lower()
     film_page = pages(conn, NOW)["films/the-thing-1982/index.html"]
     assert "IMDb" in film_page
     assert "rating-switches" not in page

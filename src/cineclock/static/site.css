@@ -328,8 +328,8 @@ a:focus-visible {
 }
 
 .ratings b { color: var(--bright); font-weight: 600; }
-.ratings .lb-rating { font-size: 0.8125rem; }
-.ratings .lb-rating .source-logo { height: 0.875rem; }
+.ratings .card-rating { font-size: 0.8125rem; }
+.ratings .card-rating .source-logo { height: 0.875rem; }
 
 .rating {
   display: inline-flex;
@@ -1022,7 +1022,7 @@ a:focus-visible {
   margin-top: 0.25rem;
 }
 
-.lb-rating {
+.card-rating {
   display: inline-flex;
   align-items: center;
   gap: 0.3125rem;
@@ -1030,8 +1030,8 @@ a:focus-visible {
   font-size: 0.75rem;
 }
 
-.lb-rating b { font-weight: 600; }
-.lb-rating .source-logo { height: 0.6875rem; }
+.card-rating b { font-weight: 600; }
+.card-rating .source-logo { height: 0.6875rem; }
 
 /* A film that plays once (or on one day) has its date picked out in purple
    rather than carrying a separate badge. */

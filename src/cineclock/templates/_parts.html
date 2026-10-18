@@ -26,9 +26,18 @@
 {%- endif %}
 {%- endmacro %}
 
-{# Just the Letterboxd average, for cards and rows. The film page has the full spread. #}
-{% macro lb_rating(film, root) -%}
-{% if film and film.letterboxd_rating %}<span class="lb-rating" title="{{ "%.1f" | format(film.letterboxd_rating) }} on Letterboxd">{{ source_mark("letterboxd", root) }}<b>{{ "%.1f" | format(film.letterboxd_rating) }}</b></span>{% endif %}
+{# One score for cards and rows: Letterboxd, or the first other source that has one.
+   The film page has the full spread. #}
+{% macro card_rating(film, root) -%}
+{% if film %}
+{%- set names = {"letterboxd": "Letterboxd", "imdb": "IMDb", "rt": "Rotten Tomatoes", "metacritic": "Metacritic"} -%}
+{%- if film.letterboxd_rating %}{% set source, score = "letterboxd", "%.1f" | format(film.letterboxd_rating) %}
+{%- elif film.imdb_rating %}{% set source, score = "imdb", "%.1f" | format(film.imdb_rating) %}
+{%- elif film.rt_score is not none %}{% set source, score = "rt", film.rt_score ~ "%" %}
+{%- elif film.metacritic is not none %}{% set source, score = "metacritic", film.metacritic ~ "" %}
+{%- else %}{% set source = None %}{% endif -%}
+{%- if source %}<span class="card-rating card-rating-{{ source }}" title="{{ score }} on {{ names[source] }}">{{ source_mark(source, root) }}<b>{{ score }}</b></span>{% endif -%}
+{% endif %}
 {%- endmacro %}
 
 {# Every ratings source, for the film page. #}
@@ -103,7 +112,7 @@
       {% if r.year %}<span class="year">{{ r.year }}</span>{% endif %}
     </p>
     {% if r.note and not (r.note | said_by_tags(r.tags)) %}<p class="meta">{{ r.note }}</p>{% elif r.page.film and r.page.film.director %}<p class="meta">{{ r.page.film.director }}</p>{% endif %}
-    {% if r.page.film and r.page.film.letterboxd_rating %}<p class="ratings">{{ lb_rating(r.page.film, root) }}</p>{% endif %}
+    {% set score = card_rating(r.page.film, root) %}{% if score | trim %}<p class="ratings">{{ score }}</p>{% endif %}
     {{ tag_list(r.tags) }}
     <p class="tags personal" hidden></p>
   </div>
@@ -180,7 +189,7 @@
     <span class="card-title">{{ p.title }}{% if p.year %} <span class="year">{{ p.year }}</span>{% endif %}</span>
     {% if why %}<span class="card-why">{% if why in TAG_ICONS %}{{ icon(TAG_ICONS[why], 11) }}{% endif %}{{ why }}</span>{% endif %}
     <span class="card-meta">
-      {{- lb_rating(p.film, root) -}}
+      {{- card_rating(p.film, root) -}}
       <span class="card-next{% if rare %} rare{% endif %}"{% if rare %} title="{{ rare[0] }}"{% endif %}>{{ icon("star" if rare else "calendar", 12) }}{{ when }}</span>
     </span>
   </a>

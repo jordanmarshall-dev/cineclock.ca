@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_parts.html" import rail, icon, venue_badge, lb_rating, TAG_ICONS %}
+{% from "_parts.html" import rail, icon, venue_badge, card_rating, TAG_ICONS %}
 
 {% block title %}cineclock: Support local cinemas{% endblock %}
 
@@ -20,7 +20,7 @@
             {%- for v in p.venues %}{{ venue_badge(v, root) }}{% endfor -%}
             <span>{{ icon("calendar", 14) }}{{ sl.when }}</span>
             {%- if p.film.director %}<span>{{ icon("clapper", 14) }}{{ p.film.director }}</span>{% endif -%}
-            {{- lb_rating(p.film, root) -}}
+            {{- card_rating(p.film, root) -}}
           </span>
         </span>
       </a>
