@@ -17,11 +17,6 @@
 {%- if v.mark and has_asset("logos/" ~ v.mark) %}{{ venue_badge(v, root, scale=1.6) }}{% else %}<span>{{ v.name }}</span>{% endif -%}
 {%- endmacro %}
 
-{# A room pill, only for rooms other than the theatre's main one. #}
-{% macro room_pill(s) -%}
-{% set label = s | room_label %}{% if label %}<span class="room-pill">{{ label }}</span>{% endif %}
-{%- endmacro %}
-
 {% macro source_mark(source, root) -%}
 {% set names = {"letterboxd": "Letterboxd", "imdb": "IMDb", "rt": "Rotten Tomatoes", "metacritic": "Metacritic"} %}
 {%- if has_asset("logos/" ~ source ~ ".png") -%}
@@ -76,10 +71,11 @@
   "Filmmaker Q&A": "mic", "Q&A": "mic", "Introduction": "mic", "Live accompaniment": "music", "Festival": "star",
   "Shorts programme": "film", "Special presentation": "star", "Guests": "people",
   "Advance screening": "eye", "Insider screening": "eye", "Sneak preview": "eye",
+  "7.1 sound": "speaker", "Curved screen": "screen",
 } %}
 
 {% macro tag_list(tags) -%}
-{% if tags %}<p class="tags">{% for t in tags %}<span class="tag tag-{{ t | tagkind }} tag-{{ t | tagslug }}">{% if t in TAG_ICONS %}{{ icon(TAG_ICONS[t], 12) }}{% endif %}{{ t }}</span>{% endfor %}</p>{% endif %}
+{% if tags %}<p class="tags">{% for t in tags %}<span class="tag tag-{{ t | tagkind }} tag-{{ t | tagslug }}">{{ icon(TAG_ICONS.get(t, "screen"), 12) }}{{ t }}</span>{% endfor %}</p>{% endif %}
 {%- endmacro %}
 
 {% macro showtime(s, label=None) -%}

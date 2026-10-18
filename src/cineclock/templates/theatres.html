@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_parts.html" import icon %}
+{% from "_parts.html" import icon, tag_list %}
 
 {% block title %}Theatres{% endblock %}
 
@@ -19,7 +19,7 @@
           <span class="theatre-name">{{ v.name }}</span>
           <span class="meta">{{ icon("pin", 12) }}{{ v.neighbourhood }}</span>
           <span class="theatre-blurb">{{ v.blurb }}</span>
-          {% if v.offers %}<span class="tags">{% for o in v.offers[:3] %}<span class="tag {{ 'tag-format' if 'mm' in o or o in ('4K', '3D') else 'tag-event' }}">{{ o }}</span>{% endfor %}</span>{% endif %}
+          {{ tag_list(v.offers[:3]) }}
         </span>
       </a>
     </li>

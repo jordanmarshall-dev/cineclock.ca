@@ -20,6 +20,8 @@
         {%- if film and film.runtime %}<span>{{ icon("clock") }}{{ film.runtime | runtime }}</span>{% endif -%}
         {%- if film and film.director %}<span class="film-director">{{ icon("clapper") }}<span class="visually-hidden">Directed by </span><b>{{ film.director }}</b></span>{% endif -%}
       </p>
+    </div>
+    <div class="film-details">
       {% if page.genres %}<p class="genres">{% for g in page.genres %}<span class="genre">{{ g }}</span>{% endfor %}</p>{% endif %}
       {{ tag_list(page.tags) }}
       {% if page.shared_note and not (page.shared_note | said_by_tags(page.tags)) %}<p class="film-note">{{ page.shared_note }}</p>{% endif %}

@@ -31,7 +31,7 @@ OFFERS = [
 class Room:
     id: str  # stable, never shown; e.g. "viff-lochmaddy"
     name: str  # e.g. "Lochmaddy Studio Theatre"
-    short: str = ""  # shown next to the theatre badge when it isn't the main room
+    short: str = ""  # shown on showtimes at theatres with more than one room
     specs: dict[str, str] = field(default_factory=dict)
     sources: tuple[str, ...] = ()
 
@@ -56,10 +56,6 @@ class Venue:
     # The Rio and the Park make their own posters, which beat generic ones.
     own_posters: bool = False
     about: tuple[str, ...] = ()
-
-    @property
-    def main_room(self) -> Room:
-        return self.rooms[0]
 
     def room(self, room_id: str | None) -> Room | None:
         return next((r for r in self.rooms if r.id == room_id), None)
@@ -269,7 +265,6 @@ VENUES = [
 ]
 
 BY_NAME = {v.name: v for v in VENUES}
-BY_SLUG = {v.slug: v for v in VENUES}
 
 
 def order(name: str) -> int:

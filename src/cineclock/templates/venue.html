@@ -1,12 +1,11 @@
 {% extends "base.html" %}
-{% from "_parts.html" import day_sections, date_tools, icon, TAG_ICONS %}
+{% from "_parts.html" import day_sections, date_tools, icon, tag_list %}
 
 {% block title %}{{ venue.name }} showtimes{% endblock %}
 {% block description %}What's playing at {{ venue.name }}, {{ venue.address }}.{% endblock %}
 
 {% block main %}
 {% set SPEC_ICONS = {"Seats": "seat", "Screen": "screen", "Projection": "projector", "Sound": "speaker"} %}
-{% set OFFER_ICONS = {"70mm": "film", "35mm": "film", "16mm": "film", "4K": "screen", "3D": "eye", "7.1 sound": "speaker", "Curved screen": "screen"} %}
 {% set photo = "theatres/" ~ venue.slug ~ ".jpg" %}
 {% if has_asset(photo) %}
 <div class="theatre-hero" aria-hidden="true"><img src="{{ root }}static/{{ photo }}" alt="" style="object-position: {{ venue.photo_focus }}" onerror="this.hidden = true"></div>
@@ -21,12 +20,7 @@
       <h1 class="venue-title">{{ venue.name }}</h1>
     {% endif %}
     <p class="meta">{{ icon("pin", 12) }}{{ venue.neighbourhood }}</p>
-    {% if venue.offers or listed %}
-    <p class="tags theatre-offers" aria-label="What this theatre offers">
-      {% for o in venue.offers %}<span class="tag {{ 'tag-format' if 'mm' in o or o in ('4K', '3D') else 'tag-event' }}">{{ icon(OFFER_ICONS.get(o, "screen"), 12) }}{{ o }}</span>{% endfor %}
-      {% for t in listed if t not in venue.offers %}<span class="tag tag-{{ t | tagkind }}">{{ icon(TAG_ICONS.get(t, "star"), 12) }}{{ t }}</span>{% endfor %}
-    </p>
-    {% endif %}
+    <div class="theatre-offers">{{ tag_list(venue.offers + (listed | reject("in", venue.offers) | list)) }}</div>
   </div>
   <p class="venue-blurb">{{ venue.blurb }}</p>
 
