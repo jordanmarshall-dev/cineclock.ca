@@ -172,6 +172,7 @@ VENUES = [
             Room(
                 "viff-main",
                 "VIFF Cinema",
+                short="VIFF Cinema",
                 specs={
                     "Seats": "169",
                     "Screen": "33 ft",
@@ -252,9 +253,9 @@ def shown_specs() -> list[str]:
 
 
 def room_label(venue_name: str, room_id: str | None) -> str | None:
-    """A room's short name for pills, when it isn't the theatre's main room."""
+    """A room's short name, for theatres with more than one room."""
     venue = BY_NAME.get(venue_name)
     room = venue.room(room_id) if venue else None
-    if not room or room == venue.main_room:
+    if not room or len(venue.rooms) == 1:
         return None
     return room.short or room.name

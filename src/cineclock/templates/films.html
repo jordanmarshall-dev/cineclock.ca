@@ -15,10 +15,11 @@
     {% set lb = p.film.letterboxd_rating if p.film and p.film.letterboxd_rating and (p.film.letterboxd_count or 0) >= 1000 else -1 %}
     <li class="film-item" data-item
         data-venues="{{ p.venues | map(attribute='slug') | join(' ') }}"
-        data-tags="{{ p.tags | map('tagslug') | join(' ') }}"
+        data-tags="{{ p.tags | filter_slugs | join(' ') }}"
         data-genres="{{ p.genres | map('tagslug') | join(' ') }}"
         data-title="{{ p.title | lower }}{% for s in p.screenings %} {{ s.title | lower }}{% endfor %}"
         data-sort-next="{{ p.next_showing.starts_at.timestamp() | int }}"
+        data-sort-leaving="{{ p.last_showing.starts_at.timestamp() | int }}"
         data-sort-added="{{ (p.added.timestamp() | int) if p.added else 0 }}"
         data-sort-rated="{{ lb }}"
         data-sort-popular="{{ (p.film.letterboxd_count or 0) if p.film else 0 }}"

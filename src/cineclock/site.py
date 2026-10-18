@@ -16,7 +16,7 @@ from cineclock import db
 from cineclock.films import Film, match_key, slugify
 from cineclock.models import VANCOUVER, Screening
 from cineclock.render import env
-from cineclock.tags import screening_tags, sort_tags
+from cineclock.tags import EVENTS, ON_FILM, is_event, screening_tags, sort_tags
 from cineclock.timefmt import clock, day_label, short_day
 from cineclock.venues import BY_NAME, VENUES, Room, Venue, order, shown_specs
 
@@ -236,6 +236,17 @@ def when(s: Screening, now: datetime) -> str:
     return f"{day:%b} {day.day}, {clock(s.starts_at)}"
 
 
+def last_day(s: Screening, now: datetime) -> str:
+    """today, tomorrow, or a weekday and date: "Last showing Tue Oct 20" """
+    today = now.astimezone(VANCOUVER).date()
+    day = s.local_start.date()
+    if day == today:
+        return "today"
+    if day == today + timedelta(days=1):
+        return "tomorrow"
+    return f"{day:%a %b} {day.day}"
+
+
 def rails(film_list: list[FilmPage], now: datetime) -> list[Rail]:
     today = now.astimezone(VANCOUVER).date()
     soonest = lambda p: p.next_showing.starts_at  # noqa: E731
@@ -255,8 +266,14 @@ def rails(film_list: list[FilmPage], now: datetime) -> list[Rail]:
         key=lambda p: (-p.added.timestamp(), soonest(p)),
     )
 
-    on_film = sorted((p for p in film_list if {"70mm", "35mm", "16mm"} & set(p.tags)), key=soonest)
-    events = sorted((p for p in film_list if "Event" in p.tags), key=soonest)
+    # Films whose last showing is within the week: catch them before they go.
+    last = lambda p: p.last_showing.starts_at  # noqa: E731
+    leaving = sorted(
+        (p for p in film_list if p.last_showing.local_start.date() <= today + timedelta(days=6)),
+        key=last,
+    )
+    on_film = sorted((p for p in film_list if ON_FILM & set(p.tags)), key=soonest)
+    events = sorted((p for p in film_list if is_event(p.tags)), key=soonest)
     top = sorted(
         (
             p
@@ -284,6 +301,11 @@ def rails(film_list: list[FilmPage], now: datetime) -> list[Rail]:
     found = [
         Rail("On today", cards(on_today), f"showtimes/#d{today:%Y%m%d}"),
         Rail("Coming up", cards(coming_up), "films/"),
+        Rail(
+            "Leaving soon",
+            cards(leaving, lambda p: f"Last showing {last_day(p.last_showing, now)}"),
+            "films/?sort=leaving",
+        ),
         Rail("Just added", cards(just_added), "films/?sort=added"),
         Rail(
             "On film",
@@ -303,7 +325,11 @@ def rails(film_list: list[FilmPage], now: datetime) -> list[Rail]:
         Rail(
             "Events and guests",
             cards(
-                events, lambda p: next((s.note for s in p.screenings if s.note), "Special event")
+                events,
+                lambda p: next(
+                    (s.note for s in p.screenings if s.note),
+                    next(t for t in p.tags if t in EVENTS),
+                ),
             ),
             "films/?tag=event",
         ),

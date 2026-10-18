@@ -8,7 +8,6 @@
   const chips = [...form.querySelectorAll(".chip")];
   const status = form.querySelector(".filter-status");
   const items = [...document.querySelectorAll("[data-item]")];
-  const onFilm = ["70mm", "35mm", "16mm"];
   form.hidden = false;
 
   const params = new URLSearchParams(location.search);
@@ -27,8 +26,8 @@
   function reorder() {
     if (!sort || !list) return;
     const key = "sort" + sort.value[0].toUpperCase() + sort.value.slice(1);
-    // "next" sorts soonest first; every other sort puts the biggest number first.
-    const direction = sort.value === "next" ? 1 : -1;
+    // Dates sort soonest first; every other sort puts the biggest number first.
+    const direction = sort.value === "next" || sort.value === "leaving" ? 1 : -1;
     const sorted = [...list.children].sort(
       (a, b) =>
         direction * (Number(a.dataset[key]) - Number(b.dataset[key])) ||
@@ -55,9 +54,7 @@
       const itemTags = words(item, "tags");
       const match =
         (!venues.length || venues.some((v) => words(item, "venues").includes(v))) &&
-        tags.every((t) =>
-          t === "on-film" ? onFilm.some((f) => itemTags.includes(f)) : itemTags.includes(t)
-        ) &&
+        tags.every((t) => itemTags.includes(t)) &&
         (!genres.length || genres.some((g) => words(item, "genres").includes(g))) &&
         (!q || item.dataset.title.includes(q));
       item.hidden = !match;

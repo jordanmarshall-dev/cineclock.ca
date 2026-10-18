@@ -352,8 +352,23 @@ def test_on_film_rail(conn):
 
 
 def test_empty_rails_are_left_out(conn):
-    save(conn, show("Musk", at(19, 12)))
+    save(conn, show("Musk", at(30, 12)))
     assert set(rail_titles(conn)) == {"Coming up"}
+
+
+def test_leaving_soon_lists_films_whose_last_showing_is_this_week(conn):
+    save(
+        conn,
+        show("Stays", at(19, 19)),
+        show("Stays", at(30, 19)),
+        show("Goes Later", at(19, 19)),
+        show("Goes Later", at(23, 19)),
+        show("Goes", at(20, 19)),
+    )
+    rail = rail_titles(conn)["Leaving soon"]
+    assert [c.page.title for c in rail.cards] == ["Goes", "Goes Later"]
+    assert rail.cards[0].why == "Last showing Tue Oct 20"
+    assert rail.more == "films/?sort=leaving"
 
 
 def test_coming_up_skips_what_is_on_today(conn):
@@ -368,8 +383,8 @@ def test_rows_carry_tags_and_filter_data(conn):
     save(conn, show("Dune: Part Three", at(18, 19), "The Park", note="Presented in 70mm"))
     page = pages(conn, NOW)["showtimes/index.html"]
     assert 'data-venues="park"' in page
-    assert 'data-tags="one-screening 70mm"' in page
-    assert 'class="tag tag-70mm">70mm<' in plain(page)
+    assert 'data-tags="one-screening 70mm on-film"' in page
+    assert 'class="tag tag-format tag-70mm">70mm<' in plain(page)
     assert 'data-value="on-film"' in page
 
 
@@ -465,7 +480,7 @@ def test_ratings_show_on_listings_without_toggles(conn):
     assert "rating-switches" not in page
 
 
-def test_viff_rooms_share_one_venue_and_label_the_studio(conn):
+def test_viff_rooms_share_one_venue_and_label_each_room(conn):
     save(
         conn,
         show("NAZA", at(19, 16), "VIFF Centre", room="viff-main"),
@@ -475,6 +490,7 @@ def test_viff_rooms_share_one_venue_and_label_the_studio(conn):
     assert [v.name for v in p.venues] == ["VIFF Centre"]
     page = pages(conn, NOW)["films/naza/index.html"]
     assert page.count("<small>Lochmaddy</small>") == 1
+    assert page.count("<small>VIFF Cinema</small>") == 1
 
 
 def test_every_theatre_page_shows_the_same_spec_fields(conn):

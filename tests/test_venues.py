@@ -61,9 +61,10 @@ def test_only_specs_every_room_has_are_shown():
     assert shown_specs() == ["Seats", "Screen", "Projection", "Sound"]
 
 
-def test_room_label_only_for_rooms_other_than_the_main_one():
+def test_room_label_only_for_theatres_with_several_rooms():
     assert room_label("VIFF Centre", "viff-lochmaddy") == "Lochmaddy"
-    assert room_label("VIFF Centre", "viff-main") is None
+    assert room_label("VIFF Centre", "viff-main") == "VIFF Cinema"
+    assert room_label("The Rio", "rio-main") is None
     assert room_label("VIFF Centre", None) is None
     assert room_label("Somewhere New", "x") is None
 
