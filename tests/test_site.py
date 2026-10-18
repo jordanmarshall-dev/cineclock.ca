@@ -646,7 +646,21 @@ def test_film_without_a_poster_shows_its_title_in_the_frame(conn):
     assert '<span class="poster-fallback" aria-hidden="true">Obscure Thing</span>' in page
 
 
-def test_film_page_lists_a_row_per_day_and_theatre(conn):
+def test_film_page_groups_days_under_their_theatre(conn):
     save(conn, show("Jaws", at(19, 19)), show("Jaws", at(19, 21)), show("Jaws", at(20, 19)))
     page = pages(conn, NOW)["films/jaws/index.html"]
-    assert page.count('class="showing panel"') == 2
+    assert page.count('class="showing"') == 2
+    assert page.count('class="venue-group panel"') == 1
+
+
+def test_film_page_starts_a_new_block_when_the_theatre_changes(conn):
+    save(
+        conn,
+        show("Jaws", at(19, 19)),
+        show("Jaws", at(20, 19), "The Park"),
+        show("Jaws", at(21, 19)),
+        show("Jaws", at(22, 19)),
+    )
+    page = pages(conn, NOW)["films/jaws/index.html"]
+    blocks = page.split('class="venue-group panel"')[1:]
+    assert [b.count('class="showing"') for b in blocks] == [1, 1, 2]

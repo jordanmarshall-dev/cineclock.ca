@@ -191,6 +191,25 @@ def calendar_months(days: list[Day], now: datetime) -> list[CalendarMonth]:
 
 
 @dataclass
+class TheatreRun:
+    """Back-to-back days at one theatre, shown as one block on a film page."""
+
+    venue: Venue
+    days: list[tuple[Day, list[Row]]]
+
+
+def theatre_runs(days: list[Day]) -> list[TheatreRun]:
+    runs: list[TheatreRun] = []
+    for day in days:
+        for group in day.groups:
+            if runs and runs[-1].venue == group.venue:
+                runs[-1].days.append((day, group.rows))
+            else:
+                runs.append(TheatreRun(group.venue, [(day, group.rows)]))
+    return runs
+
+
+@dataclass
 class Card:
     """A poster in one of the home page's rows. `why` says why it's in that row."""
 
@@ -469,7 +488,9 @@ def pages(conn: Connection, now: datetime) -> dict[str, str]:
     for page in film_list:
         path = f"films/{page.slug}/index.html"
         page_days = group_days(page.screenings, page_of, films, now)
-        out[path] = render("film.html", path, page=page, film=page.film, days=page_days)
+        out[path] = render(
+            "film.html", path, page=page, film=page.film, runs=theatre_runs(page_days)
+        )
 
     out["theatres/index.html"] = render("theatres.html", "theatres/index.html", current="theatres")
     out["about/index.html"] = render("about.html", "about/index.html")

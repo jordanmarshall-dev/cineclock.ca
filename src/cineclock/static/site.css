@@ -1128,22 +1128,11 @@ a:focus-visible {
   font: 400 1.0625rem/1.6 var(--serif);
 }
 
-/* Showtimes: one row per day and theatre, times underneath. */
-.showings {
-  display: grid;
-  gap: 0.5rem;
-  margin: 1rem 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.showing {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.5rem 1rem;
-  align-items: center;
-  padding: 0.75rem 1rem;
-}
+/* Showtimes: a block per theatre (logo and rule), then each date and its
+   times. A new block starts only when the theatre changes. */
+.showing { padding: 0.75rem 0; }
+.showing + .showing { border-top: 1px solid var(--panel-line); }
+.showing:last-child { padding-bottom: 1rem; }
 
 .showing-when {
   display: flex;
@@ -1155,11 +1144,9 @@ a:focus-visible {
 }
 
 .showing-when .icon { color: var(--accent-text); }
-.showing-venue { display: inline-flex; justify-self: end; text-decoration: none; }
-.showing-times { grid-column: 1 / -1; }
-.showing-times .times { margin-top: 0.25rem; }
-.showing-times .tags,
-.showing-times .showing-note { margin: 0 0 0.5rem; }
+.showing .times { margin-top: 0.5rem; }
+.showing .tags,
+.showing .showing-note { margin: 0.5rem 0 0; }
 
 /* 9. Theatres list and theatre page */
 
