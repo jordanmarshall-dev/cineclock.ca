@@ -6,15 +6,25 @@
 
 {% block main %}
 {% set SPEC_ICONS = {"Seats": "seat", "Screen": "screen", "Projection": "projector", "Sound": "speaker"} %}
+{% set OFFER_ICONS = {"70mm": "film", "35mm": "film", "16mm": "film", "4K": "screen", "3D": "eye", "7.1 sound": "speaker", "Curved screen": "screen"} %}
+{% set photo = "theatres/" ~ venue.slug ~ ".jpg" %}
+{% if has_asset(photo) %}
+<div class="theatre-hero" aria-hidden="true"><img src="{{ root }}static/{{ photo }}" alt="" style="object-position: {{ venue.photo_focus }}" onerror="this.hidden = true"></div>
+{% endif %}
 <div class="wrap">
-  <div class="theatre-head">
+  <div class="theatre-head{% if has_asset(photo) %} over-hero{% endif %}">
     {% if venue.full_logo and has_asset("logos/" ~ venue.full_logo) %}
       <img class="theatre-full-logo" src="{{ root }}static/logos/{{ venue.full_logo }}" alt="{{ venue.name }}">
       <h1 class="visually-hidden">{{ venue.name }}</h1>
     {% else %}
       <h1 class="venue-title">{{ venue.name }}</h1>
     {% endif %}
-    <p class="meta">{{ venue.neighbourhood }}</p>
+    <p class="meta">{{ icon("pin", 12) }}{{ venue.neighbourhood }}</p>
+    {% if venue.offers %}
+    <p class="tags theatre-offers" aria-label="What this theatre offers">
+      {% for o in venue.offers %}<span class="tag {{ 'tag-format' if 'mm' in o or o in ('4K', '3D') else 'tag-event' }}">{{ icon(OFFER_ICONS.get(o, "screen"), 12) }}{{ o }}</span>{% endfor %}
+    </p>
+    {% endif %}
   </div>
   <p class="venue-blurb">{{ venue.blurb }}</p>
 

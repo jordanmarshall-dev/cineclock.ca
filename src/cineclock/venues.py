@@ -8,11 +8,23 @@ A spec is shown on the site only once every room has it (see shown_specs), so
 theatre pages stay comparable and nothing is filled in by guesswork.
 """
 
+import re
 from dataclasses import dataclass, field
 from urllib.parse import quote_plus
 
 # The order specs appear in on theatre pages.
 SPEC_FIELDS = ["Seats", "Screen", "Projection", "Sound"]
+
+# Capabilities worth a pill on a theatre page, matched against its specs.
+OFFERS = [
+    ("70mm", r"\b70mm\b"),
+    ("35mm", r"\b35mm\b"),
+    ("16mm", r"\b16mm\b"),
+    ("4K", r"\b4k\b"),
+    ("3D", r"\b3d\b"),
+    ("7.1 sound", r"\b7\.1\b"),
+    ("Curved screen", r"\bcurved\b"),
+]
 
 
 @dataclass(frozen=True)
@@ -39,6 +51,8 @@ class Venue:
     full_logo: str | None = None
     # Some marks read small at the shared size (the Cinematheque's is plain text).
     mark_scale: float = 1.0
+    # Which part of the theatre's photo to keep when it's cropped into the header.
+    photo_focus: str = "center"
     # The Rio and the Park make their own posters, which beat generic ones.
     own_posters: bool = False
     about: tuple[str, ...] = ()
@@ -53,6 +67,19 @@ class Venue:
     @property
     def map_url(self) -> str:
         return f"https://www.google.com/maps/search/?api=1&query={quote_plus(self.address)}"
+
+    @property
+    def offers(self) -> list[str]:
+        """What the theatre can show, read only from its recorded specs."""
+        found = []
+        for room in self.rooms:
+            text = " ".join(room.specs.values()).lower()
+            for label, pattern in OFFERS:
+                if re.search(pattern, text) and label not in found:
+                    found.append(label)
+        if len(self.rooms) > 1:
+            found.append(f"{len(self.rooms)} screens")
+        return found
 
     @property
     def monogram(self) -> str:
@@ -85,6 +112,7 @@ VENUES = [
         mark="rio-mark.png",
         full_logo="rio-full.png",
         own_posters=True,
+        photo_focus="center 30%",
         about=(
             "Built in 1938 and restored with a digital projector, surround sound and a large "
             "stage, so nights here swing between repertory screenings, burlesque and comedy.",
@@ -118,6 +146,7 @@ VENUES = [
         mark="park-mark.png",
         full_logo="park-full.png",
         own_posters=True,
+        photo_focus="center 25%",
         about=(
             "Opened in August 1941. A 2005 renovation brought new seats, the larger screen "
             "and Dolby Digital sound.",
@@ -196,6 +225,7 @@ VENUES = [
         ),
         mark="viff.svg",
         full_logo="viff.svg",
+        photo_focus="center 35%",
         about=(
             "Home of the Vancouver International Film Festival, programming new releases, "
             "restorations and series all year.",
@@ -229,6 +259,7 @@ VENUES = [
         ),
         mark="dunbar-mark.png",
         full_logo="dunbar-full.png",
+        photo_focus="15% 25%",
         about=(
             "Built in 1935 and one of the last neighbourhood movie houses in Vancouver.",
             "Run independently by Ken Charko since 1998, with a focus on first-run films.",

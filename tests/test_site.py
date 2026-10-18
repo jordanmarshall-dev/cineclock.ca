@@ -560,3 +560,9 @@ def test_about_page_and_footer_links(conn):
     assert 'href="https://github.com/yogzoth"' in about
     home = built["index.html"]
     assert 'href="about/"' in home and 'href="https://boxd.it/7T1D"' in home
+
+
+def test_theatre_page_has_a_photo_header_and_offer_pills(conn):
+    page = pages(conn, NOW)["theatres/park/index.html"]
+    assert 'class="theatre-hero"' in page and "static/theatres/park.jpg" in page
+    assert 'class="tag tag-format">70mm<' in plain(page)
