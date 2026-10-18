@@ -13,9 +13,10 @@
 <header class="site-header">
   <div class="wrap">
     <a class="wordmark" href="{{ root }}">cine<span>clock</span></a>
-    <nav class="venue-nav" aria-label="Theatres">
+    <nav class="venue-nav" aria-label="Site">
+      <a href="{{ root }}showtimes/"{% if current == "showtimes" %} aria-current="page"{% endif %}>Showtimes</a>
       {% for v in venues %}
-        <a href="{{ root }}venues/{{ v.slug }}/"{% if current_venue == v.slug %} aria-current="page"{% endif %}>{{ v.name | replace("The ", "") }}</a>
+        <a href="{{ root }}venues/{{ v.slug }}/"{% if current == v.slug %} aria-current="page"{% endif %}>{{ v.name | replace("The ", "") }}</a>
       {% endfor %}
     </nav>
   </div>
@@ -32,5 +33,6 @@
     <p>Inspired by <a href="https://movieclock.app">MovieClock</a>. <a href="https://github.com/yogzoth/cineclock">Source on GitHub</a>.</p>
   </div>
 </footer>
+{% block scripts %}{% endblock %}
 </body>
 </html>

@@ -20,8 +20,12 @@
 </a>
 {%- endmacro %}
 
-{% macro row(r, root) -%}
-<li class="row">
+{% macro tag_list(tags) -%}
+{% if tags %}<ul class="tags">{% for t in tags %}<li class="tag tag-{{ t | tagslug }}">{{ t }}</li>{% endfor %}</ul>{% endif %}
+{%- endmacro %}
+
+{% macro row(r, root, venue_slug="") -%}
+<li class="row" data-venue="{{ venue_slug }}" data-tags="{{ r.tags | map('tagslug') | join(' ') }}" data-title="{{ r.title | lower }} {{ r.page.title | lower }}">
   {{ poster(r.poster_url, root ~ "films/" ~ r.page.slug ~ "/", r.title) }}
   <div>
     <p class="row-title">
@@ -30,6 +34,7 @@
     </p>
     {% if r.note %}<p class="meta">{{ r.note }}</p>{% elif r.page.film and r.page.film.director %}<p class="meta">{{ r.page.film.director }}</p>{% endif %}
     {{ ratings(r.page.film) }}
+    {{ tag_list(r.tags) }}
     <div class="times">
       {% for s in r.showtimes %}{{ showtime(s, r.title) }}{% endfor %}
     </div>
@@ -42,10 +47,12 @@
 <section class="day" id="{{ day.anchor }}" aria-labelledby="{{ day.anchor }}-h">
   <h2 class="day-heading" id="{{ day.anchor }}-h">{{ day.label }}</h2>
   {% for group in day.groups %}
+    <div class="venue-group" data-venue="{{ group.venue.slug }}">
     {% if show_venues %}<h3 class="venue-heading"><a href="{{ root }}venues/{{ group.venue.slug }}/">{{ group.venue.name }}</a></h3>{% endif %}
     <ul class="rows">
-      {% for r in group.rows %}{{ row(r, root) }}{% endfor %}
+      {% for r in group.rows %}{{ row(r, root, group.venue.slug) }}{% endfor %}
     </ul>
+    </div>
   {% endfor %}
 </section>
 {% endfor %}
@@ -57,4 +64,25 @@
   {% for day in days %}<a href="#{{ day.anchor }}">{{ day.short }}</a>{% endfor %}
 </nav>
 {% endif %}
+{%- endmacro %}
+
+
+{% macro rail(r, root) -%}
+<section class="rail" aria-labelledby="rail-{{ r.title | tagslug }}">
+  <div class="rail-head">
+    <h2 id="rail-{{ r.title | tagslug }}">{{ r.title }}</h2>
+    {% if r.more is not none %}<a href="{{ root }}showtimes/{{ r.more }}">See all</a>{% endif %}
+  </div>
+  <ul class="rail-cards">
+    {% for c in r.cards %}
+    <li class="card">
+      <a href="{{ root }}films/{{ c.page.slug }}/">
+        {{ poster(c.page.poster_url, label=c.page.title) }}
+        <span class="card-title">{{ c.page.title }}</span>
+        <span class="card-meta">{{ c.meta }}</span>
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
 {%- endmacro %}

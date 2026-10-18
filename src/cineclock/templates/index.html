@@ -1,11 +1,11 @@
 {% extends "base.html" %}
-{% from "_parts.html" import day_sections, date_strip %}
+{% from "_parts.html" import rail %}
 
 {% block main %}
 <div class="wrap">
-  {{ date_strip(days) }}
-  {% if days %}
-    {{ day_sections(days, root) }}
+  {% if rails %}
+    {% for r in rails %}{{ rail(r, root) }}{% endfor %}
+    <p class="all-showtimes"><a href="{{ root }}showtimes/">All showtimes, day by day</a></p>
   {% else %}
     <p class="empty">No showtimes saved yet. Run <code>python -m cineclock.scrape</code> to fetch them.</p>
   {% endif %}

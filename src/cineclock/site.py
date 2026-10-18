@@ -1,21 +1,56 @@
 """Every page of the site, built from the database.
 
-Three kinds of page: the home page (what's on, by day), one page per film
-and one page per venue. pages() returns them all as {path: html}, which the
-static build writes to disk and the dev server serves from memory.
+Four kinds of page: the home page (rows of posters: on today, just added,
+highly rated...), the showtimes page (everything, by day, with filters), one
+page per film and one page per venue. pages() returns them all as
+{path: html}, which the static build writes to disk and the dev server serves
+from memory.
 """
 
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from sqlite3 import Connection
 
 from cineclock import db
 from cineclock.films import Film, match_key, slugify
 from cineclock.models import VANCOUVER, Screening
 from cineclock.render import env
+from cineclock.tags import screening_tags, sort_tags
 from cineclock.timefmt import clock, day_label, short_day
 from cineclock.venues import BY_NAME, VENUES, Venue, order
+
+RAIL_LENGTH = 15
+# Below this many Letterboxd ratings, an average says little.
+MIN_RATINGS_FOR_TOP = 1000
+
+
+def choose_poster(screening: Screening, film: Film | None) -> str | None:
+    """The Rio's and the Park's own posters first; elsewhere TMDB's poster beats a still."""
+    venue = BY_NAME.get(screening.venue)
+    if venue and venue.own_posters and screening.poster_url:
+        return screening.poster_url
+    if film and film.poster_url:
+        return film.poster_url
+    return screening.poster_url
+
+
+def venue_for(name: str) -> Venue:
+    # A venue missing from the registry still gets a page rather than crashing the build.
+    return BY_NAME.get(name) or Venue(name, slugify(name), "", "", "")
+
+
+def tags_for(s: Screening) -> list[str]:
+    return screening_tags(s.title, s.note, s.film_format)
+
+
+def compact(n: int) -> str:
+    """1476132 -> 1.5M, 12345 -> 12K"""
+    if n >= 1_000_000:
+        return f"{n / 1_000_000:.1f}M".replace(".0M", "M")
+    if n >= 1_000:
+        return f"{round(n / 1_000)}K"
+    return str(n)
 
 
 @dataclass
@@ -30,10 +65,26 @@ class FilmPage:
     def poster_url(self) -> str | None:
         return choose_poster(self.screenings[0], self.film) if self.screenings else None
 
+    @property
+    def next_showing(self) -> Screening:
+        return min(self.screenings, key=lambda s: s.starts_at)
+
+    @property
+    def added(self) -> datetime | None:
+        seen = [s.first_seen for s in self.screenings if s.first_seen]
+        return min(seen) if seen else None
+
+    @property
+    def tags(self) -> list[str]:
+        tags = [t for s in self.screenings for t in tags_for(s)]
+        if len(self.screenings) == 1:
+            tags.append("One screening")
+        return sort_tags(tags)
+
 
 @dataclass
 class Row:
-    """One film at one venue on one day: what a line on the home page shows."""
+    """One film at one venue on one day: a line on the showtimes page."""
 
     page: FilmPage
     title: str
@@ -41,6 +92,13 @@ class Row:
     note: str | None
     poster_url: str | None
     showtimes: list[Screening]
+
+    @property
+    def tags(self) -> list[str]:
+        tags = [t for s in self.showtimes for t in tags_for(s)]
+        if len(self.page.screenings) == 1:
+            tags.append("One screening")
+        return sort_tags(tags)
 
 
 @dataclass
@@ -61,19 +119,19 @@ class Day:
         return f"d{self.date:%Y%m%d}"
 
 
-def choose_poster(screening: Screening, film: Film | None) -> str | None:
-    """The Rio's and the Park's own posters first; elsewhere TMDB's poster beats a still."""
-    venue = BY_NAME.get(screening.venue)
-    if venue and venue.own_posters and screening.poster_url:
-        return screening.poster_url
-    if film and film.poster_url:
-        return film.poster_url
-    return screening.poster_url
+@dataclass
+class Card:
+    """A poster in one of the home page's rows."""
+
+    page: FilmPage
+    meta: str
 
 
-def venue_for(name: str) -> Venue:
-    # A venue missing from the registry still gets a page rather than crashing the build.
-    return BY_NAME.get(name) or Venue(name, slugify(name), "", "", "")
+@dataclass
+class Rail:
+    title: str
+    cards: list[Card]
+    more: str | None = None  # a showtimes page filter, like "?tag=70mm"
 
 
 def film_pages(screenings: list[Screening], films: dict[str, Film]) -> dict[int, FilmPage]:
@@ -134,6 +192,91 @@ def group_days(
     return days
 
 
+def when(s: Screening, today: date) -> str:
+    """Today 7:00 pm, Tomorrow 7:00 pm, Sat Oct 24"""
+    day = s.local_start.date()
+    if day == today:
+        return f"Today {clock(s.starts_at)}"
+    if day == today + timedelta(days=1):
+        return f"Tomorrow {clock(s.starts_at)}"
+    return f"{day:%a %b} {day.day}"
+
+
+def rails(film_list: list[FilmPage], now: datetime) -> list[Rail]:
+    today = now.astimezone(VANCOUVER).date()
+
+    def card(page: FilmPage, meta: str | None = None) -> Card:
+        return Card(page, meta or when(page.next_showing, today))
+
+    on_today = sorted(
+        (p for p in film_list if any(s.local_start.date() == today for s in p.screenings)),
+        key=lambda p: p.next_showing.starts_at,
+    )
+    on_today_cards = [
+        card(p, f"{clock(p.next_showing.starts_at)}, {p.next_showing.venue.removeprefix('The ')}")
+        for p in on_today
+    ]
+
+    coming_up = sorted(
+        (p for p in film_list if p not in on_today),
+        key=lambda p: p.next_showing.starts_at,
+    )
+
+    # Films that appeared in the last two weeks, newest first. Everything seen on
+    # the very first run is the baseline, not news, so it doesn't count.
+    added = [p.added for p in film_list if p.added]
+    since = max(min(added), now - timedelta(days=14)) if added else now
+    just_added = sorted(
+        (p for p in film_list if p.added and p.added > since),
+        key=lambda p: (-p.added.timestamp(), p.next_showing.starts_at),
+    )
+
+    on_film = [p for p in film_list if {"70mm", "35mm", "16mm"} & set(p.tags)]
+    events = [p for p in film_list if "Event" in p.tags]
+
+    rated = [
+        p
+        for p in film_list
+        if p.film
+        and p.film.letterboxd_rating
+        and (p.film.letterboxd_count or 0) >= MIN_RATINGS_FOR_TOP
+    ]
+    top = sorted(rated, key=lambda p: -p.film.letterboxd_rating)
+    popular = sorted(
+        (p for p in film_list if p.film and p.film.letterboxd_count),
+        key=lambda p: -p.film.letterboxd_count,
+    )
+    busiest = sorted(
+        (p for p in film_list if len(p.screenings) > 1),
+        key=lambda p: (-len(p.screenings), p.next_showing.starts_at),
+    )
+
+    found = [
+        Rail("On today", on_today_cards[:RAIL_LENGTH], f"#d{today:%Y%m%d}"),
+        Rail("Coming up", [card(p) for p in coming_up[:RAIL_LENGTH]], ""),
+        Rail("Just added", [card(p) for p in just_added[:RAIL_LENGTH]]),
+        Rail(
+            "On film",
+            [card(p, " ".join(t for t in p.tags if t.endswith("mm"))) for p in on_film],
+            "?tag=on-film",
+        ),
+        Rail(
+            "Highly rated",
+            [card(p, f"{p.film.letterboxd_rating:.1f} on Letterboxd") for p in top[:RAIL_LENGTH]],
+        ),
+        Rail(
+            "Popular",
+            [card(p, f"{compact(p.film.letterboxd_count)} ratings") for p in popular[:RAIL_LENGTH]],
+        ),
+        Rail("Events and guests", [card(p) for p in events[:RAIL_LENGTH]], "?tag=event"),
+        Rail(
+            "Most screenings",
+            [card(p, f"{len(p.screenings)} screenings") for p in busiest[:RAIL_LENGTH]],
+        ),
+    ]
+    return [r for r in found if r.cards]
+
+
 def updated_label(now: datetime) -> str:
     local = now.astimezone(VANCOUVER)
     return f"{local:%a %b} {local.day}, {clock(now)}"
@@ -143,6 +286,7 @@ def pages(conn: Connection, now: datetime) -> dict[str, str]:
     screenings = db.upcoming(conn, now)
     films = db.films_by_key(conn)
     page_of = film_pages(screenings, films)
+    film_list = list({id(p): p for p in page_of.values()}.values())
     days = group_days(screenings, page_of, films, now)
     common = {"updated": updated_label(now), "venues": VENUES}
 
@@ -150,9 +294,19 @@ def pages(conn: Connection, now: datetime) -> dict[str, str]:
         root = "../" * path.count("/")
         return env.get_template(template).render(root=root, path=path, **common, **context)
 
-    out = {"index.html": render("index.html", "index.html", days=days)}
+    filter_tags = sort_tags({t for p in film_list for t in p.tags})
+    out = {
+        "index.html": render("index.html", "index.html", rails=rails(film_list, now)),
+        "showtimes/index.html": render(
+            "showtimes.html",
+            "showtimes/index.html",
+            days=days,
+            filter_tags=filter_tags,
+            current="showtimes",
+        ),
+    }
 
-    for page in {id(p): p for p in page_of.values()}.values():
+    for page in film_list:
         path = f"films/{page.slug}/index.html"
         page_days = group_days(page.screenings, page_of, films, now)
         out[path] = render("film.html", path, page=page, film=page.film, days=page_days)
@@ -164,7 +318,7 @@ def pages(conn: Connection, now: datetime) -> dict[str, str]:
             "venue.html",
             path,
             venue=venue,
-            current_venue=venue.slug,
+            current=venue.slug,
             days=group_days(mine, page_of, films, now),
         )
     return out
@@ -177,16 +331,21 @@ def stats(conn: Connection, now: datetime) -> dict:
     keys = {match_key(s.title, s.year) for s in screenings}
     known = [films[k] for k in keys if k in films]
     per_venue: dict[str, int] = defaultdict(int)
+    tag_counts: dict[str, int] = defaultdict(int)
     for s in screenings:
         per_venue[s.venue] += 1
+        for t in tags_for(s):
+            tag_counts[t] += 1
     return {
         "updated": now.isoformat(),
         "screenings": len(screenings),
         "per_venue": dict(sorted(per_venue.items(), key=lambda item: order(item[0]))),
+        "tagged_screenings": dict(sorted(tag_counts.items())),
         "films": len(keys),
         "looked_up": len(known),
         "matched": sum(f.matched for f in known),
         "with_letterboxd_rating": sum(f.letterboxd_rating is not None for f in known),
+        "with_letterboxd_count": sum(f.letterboxd_count is not None for f in known),
         "with_imdb_rating": sum(f.imdb_rating is not None for f in known),
         "with_rt_score": sum(f.rt_score is not None for f in known),
         "unmatched": sorted(k for k in keys if k not in films or not films[k].matched),

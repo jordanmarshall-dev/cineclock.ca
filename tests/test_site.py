@@ -5,7 +5,7 @@ import pytest
 from cineclock import db
 from cineclock.films import Film, match_key
 from cineclock.models import VANCOUVER, Screening
-from cineclock.site import choose_poster, film_pages, group_days, pages, stats
+from cineclock.site import choose_poster, compact, film_pages, group_days, pages, rails, stats
 from cineclock.timefmt import clock, day_label, short_day
 
 NOW = datetime(2026, 10, 18, 8, 0, tzinfo=UTC)  # 1am Oct 18 in Vancouver
@@ -159,6 +159,7 @@ def test_pages_cover_home_films_and_every_venue(conn):
     save(conn, show("Musk", at(18, 12)), show("Pulse", at(18, 20), "The Cinematheque", year=2001))
     built = pages(conn, NOW)
     assert "index.html" in built
+    assert "showtimes/index.html" in built
     assert "films/musk/index.html" in built
     assert "films/pulse-2001/index.html" in built
     for slug in ("rio", "park", "cinematheque", "viff-centre", "viff-lochmaddy"):
@@ -229,7 +230,8 @@ def test_unmatched_film_page_still_has_showtimes(conn):
 def test_venue_page_lists_only_its_shows(conn):
     save(conn, show("Musk", at(18, 12)), show("Pulse", at(18, 20), "The Cinematheque"))
     page = pages(conn, NOW)["venues/rio/index.html"]
-    assert "Musk" in page and "Pulse" not in page
+    main = page.split("<main>")[1]
+    assert "Musk" in main and "Pulse" not in main
     assert "1660 East Broadway" in page
     assert 'aria-current="page"' in page
 
@@ -258,3 +260,106 @@ def test_stats(conn):
 def test_past_screenings_are_left_out(conn):
     save(conn, show("Gone", NOW - timedelta(hours=1)), show("Musk", at(18, 12)))
     assert "Gone" not in pages(conn, NOW)["index.html"]
+
+
+# Home page rails
+
+
+def rail_titles(conn, now=NOW):
+    screenings = db.upcoming(conn, now)
+    page_of = film_pages(screenings, db.films_by_key(conn))
+    return {r.title: r for r in rails(list({id(p): p for p in page_of.values()}.values()), now)}
+
+
+@pytest.mark.parametrize(
+    "n, expected",
+    [(999, "999"), (1_000, "1K"), (12_345, "12K"), (1_476_132, "1.5M"), (2_000_000, "2M")],
+)
+def test_compact(n, expected):
+    assert compact(n) == expected
+
+
+def test_on_today_lists_todays_films_by_time(conn):
+    save(conn, show("Late", at(18, 21)), show("Early", at(18, 13)), show("Tomorrow", at(19, 13)))
+    today = rail_titles(conn)["On today"]
+    assert [(c.page.title, c.meta) for c in today.cards] == [
+        ("Early", "1:00 pm, Rio"),
+        ("Late", "9:00 pm, Rio"),
+    ]
+    assert today.more == "#d20261018"
+
+
+def test_just_added_skips_the_first_run(conn):
+    save(conn, show("Old", at(20, 19)))
+    assert "Just added" not in rail_titles(conn)
+    later = NOW + timedelta(days=2)
+    db.sync_venue(conn, "The Rio", [show("Old", at(20, 19)), show("New", at(22, 19))], later)
+    assert [c.page.title for c in rail_titles(conn, later)["Just added"].cards] == ["New"]
+
+
+def test_highly_rated_needs_enough_ratings(conn):
+    save(conn, show("Classic", at(18, 19), year=1970), show("Obscure", at(18, 20), year=2020))
+    db.save_film(conn, film("Classic", 1970, 1, letterboxd_rating=4.1, letterboxd_count=50_000))
+    db.save_film(conn, film("Obscure", 2020, 2, letterboxd_rating=4.9, letterboxd_count=12))
+    found = rail_titles(conn)
+    assert [c.page.title for c in found["Highly rated"].cards] == ["Classic"]
+    assert found["Highly rated"].cards[0].meta == "4.1 on Letterboxd"
+    assert [c.page.title for c in found["Popular"].cards] == ["Classic", "Obscure"]
+    assert found["Popular"].cards[0].meta == "50K ratings"
+
+
+def test_most_screenings(conn):
+    save(conn, show("Once", at(19, 19)), *[show("Lots", at(d, 19)) for d in (18, 19, 20)])
+    cards = rail_titles(conn)["Most screenings"].cards
+    assert [(c.page.title, c.meta) for c in cards] == [("Lots", "3 screenings")]
+
+
+def test_on_film_rail(conn):
+    save(
+        conn,
+        show("Dune: Part Three", at(18, 19), "The Park", note="Presented in 70mm"),
+        Screening("The Cinematheque", "Vertigo", at(19, 19), "https://x", film_format="35mm"),
+        show("Musk", at(18, 12)),
+    )
+    on_film = rail_titles(conn)["On film"]
+    assert [(c.page.title, c.meta) for c in on_film.cards] == [
+        ("Dune: Part Three", "70mm"),
+        ("Vertigo", "35mm"),
+    ]
+    assert on_film.more == "?tag=on-film"
+
+
+def test_empty_rails_are_left_out(conn):
+    save(conn, show("Musk", at(19, 12)))
+    assert set(rail_titles(conn)) == {"Coming up"}
+
+
+def test_coming_up_skips_what_is_on_today(conn):
+    save(conn, show("Today", at(18, 19)), show("Later", at(25, 19)), show("Soon", at(19, 19)))
+    assert [c.page.title for c in rail_titles(conn)["Coming up"].cards] == ["Soon", "Later"]
+
+
+# Tags and filters
+
+
+def test_rows_carry_tags_and_filter_data(conn):
+    save(conn, show("Dune: Part Three", at(18, 19), "The Park", note="Presented in 70mm"))
+    page = pages(conn, NOW)["showtimes/index.html"]
+    assert 'data-venue="park"' in page
+    assert 'data-tags="70mm one-screening"' in page
+    assert 'class="tag tag-70mm">70mm<' in page
+    assert 'data-value="on-film"' in page
+
+
+def test_one_screening_tag_only_when_it_plays_once(conn):
+    save(conn, show("Twice", at(18, 19)), show("Twice", at(19, 19)), show("Once", at(18, 21)))
+    page = pages(conn, NOW)["showtimes/index.html"]
+    assert page.count("tag-one-screening") == 1
+
+
+def test_film_page_shows_tags(conn):
+    save(
+        conn, Screening("The Cinematheque", "Vertigo", at(19, 19), "https://x", film_format="35mm")
+    )
+    page = pages(conn, NOW)["films/vertigo/index.html"]
+    assert ">35mm<" in page and ">One screening<" in page

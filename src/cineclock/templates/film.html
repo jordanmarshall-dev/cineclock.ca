@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_parts.html" import poster, showtime %}
+{% from "_parts.html" import poster, showtime, tag_list %}
 
 {% block title %}{{ page.title }}{% if page.year %} ({{ page.year }}){% endif %} showtimes in Vancouver{% endblock %}
 {% block description %}{% if film and film.overview %}{{ film.overview | truncate(160) }}{% else %}Showtimes for {{ page.title }} in Vancouver.{% endif %}{% endblock %}
@@ -20,6 +20,7 @@
         {%- if film and film.director %}{% if page.year %}, {% endif %}directed by <b>{{ film.director }}</b>{% endif -%}
         {%- if film and film.runtime %}<br>{{ film.runtime }} min{% endif -%}
       </p>
+      {{ tag_list(page.tags) }}
     </div>
   </div>
 

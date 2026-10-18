@@ -39,13 +39,24 @@ def lookup_film(
     tmdb_key: str,
     omdb_key: str | None,
     pause: float,
+    previous: Film | None = None,
 ) -> Film:
     found = tmdb.find(client, tmdb_key, title, year)
     if not found:
         return Film(match_key=match_key(title, year), fetched_at=now)
 
-    lb, imdb_rating, rt_score = letterboxd.LetterboxdFilm(), None, None
-    # Letterboxd and OMDb are extras: if either is down, keep the TMDB match.
+    # Letterboxd and OMDb are extras: if either is down, keep the TMDB match,
+    # and keep last time's ratings for the same film rather than blanking them.
+    same_film = previous if previous and previous.tmdb_id == found["tmdb_id"] else None
+    lb = letterboxd.LetterboxdFilm(
+        *(
+            (same_film.letterboxd_url, same_film.letterboxd_rating, same_film.letterboxd_count)
+            if same_film
+            else ()
+        )
+    )
+    imdb_rating = same_film.imdb_rating if same_film else None
+    rt_score = same_film.rt_score if same_film else None
     try:
         time.sleep(pause)  # Be gentle with Letterboxd, which has no API.
         lb = letterboxd.lookup(client, found["tmdb_id"])
@@ -89,7 +100,7 @@ def enrich(
             if now - cached.fetched_at < wait:
                 continue
         try:
-            film = lookup_film(client, title, year, now, tmdb_key, omdb_key, pause)
+            film = lookup_film(client, title, year, now, tmdb_key, omdb_key, pause, cached)
         except httpx.HTTPError:
             # Not saved, so it's retried on the next run.
             failed += 1

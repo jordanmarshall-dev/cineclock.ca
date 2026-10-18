@@ -178,3 +178,29 @@ def test_films_saved_before_rating_counts_get_one_early_refresh(conn, services):
     assert run(conn, services, now=NOW + timedelta(days=1)).looked_up == 1
     assert db.get_film(conn, match_key("The Thing", 1982)).letterboxd_count == 1476132
     assert run(conn, services, now=NOW + timedelta(days=2)).looked_up == 0
+
+
+def test_failed_refresh_keeps_last_ratings(conn, services):
+    db.sync_venue(conn, "VIFF Lochmaddy", [show("The Thing", 1982)], NOW)
+    run(conn, services)
+    services["down"].update({"letterboxd.com", "www.omdbapi.com"})
+    later = NOW + timedelta(days=31)
+    db.sync_venue(
+        conn,
+        "VIFF Lochmaddy",
+        [
+            Screening(
+                "VIFF Lochmaddy", "The Thing", later + timedelta(days=1), "https://x", year=1982
+            )
+        ],
+        later,
+    )
+    assert run(conn, services, now=later).looked_up == 1
+    film = db.get_film(conn, match_key("The Thing", 1982))
+    assert (film.letterboxd_rating, film.letterboxd_count, film.imdb_rating, film.rt_score) == (
+        4.35,
+        1476132,
+        8.2,
+        85,
+    )
+    assert film.fetched_at == later

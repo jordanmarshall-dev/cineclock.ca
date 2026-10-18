@@ -19,6 +19,13 @@ VENUES = (VENUE,)
 CALENDAR_URL = "https://thecinematheque.ca/films/calendar"
 HEADERS = {"Accept": "text/html,application/xhtml+xml"}
 
+
+def tidy_url(url: str) -> str:
+    # The calendar mixes www.thecinematheque.ca and thecinematheque.ca links to
+    # the same pages; one address per film means one fetch per film.
+    return url.replace("://www.thecinematheque.ca", "://thecinematheque.ca")
+
+
 MONTHS = [
     "January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December",
@@ -69,8 +76,8 @@ def parse_calendar(page: str) -> list[Screening]:
                     year=title_year,
                     note=note,
                     starts_at=start,
-                    url=tickets["href"] if tickets else film["href"],
-                    info_url=film["href"],
+                    url=tickets["href"] if tickets else tidy_url(film["href"]),
+                    info_url=tidy_url(film["href"]),
                 )
             )
     return screenings

@@ -101,3 +101,16 @@ def test_shorts_program_has_no_format(fixture_text):
         ).film_format
         is None
     )
+
+
+def test_www_and_bare_links_become_one_address():
+    page = """<ol id="eventCalendar"><li><span class="day"><span class="dom">18</span>
+      <span class="mon">October</span><span class="year">2026</span></span>
+      <ol class="programs">
+        <li class="programScreening"><span class="time pm">7:00</span>
+          <a class="programTitle" href="https://www.thecinematheque.ca/films/2026/kwaidan">Kwaidan</a></li>
+        <li class="programScreening"><span class="time pm">9:30</span>
+          <a class="programTitle" href="https://thecinematheque.ca/films/2026/kwaidan">Kwaidan</a></li>
+      </ol></li></ol>"""
+    screenings = cinematheque.parse_calendar(page)
+    assert {s.info_url for s in screenings} == {"https://thecinematheque.ca/films/2026/kwaidan"}
