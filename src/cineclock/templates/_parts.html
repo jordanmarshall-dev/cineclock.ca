@@ -75,7 +75,7 @@
 
 {% macro showtime(s, label=None) -%}
 <a class="time" href="{{ s.url }}" aria-label="Tickets for {{ label or s.title }}, {{ s.local_start.strftime('%A %B') }} {{ s.local_start.day }} at {{ s.starts_at | clock }}{% if s | room_label %}, {{ s | room_label }}{% endif %}">
-  {{- icon("ticket", 18) }}<span class="time-text">{{ s.starts_at | clock }}{% if s | room_label %}<small>{{ s | room_label }}</small>{% endif %}</span>
+  {{- icon("ticket", 16) }}<span class="time-text">{{ s.starts_at | clock }}{% if s | room_label %}<small>{{ s | room_label }}</small>{% endif %}</span>
 </a>
 {%- endmacro %}
 
