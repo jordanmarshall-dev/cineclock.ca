@@ -27,8 +27,9 @@ class EnrichResult:
 
 
 def needs_backfill(film: Film) -> bool:
-    """Films saved before rating counts were collected get one early refresh."""
-    return film.letterboxd_rating is not None and film.letterboxd_count is None
+    """Films saved before rating counts or genres were collected get one early refresh."""
+    missing_count = film.letterboxd_rating is not None and film.letterboxd_count is None
+    return missing_count or (film.matched and film.genres is None)
 
 
 def lookup_film(
@@ -55,8 +56,11 @@ def lookup_film(
             else ()
         )
     )
-    imdb_rating = same_film.imdb_rating if same_film else None
-    rt_score = same_film.rt_score if same_film else None
+    scores = (
+        omdb.Scores(same_film.imdb_rating, same_film.rt_score, same_film.metacritic)
+        if same_film
+        else omdb.Scores()
+    )
     try:
         time.sleep(pause)  # Be gentle with Letterboxd, which has no API.
         lb = letterboxd.lookup(client, found["tmdb_id"])
@@ -64,7 +68,7 @@ def lookup_film(
         pass
     if omdb_key and found["imdb_id"]:
         try:
-            imdb_rating, rt_score = omdb.lookup(client, omdb_key, found["imdb_id"])
+            scores = omdb.lookup(client, omdb_key, found["imdb_id"])
         except httpx.HTTPError:
             pass
 
@@ -74,8 +78,9 @@ def lookup_film(
         letterboxd_url=lb.url,
         letterboxd_rating=lb.rating,
         letterboxd_count=lb.rating_count,
-        imdb_rating=imdb_rating,
-        rt_score=rt_score,
+        imdb_rating=scores.imdb,
+        rt_score=scores.rt,
+        metacritic=scores.metacritic,
         **found,
     )
 

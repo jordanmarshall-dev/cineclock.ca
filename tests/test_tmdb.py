@@ -74,6 +74,7 @@ def test_parse_details(fixture_json):
         "director": "John Carpenter",
         "runtime": 109,
         "overview": details["overview"],
+        "genres": "Horror, Mystery, Science Fiction",
         "poster_url": "https://image.tmdb.org/t/p/w500/tzGY49kseSE9QAKk47uuDGwnSCu.jpg",
         "backdrop_url": "https://image.tmdb.org/t/p/w1280/r9leYNa8nTRCceZrZhP1DXkgKVb.jpg",
     }
@@ -84,6 +85,7 @@ def test_parse_details_with_little_data():
     details = tmdb.parse_details({"id": 5, "title": "Obscure"})
     assert details["tmdb_id"] == 5
     assert details["poster_url"] is details["director"] is details["year"] is None
+    assert details["genres"] is None
 
 
 @pytest.fixture

@@ -1,24 +1,12 @@
 {% extends "base.html" %}
-{% from "_parts.html" import day_sections, date_strip %}
+{% from "_parts.html" import day_sections, date_strip, filter_bar %}
 
 {% block title %}Showtimes in Vancouver{% endblock %}
 
 {% block main %}
 <div class="wrap">
   <h1 class="page-title">Showtimes</h1>
-
-  <form class="filters" role="search" hidden>
-    <input type="search" name="q" placeholder="Search films" aria-label="Search films" autocomplete="off">
-    <div class="chips" role="group" aria-label="Theatres">
-      {% for v in venues %}<button type="button" class="chip" data-filter="venue" data-value="{{ v.slug }}" aria-pressed="false">{{ v.name | replace("The ", "") }}</button>{% endfor %}
-    </div>
-    <div class="chips" role="group" aria-label="Tags">
-      {% if "70mm" in filter_tags or "35mm" in filter_tags or "16mm" in filter_tags %}<button type="button" class="chip" data-filter="tag" data-value="on-film" aria-pressed="false">On film</button>{% endif %}
-      {% for t in filter_tags %}<button type="button" class="chip" data-filter="tag" data-value="{{ t | tagslug }}" aria-pressed="false">{{ t }}</button>{% endfor %}
-    </div>
-    <p class="filter-status" aria-live="polite"></p>
-  </form>
-
+  {{ filter_bar(venues, filter_tags, genres) }}
   {{ date_strip(days) }}
   {% if days %}
     {{ day_sections(days, root) }}
@@ -28,77 +16,4 @@
 </div>
 {% endblock %}
 
-{% block scripts %}
-<script>
-// Filters run in the browser, so the page stays plain files. Without
-// JavaScript the form stays hidden and every showtime is listed.
-(() => {
-  const form = document.querySelector(".filters");
-  const search = form.querySelector("input");
-  const chips = [...form.querySelectorAll(".chip")];
-  const status = form.querySelector(".filter-status");
-  const film = ["70mm", "35mm", "16mm"];
-  form.hidden = false;
-
-  const params = new URLSearchParams(location.search);
-  for (const chip of chips) {
-    if (params.getAll(chip.dataset.filter).includes(chip.dataset.value)) {
-      chip.setAttribute("aria-pressed", "true");
-    }
-  }
-  search.value = params.get("q") || "";
-
-  function picked(kind) {
-    return chips
-      .filter((c) => c.dataset.filter === kind && c.getAttribute("aria-pressed") === "true")
-      .map((c) => c.dataset.value);
-  }
-
-  function apply() {
-    const venues = picked("venue");
-    const tags = picked("tag");
-    const q = search.value.trim().toLowerCase();
-    let shown = 0;
-
-    for (const row of document.querySelectorAll(".row")) {
-      const rowTags = row.dataset.tags.split(" ");
-      const tagMatch = tags.every((t) =>
-        t === "on-film" ? film.some((f) => rowTags.includes(f)) : rowTags.includes(t)
-      );
-      const match =
-        (!venues.length || venues.includes(row.dataset.venue)) &&
-        tagMatch &&
-        (!q || row.dataset.title.includes(q));
-      row.hidden = !match;
-      shown += match;
-    }
-    for (const group of document.querySelectorAll(".venue-group, .day")) {
-      group.hidden = !group.querySelector(".row:not([hidden])");
-    }
-    for (const link of document.querySelectorAll(".date-strip a")) {
-      link.hidden = document.querySelector(link.getAttribute("href")).hidden;
-    }
-
-    const filtering = venues.length || tags.length || q;
-    status.textContent = filtering ? (shown ? `${shown} matching` : "Nothing matches these filters.") : "";
-
-    const next = new URLSearchParams();
-    venues.forEach((v) => next.append("venue", v));
-    tags.forEach((t) => next.append("tag", t));
-    if (q) next.set("q", q);
-    const query = next.toString();
-    history.replaceState(null, "", (query ? `?${query}` : location.pathname) + location.hash);
-  }
-
-  chips.forEach((chip) =>
-    chip.addEventListener("click", () => {
-      chip.setAttribute("aria-pressed", chip.getAttribute("aria-pressed") === "true" ? "false" : "true");
-      apply();
-    })
-  );
-  search.addEventListener("input", apply);
-  form.addEventListener("submit", (e) => e.preventDefault());
-  apply();
-})();
-</script>
-{% endblock %}
+{% block scripts %}<script src="{{ root }}static/filters.js?v={{ asset_version('filters.js') }}"></script>{% endblock %}

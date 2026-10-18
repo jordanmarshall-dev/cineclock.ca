@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_parts.html" import poster, showtime, tag_list %}
+{% from "_parts.html" import poster, showtime, tag_list, venue_badge, source_mark %}
 
 {% block title %}{{ page.title }}{% if page.year %} ({{ page.year }}){% endif %} showtimes in Vancouver{% endblock %}
 {% block description %}{% if film and film.overview %}{{ film.overview | truncate(160) }}{% else %}Showtimes for {{ page.title }} in Vancouver.{% endif %}{% endblock %}
@@ -20,15 +20,17 @@
         {%- if film and film.director %}{% if page.year %}, {% endif %}directed by <b>{{ film.director }}</b>{% endif -%}
         {%- if film and film.runtime %}<br>{{ film.runtime }} min{% endif -%}
       </p>
+      {% if page.genres %}<p class="genres">{{ page.genres | join(", ") }}</p>{% endif %}
       {{ tag_list(page.tags) }}
     </div>
   </div>
 
   {% if film %}
   <ul class="scores" aria-label="Ratings">
-    {% if film.letterboxd_link %}<li><a href="{{ film.letterboxd_link }}"><span class="score-value">{{ "%.1f" | format(film.letterboxd_rating) if film.letterboxd_rating else "–" }}</span><span class="score-source">Letterboxd</span></a></li>{% endif %}
-    {% if film.imdb_link %}<li><a href="{{ film.imdb_link }}"><span class="score-value">{{ "%.1f" | format(film.imdb_rating) if film.imdb_rating else "–" }}</span><span class="score-source">IMDb</span></a></li>{% endif %}
-    {% if film.rt_link %}<li><a href="{{ film.rt_link }}"><span class="score-value">{{ film.rt_score ~ "%" if film.rt_score is not none else "–" }}</span><span class="score-source">Rotten Tomatoes</span></a></li>{% endif %}
+    {% if film.letterboxd_link %}<li class="rating-letterboxd"><a href="{{ film.letterboxd_link }}"><span class="score-value">{{ "%.1f" | format(film.letterboxd_rating) if film.letterboxd_rating else "–" }}</span><span class="score-source">{{ source_mark("letterboxd", root) }} Letterboxd</span></a></li>{% endif %}
+    {% if film.imdb_link %}<li class="rating-imdb"><a href="{{ film.imdb_link }}"><span class="score-value">{{ "%.1f" | format(film.imdb_rating) if film.imdb_rating else "–" }}</span><span class="score-source">IMDb</span></a></li>{% endif %}
+    {% if film.rt_link %}<li class="rating-rt"><a href="{{ film.rt_link }}"><span class="score-value">{{ film.rt_score ~ "%" if film.rt_score is not none else "–" }}</span><span class="score-source">Rotten Tomatoes</span></a></li>{% endif %}
+    {% if film.metacritic_link %}<li class="rating-metacritic"><a href="{{ film.metacritic_link }}"><span class="score-value">{{ film.metacritic if film.metacritic is not none else "–" }}</span><span class="score-source">Metacritic</span></a></li>{% endif %}
   </ul>
   {% endif %}
 
@@ -39,7 +41,7 @@
     <h3 class="day-heading">{{ day.label }}</h3>
     {% for group in day.groups %}
       <div class="showtime-venue">
-        <h4><a href="{{ root }}venues/{{ group.venue.slug }}/">{{ group.venue.name }}</a></h4>
+        <h4><a href="{{ root }}theatres/{{ group.venue.slug }}/">{{ venue_badge(group.venue, root) }}{{ group.venue.name }}</a></h4>
         {% for r in group.rows %}
           {% if r.note %}<p class="meta">{{ r.note }}</p>{% endif %}
           <div class="times">{% for s in r.showtimes %}{{ showtime(s, page.title) }}{% endfor %}</div>

@@ -16,14 +16,15 @@ Version 1 covers the Rio, the Park, the Cinematheque and VIFF (both screens):
 - [x] Scrapers for all four venues, tested against saved real responses
 - [x] SQLite storage; reruns update instead of duplicating
 - [x] Home page with rows of posters: on today, coming up, on film, highly rated, popular, events, most screenings
-- [x] Showtimes page by day, filtered by theatre, tag or title
-- [x] Film pages and theatre pages
+- [x] Films page: each film once with its dates, sortable and filterable by theatre, genre and format
+- [x] Showtimes page by day, with the same filters
+- [x] Theatre pages with the room's specs and background, and theatre badges throughout
+- [x] Film pages
 - [x] Film matching on TMDB for posters, synopsis, director and runtime
-- [x] Letterboxd, IMDb and Rotten Tomatoes ratings and links
+- [x] Letterboxd, IMDb, Rotten Tomatoes and Metacritic ratings, each one switchable
 - [ ] Add to calendar (.ics)
 - [x] Tags: 70mm, 35mm, Event, Preview, One screening
 - [ ] Letterboxd watchlist and seen films
-- [ ] Theatre tech specs
 
 ## Running it
 

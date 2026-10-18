@@ -20,6 +20,7 @@ class Film:
     director: str | None = None
     runtime: int | None = None
     overview: str | None = None
+    genres: str | None = None  # "Horror, Mystery"
     poster_url: str | None = None
     backdrop_url: str | None = None
     letterboxd_url: str | None = None
@@ -27,6 +28,11 @@ class Film:
     letterboxd_count: int | None = None
     imdb_rating: float | None = None
     rt_score: int | None = None
+    metacritic: int | None = None
+
+    @property
+    def genre_list(self) -> list[str]:
+        return [g.strip() for g in (self.genres or "").split(",") if g.strip()]
 
     @property
     def matched(self) -> bool:
@@ -50,6 +56,12 @@ class Film:
         if not self.title:
             return None
         return f"https://www.rottentomatoes.com/search?search={quote_plus(self.title)}"
+
+    @property
+    def metacritic_link(self) -> str | None:
+        if not self.title:
+            return None
+        return f"https://www.metacritic.com/search/{quote_plus(self.title)}/?category=2"
 
 
 def normalize(title: str) -> str:

@@ -72,25 +72,24 @@ a:focus-visible {
 
 .wordmark span { color: var(--accent); }
 
-.venue-nav {
+.site-nav {
   display: flex;
-  gap: 1rem;
-  overflow-x: auto;
-  scrollbar-width: none;
-  font-size: 0.875rem;
+  gap: 1.125rem;
+  margin-left: auto;
+  font-size: 0.9375rem;
   font-weight: 500;
 }
 
-.venue-nav::-webkit-scrollbar { display: none; }
-
-.venue-nav a {
+.site-nav a {
   white-space: nowrap;
   text-decoration: none;
   padding: 0.25rem 0;
 }
 
-.venue-nav a:hover,
-.venue-nav a[aria-current="page"] { color: var(--white); }
+.site-nav a:hover,
+.site-nav a[aria-current="page"] { color: var(--white); }
+
+.site-nav a[aria-current="page"] { box-shadow: inset 0 -2px 0 var(--accent); }
 
 /* Date strip */
 
@@ -413,7 +412,9 @@ a:focus-visible {
   color: var(--white);
 }
 
-.rail-head a {
+.rail-head h2 a { text-decoration: none; }
+
+.rail-head .see-all {
   font-size: 0.8125rem;
   text-decoration: none;
 }
@@ -457,10 +458,22 @@ a:focus-visible {
 
 .card a:hover .card-title { color: var(--white); }
 
-.card-meta {
+.card-title .year { font-weight: 400; color: var(--text); }
+
+.card-why {
+  display: block;
+  margin-top: 0.1875rem;
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.card-next {
   display: block;
   margin-top: 0.125rem;
   font-size: 0.75rem;
+  line-height: 1.3;
 }
 
 .all-showtimes { margin: 2.5rem 0 0; }
@@ -478,34 +491,129 @@ a:focus-visible {
 
 .all-showtimes a:hover { background: var(--line); }
 
-/* Tags */
+/* Tags: quiet labels, with formats on film picked out in the accent */
 
 .tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.25rem;
-  margin: 0.375rem 0 0;
-  padding: 0;
-  list-style: none;
+  gap: 0.25rem 0.625rem;
+  margin: 0.25rem 0 0;
+  font-size: 0.75rem;
+  font-weight: 500;
 }
 
-.tag {
-  padding: 0.0625rem 0.4375rem;
-  border-radius: 3px;
-  background: var(--raised);
+.tag { color: var(--text); }
+
+.tag-70mm, .tag-35mm, .tag-16mm, .tag-imax {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.film-head .tags { margin-top: 0.5rem; }
+
+.genres {
+  margin: 0.375rem 0 0;
+  font-size: 0.8125rem;
+}
+
+/* Theatre badges */
+
+.venue-badge {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 5px;
+  background: #0d1013;
+  box-shadow: inset 0 0 0 1px rgba(221, 238, 255, 0.12);
+  overflow: hidden;
+  vertical-align: middle;
+}
+
+.venue-badge img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 2px;
+}
+
+.venue-badge.on-light { background: #f2f2ee; }
+.venue-badge.on-light img { padding: 0; }
+
+.venue-badge span {
   color: var(--bright);
   font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.venue-heading a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-venues {
+  display: flex;
+  gap: 0.25rem;
+  margin-top: 0.375rem;
+}
+
+/* Rating sources */
+
+.rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3125rem;
+}
+
+.source-logo {
+  width: 1.5rem;
+  height: auto;
+}
+
+.source-label {
+  padding: 0 0.25rem;
+  border-radius: 3px;
+  background: var(--raised);
+  color: var(--text);
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+}
+
+.score-source .source-logo { width: 1.25rem; vertical-align: -0.125rem; }
+
+.hide-letterboxd .rating-letterboxd,
+.hide-imdb .rating-imdb,
+.hide-rt .rating-rt,
+.hide-metacritic .rating-metacritic { display: none; }
+
+.rating-switches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem 1rem;
+  margin: 0 0 1.25rem;
+  padding: 0;
+  border: 0;
+}
+
+.rating-switches legend {
+  margin-bottom: 0.375rem;
+  color: var(--bright);
   font-weight: 600;
-  letter-spacing: 0.01em;
 }
 
-/* Formats on film get the accent: they're the reason to go. */
-.tag-70mm, .tag-35mm, .tag-16mm {
-  background: rgba(245, 185, 66, 0.14);
-  color: var(--accent);
+.rating-switches label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
 }
 
-.film-head .tags { margin-top: 0.625rem; }
+.rating-switches input { accent-color: var(--accent); }
 
 /* Showtimes page */
 
@@ -517,7 +625,90 @@ a:focus-visible {
 
 .filters { margin-top: 1rem; }
 
+.filter-top {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.filter-top select {
+  flex: none;
+  padding: 0 0.625rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--raised);
+  color: var(--bright);
+  font: 500 0.875rem var(--sans);
+}
+
+.filter-menus {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-top: 0.625rem;
+}
+
+/* Menus open full-width under the filter bar, so they never run off a phone screen. */
+.filter-menus { position: relative; }
+
+.filter-menus summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--bright);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  list-style: none;
+  cursor: pointer;
+}
+
+.filter-menus summary::-webkit-details-marker { display: none; }
+
+.filter-menus summary::after {
+  content: "";
+  width: 0.375rem;
+  height: 0.375rem;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+}
+
+.filter-menus details[open] summary::after { transform: translateY(1px) rotate(-135deg); }
+
+.filter-menus details.active summary { border-color: var(--accent); color: var(--accent); }
+
+.count:empty { display: none; }
+
+.filter-menus .chips {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 0.375rem);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 0.625rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--raised);
+  box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.5);
+}
+
+.clear {
+  padding: 0.375rem 0.5rem;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: 500 0.8125rem var(--sans);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 .filters input {
+  flex: 1;
+  min-width: 0;
   width: 100%;
   padding: 0.625rem 0.75rem;
   border: 1px solid var(--line);
@@ -529,7 +720,9 @@ a:focus-visible {
 
 .filters input::placeholder { color: var(--text); }
 
-.filters input:focus-visible {
+.filters input:focus-visible,
+.filter-top select:focus-visible,
+.filter-menus summary:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
@@ -572,6 +765,146 @@ a:focus-visible {
 
 [hidden] { display: none !important; }
 
+/* Films list */
+
+.page-intro { margin: 0.375rem 0 0; }
+
+.film-list {
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.film-item + .film-item { border-top: 1px solid var(--raised); }
+
+.film-link {
+  display: grid;
+  grid-template-columns: 4.25rem 1fr;
+  gap: 0.875rem;
+  padding: 0.75rem 0;
+  text-decoration: none;
+}
+
+.film-link:hover .row-title { text-decoration: underline; text-underline-offset: 3px; }
+
+.film-info { display: block; }
+.film-info > * { display: block; }
+.film-info .ratings, .film-info .tags, .film-info .card-venues { display: flex; }
+
+.film-dates {
+  margin-top: 0.125rem;
+  color: var(--bright);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.film-count {
+  margin-left: 0.5rem;
+  color: var(--text);
+  font-weight: 400;
+}
+
+/* Theatres */
+
+.theatre-list {
+  margin: 1.25rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.theatre-list li + li { border-top: 1px solid var(--raised); }
+
+.theatre-item {
+  display: grid;
+  grid-template-columns: 4rem 1fr;
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem 0;
+  text-decoration: none;
+}
+
+.theatre-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 8px;
+  background: #0d1013;
+  box-shadow: inset 0 0 0 1px rgba(221, 238, 255, 0.12);
+  overflow: hidden;
+}
+
+.theatre-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 0.375rem;
+}
+
+.theatre-logo.on-light { background: #f2f2ee; }
+.theatre-logo.on-light img { padding: 0; }
+
+.theatre-logo span {
+  color: var(--bright);
+  font-weight: 700;
+}
+
+.theatre-logo.large { width: 4.5rem; height: 4.5rem; }
+
+.theatre-text > * { display: block; }
+
+.theatre-name {
+  color: var(--white);
+  font: 700 1.25rem/1.2 var(--serif);
+}
+
+.theatre-item:hover .theatre-name { text-decoration: underline; text-underline-offset: 3px; }
+
+.theatre-blurb {
+  margin-top: 0.25rem;
+  color: var(--bright);
+  font-size: 0.875rem;
+}
+
+.theatre-head {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.theatre-head .venue-title { margin: 0; }
+.theatre-head .meta { margin-top: 0.25rem; }
+
+.specs {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+  margin: 1rem 0 0;
+}
+
+.specs div {
+  padding: 0.625rem 0.75rem;
+  border-radius: 4px;
+  background: var(--raised);
+}
+
+.specs dt { font-size: 0.75rem; }
+
+.specs dd {
+  margin: 0.125rem 0 0;
+  color: var(--white);
+  font-weight: 600;
+}
+
+.about {
+  max-width: 38rem;
+  color: var(--bright);
+}
+
+.about p { margin: 1rem 0 0; }
+
 /* Footer */
 
 .site-footer {
@@ -585,7 +918,8 @@ a:focus-visible {
 
 @media (min-width: 40rem) {
   :root { --gutter: 1.5rem; }
-  .row { grid-template-columns: 5rem 1fr; gap: 1.125rem; }
+  .row, .film-link { grid-template-columns: 5rem 1fr; gap: 1.125rem; }
+  .specs { grid-template-columns: repeat(3, 1fr); }
   .backdrop { height: 22rem; }
   .film-head { grid-template-columns: 10rem 1fr; gap: 1.5rem; }
   .has-backdrop .film-head { margin-top: -7rem; }

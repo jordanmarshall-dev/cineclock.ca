@@ -51,22 +51,26 @@ def test_letterboxd_blocked_raises():
 
 
 def test_omdb(fixture_json):
-    assert omdb.parse(fixture_json("enrich/omdb_tt0084787.json")) == (8.2, 85)
+    assert omdb.parse(fixture_json("enrich/omdb_tt0084787.json")) == omdb.Scores(8.2, 85, 57)
 
 
 @pytest.mark.parametrize(
     "data, expected",
     [
-        ({"Response": "False", "Error": "Incorrect IMDb ID."}, (None, None)),
-        ({"Response": "True", "imdbRating": "N/A", "Ratings": []}, (None, None)),
-        ({"Response": "True", "imdbRating": "6.1"}, (6.1, None)),
+        ({"Response": "False", "Error": "Incorrect IMDb ID."}, omdb.Scores()),
+        ({"Response": "True", "imdbRating": "N/A", "Ratings": []}, omdb.Scores()),
+        ({"Response": "True", "imdbRating": "6.1"}, omdb.Scores(imdb=6.1)),
+        (
+            {"Response": "True", "Ratings": [{"Source": "Metacritic", "Value": "N/A"}]},
+            omdb.Scores(),
+        ),
         (
             {
                 "Response": "True",
                 "imdbRating": "N/A",
                 "Ratings": [{"Source": "Rotten Tomatoes", "Value": "100%"}],
             },
-            (None, 100),
+            omdb.Scores(rt=100),
         ),
     ],
 )
@@ -82,5 +86,5 @@ def test_omdb_lookup_sends_id_and_key(fixture_json):
         return httpx.Response(200, json=fixture_json("enrich/omdb_tt0084787.json"))
 
     with httpx.Client(transport=httpx.MockTransport(handler)) as client:
-        assert omdb.lookup(client, "key", "tt0084787") == (8.2, 85)
+        assert omdb.lookup(client, "key", "tt0084787") == omdb.Scores(8.2, 85, 57)
     assert seen == {"i": "tt0084787", "apikey": "key"}

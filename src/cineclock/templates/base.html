@@ -8,16 +8,22 @@
 <meta name="description" content="{% block description %}Showtimes at Vancouver's repertory and independent cinemas.{% endblock %}">
 <link rel="preload" href="{{ root }}static/fonts/instrument-sans.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="{{ root }}static/site.css?v={{ asset_version('site.css') }}">
+<script>
+  // Hide rating sources switched off in the footer, before the page paints.
+  try {
+    const hidden = JSON.parse(localStorage.getItem("hiddenRatings") || "[]");
+    hidden.forEach((s) => document.documentElement.classList.add("hide-" + s));
+  } catch (e) {}
+</script>
 </head>
 <body class="{% block body_class %}{% endblock %}">
 <header class="site-header">
   <div class="wrap">
     <a class="wordmark" href="{{ root }}">cine<span>clock</span></a>
-    <nav class="venue-nav" aria-label="Site">
+    <nav class="site-nav" aria-label="Site">
+      <a href="{{ root }}films/"{% if current == "films" %} aria-current="page"{% endif %}>Films</a>
       <a href="{{ root }}showtimes/"{% if current == "showtimes" %} aria-current="page"{% endif %}>Showtimes</a>
-      {% for v in venues %}
-        <a href="{{ root }}venues/{{ v.slug }}/"{% if current == v.slug %} aria-current="page"{% endif %}>{{ v.name | replace("The ", "") }}</a>
-      {% endfor %}
+      <a href="{{ root }}theatres/"{% if current == "theatres" %} aria-current="page"{% endif %}>Theatres</a>
     </nav>
   </div>
 </header>
@@ -28,11 +34,32 @@
 
 <footer class="site-footer">
   <div class="wrap">
+    <fieldset class="rating-switches">
+      <legend>Show ratings from</legend>
+      {% for key, label in [("letterboxd", "Letterboxd"), ("imdb", "IMDb"), ("rt", "Rotten Tomatoes"), ("metacritic", "Metacritic")] %}
+      <label><input type="checkbox" value="{{ key }}" checked> {{ label }}</label>
+      {% endfor %}
+    </fieldset>
     <p>Updated {{ updated }}. Showtimes come from each theatre's website; check there before you go.</p>
-    <p>Film details and posters from <a href="https://www.themoviedb.org/">TMDB</a>. This product uses the TMDB API but is not endorsed or certified by TMDB. Ratings from Letterboxd, IMDb and Rotten Tomatoes.</p>
+    <p>Film details and posters from <a href="https://www.themoviedb.org/">TMDB</a>. This product uses the TMDB API but is not endorsed or certified by TMDB. Ratings from Letterboxd, IMDb, Rotten Tomatoes and Metacritic. Not affiliated with any of them or with the theatres.</p>
     <p>Inspired by <a href="https://movieclock.app">MovieClock</a>. <a href="https://github.com/yogzoth/cineclock">Source on GitHub</a>.</p>
   </div>
 </footer>
+<script>
+  (() => {
+    const boxes = document.querySelectorAll(".rating-switches input");
+    let hidden = [];
+    try { hidden = JSON.parse(localStorage.getItem("hiddenRatings") || "[]"); } catch (e) {}
+    for (const box of boxes) {
+      box.checked = !hidden.includes(box.value);
+      box.addEventListener("change", () => {
+        document.documentElement.classList.toggle("hide-" + box.value, !box.checked);
+        hidden = [...boxes].filter((b) => !b.checked).map((b) => b.value);
+        try { localStorage.setItem("hiddenRatings", JSON.stringify(hidden)); } catch (e) {}
+      });
+    }
+  })();
+</script>
 {% block scripts %}{% endblock %}
 </body>
 </html>

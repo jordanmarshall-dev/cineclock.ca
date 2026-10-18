@@ -6,13 +6,35 @@
 
 {% block main %}
 <div class="wrap">
-  <h1 class="venue-title">{{ venue.name }}</h1>
+  <div class="theatre-head">
+    <span class="theatre-logo large{% if venue.logo_on_light %} on-light{% endif %}">
+      {%- if venue.logo and has_asset("logos/" ~ venue.logo) %}<img src="{{ root }}static/logos/{{ venue.logo }}" alt="">{% else %}<span>{{ venue.monogram }}</span>{% endif -%}
+    </span>
+    <div>
+      <h1 class="venue-title">{{ venue.name }}</h1>
+      <p class="meta">{{ venue.neighbourhood }}</p>
+    </div>
+  </div>
   <p class="venue-blurb">{{ venue.blurb }}</p>
+
   <ul class="links">
     {% if venue.address %}<li><a href="{{ venue.map_url }}">{{ venue.address.split(",")[0] }}</a></li>{% endif %}
     {% if venue.website %}<li><a href="{{ venue.website }}">Website</a></li>{% endif %}
   </ul>
 
+  {% if venue.specs %}
+  <h2 class="section-heading">The room</h2>
+  <dl class="specs">
+    {% for label, value in venue.specs %}<div><dt>{{ label }}</dt><dd>{{ value }}</dd></div>{% endfor %}
+  </dl>
+  {% endif %}
+
+  {% if venue.about %}
+  <h2 class="section-heading">About</h2>
+  <div class="about">{% for para in venue.about %}<p>{{ para }}</p>{% endfor %}</div>
+  {% endif %}
+
+  <h2 class="section-heading">Playing here</h2>
   {{ date_strip(days) }}
   {% if days %}
     {{ day_sections(days, root, show_venues=False) }}

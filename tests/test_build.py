@@ -24,11 +24,11 @@ def test_build_writes_every_page_and_asset(conn, tmp_path):
     out = tmp_path / "site"
     count = build(conn, out, NOW)
 
-    assert count == 1 + 1 + 1 + 5  # home, showtimes, one film, five venues
+    assert count == 1 + 1 + 1 + 1 + 1 + 5  # home, showtimes, films, theatres, one film, 5 venues
     assert "Scream" in (out / "index.html").read_text()
     assert "Scream" in (out / "showtimes/index.html").read_text()
     assert (out / "films/scream/index.html").exists()
-    assert (out / "venues/rio/index.html").exists()
+    assert (out / "theatres/rio/index.html").exists()
     assert (out / "static/site.css").exists()
     assert (out / "static/fonts/source-serif-4.woff2").exists()
     assert "Updated Sun Oct 18, 1:45 am." in (out / "index.html").read_text()

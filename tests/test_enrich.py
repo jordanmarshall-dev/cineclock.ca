@@ -63,6 +63,8 @@ def test_full_lookup(conn, services):
     assert film.letterboxd_url == "https://letterboxd.com/film/the-thing/"
     assert (film.letterboxd_rating, film.imdb_rating, film.rt_score) == (4.35, 8.2, 85)
     assert film.letterboxd_count == 1476132
+    assert film.metacritic == 57
+    assert film.genre_list == ["Horror", "Mystery", "Science Fiction"]
     assert film.poster_url.startswith("https://image.tmdb.org/")
 
 
@@ -173,7 +175,9 @@ def test_same_film_at_two_venues_is_looked_up_once(conn, services):
 
 def test_films_saved_before_rating_counts_get_one_early_refresh(conn, services):
     db.sync_venue(conn, "VIFF Lochmaddy", [show("The Thing", 1982)], NOW)
-    old = Film(match_key("The Thing", 1982), NOW, tmdb_id=1091, letterboxd_rating=4.35)
+    old = Film(
+        match_key("The Thing", 1982), NOW, tmdb_id=1091, letterboxd_rating=4.35, genres="Horror"
+    )
     db.save_film(conn, old)
     assert run(conn, services, now=NOW + timedelta(days=1)).looked_up == 1
     assert db.get_film(conn, match_key("The Thing", 1982)).letterboxd_count == 1476132
@@ -203,4 +207,14 @@ def test_failed_refresh_keeps_last_ratings(conn, services):
         8.2,
         85,
     )
+    assert film.metacritic == 57
     assert film.fetched_at == later
+
+
+def test_films_saved_before_genres_get_one_early_refresh(conn, services):
+    db.sync_venue(conn, "VIFF Lochmaddy", [show("The Thing", 1982)], NOW)
+    db.save_film(conn, Film(match_key("The Thing", 1982), NOW, tmdb_id=1091))
+    assert run(conn, services, now=NOW + timedelta(days=1)).looked_up == 1
+    assert (
+        db.get_film(conn, match_key("The Thing", 1982)).genres == "Horror, Mystery, Science Fiction"
+    )

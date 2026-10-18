@@ -4,14 +4,35 @@
 {% if href %}</a>{% else %}</div>{% endif %}
 {%- endmacro %}
 
-{% macro ratings(film) -%}
-{% if film and (film.letterboxd_rating or film.imdb_rating or film.rt_score is not none) %}
+{# A small square badge for a theatre: its logo if we have the file, else its initials. #}
+{% macro venue_badge(v, root) -%}
+<span class="venue-badge{% if v.logo_on_light %} on-light{% endif %}" title="{{ v.name }}">
+  {%- if v.logo and has_asset("logos/" ~ v.logo) %}<img src="{{ root }}static/logos/{{ v.logo }}" alt="{{ v.name }}">{% else %}<span aria-label="{{ v.name }}">{{ v.monogram }}</span>{% endif -%}
+</span>
+{%- endmacro %}
+
+{% macro source_mark(source, root) -%}
+{% if source == "letterboxd" and has_asset("logos/letterboxd.svg") -%}
+<img class="source-logo" src="{{ root }}static/logos/letterboxd.svg" alt="Letterboxd">
+{%- else -%}
+<span class="source-label">{{ {"letterboxd": "LB", "imdb": "IMDb", "rt": "RT", "metacritic": "MC"}[source] }}</span>
+{%- endif %}
+{%- endmacro %}
+
+{# The compact ratings line under a film's title. #}
+{% macro ratings(film, root) -%}
+{% if film and (film.letterboxd_rating or film.imdb_rating or film.rt_score is not none or film.metacritic is not none) %}
 <p class="ratings">
-  {% if film.letterboxd_rating %}<span>Letterboxd <b>{{ "%.1f" | format(film.letterboxd_rating) }}</b></span>{% endif %}
-  {% if film.imdb_rating %}<span>IMDb <b>{{ "%.1f" | format(film.imdb_rating) }}</b></span>{% endif %}
-  {% if film.rt_score is not none %}<span>RT <b>{{ film.rt_score }}%</b></span>{% endif %}
+  {% if film.letterboxd_rating %}<span class="rating rating-letterboxd">{{ source_mark("letterboxd", root) }}<b>{{ "%.1f" | format(film.letterboxd_rating) }}</b></span>{% endif %}
+  {% if film.imdb_rating %}<span class="rating rating-imdb">{{ source_mark("imdb", root) }}<b>{{ "%.1f" | format(film.imdb_rating) }}</b></span>{% endif %}
+  {% if film.rt_score is not none %}<span class="rating rating-rt">{{ source_mark("rt", root) }}<b>{{ film.rt_score }}%</b></span>{% endif %}
+  {% if film.metacritic is not none %}<span class="rating rating-metacritic">{{ source_mark("metacritic", root) }}<b>{{ film.metacritic }}</b></span>{% endif %}
 </p>
 {% endif %}
+{%- endmacro %}
+
+{% macro tag_list(tags) -%}
+{% if tags %}<p class="tags">{% for t in tags %}<span class="tag tag-{{ t | tagslug }}">{{ t }}</span>{% endfor %}</p>{% endif %}
 {%- endmacro %}
 
 {% macro showtime(s, label=None) -%}
@@ -20,20 +41,16 @@
 </a>
 {%- endmacro %}
 
-{% macro tag_list(tags) -%}
-{% if tags %}<ul class="tags">{% for t in tags %}<li class="tag tag-{{ t | tagslug }}">{{ t }}</li>{% endfor %}</ul>{% endif %}
-{%- endmacro %}
-
 {% macro row(r, root, venue_slug="") -%}
-<li class="row" data-venue="{{ venue_slug }}" data-tags="{{ r.tags | map('tagslug') | join(' ') }}" data-title="{{ r.title | lower }} {{ r.page.title | lower }}">
+<li class="row" data-item data-venues="{{ venue_slug }}" data-tags="{{ r.tags | map('tagslug') | join(' ') }}" data-genres="{{ r.page.genres | map('tagslug') | join(' ') }}" data-title="{{ r.title | lower }} {{ r.page.title | lower }}">
   {{ poster(r.poster_url, root ~ "films/" ~ r.page.slug ~ "/", r.title) }}
-  <div>
+  <div class="row-body">
     <p class="row-title">
       <a href="{{ root }}films/{{ r.page.slug }}/">{{ r.title }}</a>
       {% if r.year %}<span class="year">{{ r.year }}</span>{% endif %}
     </p>
     {% if r.note %}<p class="meta">{{ r.note }}</p>{% elif r.page.film and r.page.film.director %}<p class="meta">{{ r.page.film.director }}</p>{% endif %}
-    {{ ratings(r.page.film) }}
+    {{ ratings(r.page.film, root) }}
     {{ tag_list(r.tags) }}
     <div class="times">
       {% for s in r.showtimes %}{{ showtime(s, r.title) }}{% endfor %}
@@ -44,11 +61,11 @@
 
 {% macro day_sections(days, root, show_venues=True) -%}
 {% for day in days %}
-<section class="day" id="{{ day.anchor }}" aria-labelledby="{{ day.anchor }}-h">
+<section class="day" id="{{ day.anchor }}" data-group aria-labelledby="{{ day.anchor }}-h">
   <h2 class="day-heading" id="{{ day.anchor }}-h">{{ day.label }}</h2>
   {% for group in day.groups %}
-    <div class="venue-group" data-venue="{{ group.venue.slug }}">
-    {% if show_venues %}<h3 class="venue-heading"><a href="{{ root }}venues/{{ group.venue.slug }}/">{{ group.venue.name }}</a></h3>{% endif %}
+    <div class="venue-group" data-group>
+    {% if show_venues %}<h3 class="venue-heading"><a href="{{ root }}theatres/{{ group.venue.slug }}/">{{ venue_badge(group.venue, root) }}{{ group.venue.name }}</a></h3>{% endif %}
     <ul class="rows">
       {% for r in group.rows %}{{ row(r, root, group.venue.slug) }}{% endfor %}
     </ul>
@@ -66,23 +83,63 @@
 {% endif %}
 {%- endmacro %}
 
-
 {% macro rail(r, root) -%}
 <section class="rail" aria-labelledby="rail-{{ r.title | tagslug }}">
   <div class="rail-head">
-    <h2 id="rail-{{ r.title | tagslug }}">{{ r.title }}</h2>
-    {% if r.more is not none %}<a href="{{ root }}showtimes/{{ r.more }}">See all</a>{% endif %}
+    <h2 id="rail-{{ r.title | tagslug }}"><a href="{{ root }}{{ r.more }}">{{ r.title }}</a></h2>
+    <a class="see-all" href="{{ root }}{{ r.more }}">See all</a>
   </div>
   <ul class="rail-cards">
     {% for c in r.cards %}
     <li class="card">
       <a href="{{ root }}films/{{ c.page.slug }}/">
         {{ poster(c.page.poster_url, label=c.page.title) }}
-        <span class="card-title">{{ c.page.title }}</span>
-        <span class="card-meta">{{ c.meta }}</span>
+        <span class="card-title">{{ c.page.title }}{% if c.page.year %} <span class="year">{{ c.page.year }}</span>{% endif %}</span>
+        {% if c.why %}<span class="card-why">{{ c.why }}</span>{% endif %}
+        <span class="card-next">{{ c.next_label }}</span>
+        <span class="card-venues">{% for v in c.page.badges %}{{ venue_badge(v, root) }}{% endfor %}</span>
       </a>
     </li>
     {% endfor %}
   </ul>
 </section>
+{%- endmacro %}
+
+{# Search, plus dropdowns of filter chips. Hidden until the script turns it on. #}
+{% macro filter_bar(venues, filter_tags, genres, sorting=False) -%}
+<form class="filters" role="search" hidden>
+  <div class="filter-top">
+    <input type="search" name="q" placeholder="Search films" aria-label="Search films" autocomplete="off">
+    {% if sorting %}
+    <select name="sort" aria-label="Sort films">
+      <option value="next">Soonest</option>
+      <option value="added">Just added</option>
+      <option value="rated">Highest rated</option>
+      <option value="popular">Most popular</option>
+      <option value="screenings">Most screenings</option>
+    </select>
+    {% endif %}
+  </div>
+  <div class="filter-menus">
+    <details>
+      <summary>Theatre <span class="count"></span></summary>
+      <div class="chips">{% for v in venues %}<button type="button" class="chip" data-filter="venue" data-value="{{ v.slug }}" aria-pressed="false">{{ v.short }}</button>{% endfor %}</div>
+    </details>
+    <details>
+      <summary>Format and events <span class="count"></span></summary>
+      <div class="chips">
+        {% if "70mm" in filter_tags or "35mm" in filter_tags or "16mm" in filter_tags %}<button type="button" class="chip" data-filter="tag" data-value="on-film" aria-pressed="false">On film</button>{% endif %}
+        {% for t in filter_tags %}<button type="button" class="chip" data-filter="tag" data-value="{{ t | tagslug }}" aria-pressed="false">{{ t }}</button>{% endfor %}
+      </div>
+    </details>
+    {% if genres %}
+    <details>
+      <summary>Genre <span class="count"></span></summary>
+      <div class="chips">{% for g in genres %}<button type="button" class="chip" data-filter="genre" data-value="{{ g | tagslug }}" aria-pressed="false">{{ g }}</button>{% endfor %}</div>
+    </details>
+    {% endif %}
+    <button type="button" class="clear" hidden>Clear</button>
+  </div>
+  <p class="filter-status" aria-live="polite"></p>
+</form>
 {%- endmacro %}

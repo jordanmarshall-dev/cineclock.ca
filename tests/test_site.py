@@ -160,10 +160,12 @@ def test_pages_cover_home_films_and_every_venue(conn):
     built = pages(conn, NOW)
     assert "index.html" in built
     assert "showtimes/index.html" in built
+    assert "films/index.html" in built
+    assert "theatres/index.html" in built
     assert "films/musk/index.html" in built
     assert "films/pulse-2001/index.html" in built
     for slug in ("rio", "park", "cinematheque", "viff-centre", "viff-lochmaddy"):
-        assert f"venues/{slug}/index.html" in built
+        assert f"theatres/{slug}/index.html" in built
 
 
 def test_links_are_relative_to_each_page(conn):
@@ -172,7 +174,7 @@ def test_links_are_relative_to_each_page(conn):
     assert 'href="films/musk/"' in built["index.html"]
     assert 'href="static/site.css?v=' in built["index.html"]
     assert 'href="../../static/site.css?v=' in built["films/musk/index.html"]
-    assert 'href="../../venues/rio/"' in built["films/musk/index.html"]
+    assert 'href="../../theatres/rio/"' in built["films/musk/index.html"]
 
 
 def test_film_page_shows_details_ratings_and_links(conn):
@@ -213,11 +215,11 @@ def test_film_page_links_go_through_score_tiles(conn):
     db.save_film(conn, film("The Thing", 1982, 1091, imdb_id="tt0084787"))
     page = pages(conn, NOW)["films/the-thing-1982/index.html"]
     # No scores yet, but each tile still links out
-    assert page.count('class="score-value">–<') == 3
+    assert page.count('class="score-value">–<') == 4
     assert 'href="https://letterboxd.com/tmdb/1091/"' in page
     assert 'class="links"' not in page
     assert "https://viff/x" not in page
-    assert 'href="../../venues/viff-lochmaddy/">VIFF Lochmaddy</a>' in page
+    assert 'href="../../theatres/viff-lochmaddy/">' in page
 
 
 def test_unmatched_film_page_still_has_showtimes(conn):
@@ -229,7 +231,7 @@ def test_unmatched_film_page_still_has_showtimes(conn):
 
 def test_venue_page_lists_only_its_shows(conn):
     save(conn, show("Musk", at(18, 12)), show("Pulse", at(18, 20), "The Cinematheque"))
-    page = pages(conn, NOW)["venues/rio/index.html"]
+    page = pages(conn, NOW)["theatres/rio/index.html"]
     main = page.split("<main>")[1]
     assert "Musk" in main and "Pulse" not in main
     assert "1660 East Broadway" in page
@@ -237,7 +239,7 @@ def test_venue_page_lists_only_its_shows(conn):
 
 
 def test_empty_venue_page_points_to_its_website(conn):
-    page = pages(conn, NOW)["venues/viff-lochmaddy/index.html"]
+    page = pages(conn, NOW)["theatres/viff-lochmaddy/index.html"]
     assert "Nothing listed here right now" in page
 
 
@@ -282,11 +284,11 @@ def test_compact(n, expected):
 def test_on_today_lists_todays_films_by_time(conn):
     save(conn, show("Late", at(18, 21)), show("Early", at(18, 13)), show("Tomorrow", at(19, 13)))
     today = rail_titles(conn)["On today"]
-    assert [(c.page.title, c.meta) for c in today.cards] == [
-        ("Early", "1:00 pm, Rio"),
-        ("Late", "9:00 pm, Rio"),
+    assert [(c.page.title, c.next_label, c.why) for c in today.cards] == [
+        ("Early", "Today, 1:00 pm", None),
+        ("Late", "Today, 9:00 pm", None),
     ]
-    assert today.more == "#d20261018"
+    assert today.more == "showtimes/#d20261018"
 
 
 def test_just_added_skips_the_first_run(conn):
@@ -303,15 +305,17 @@ def test_highly_rated_needs_enough_ratings(conn):
     db.save_film(conn, film("Obscure", 2020, 2, letterboxd_rating=4.9, letterboxd_count=12))
     found = rail_titles(conn)
     assert [c.page.title for c in found["Highly rated"].cards] == ["Classic"]
-    assert found["Highly rated"].cards[0].meta == "4.1 on Letterboxd"
+    assert found["Highly rated"].cards[0].why == "4.1 on Letterboxd"
+    assert found["Highly rated"].cards[0].next_label == "Today, 7:00 pm"
+    assert found["Highly rated"].more == "films/?sort=rated"
     assert [c.page.title for c in found["Popular"].cards] == ["Classic", "Obscure"]
-    assert found["Popular"].cards[0].meta == "50K ratings"
+    assert found["Popular"].cards[0].why == "50K Letterboxd ratings"
 
 
 def test_most_screenings(conn):
     save(conn, show("Once", at(19, 19)), *[show("Lots", at(d, 19)) for d in (18, 19, 20)])
     cards = rail_titles(conn)["Most screenings"].cards
-    assert [(c.page.title, c.meta) for c in cards] == [("Lots", "3 screenings")]
+    assert [(c.page.title, c.why) for c in cards] == [("Lots", "3 screenings")]
 
 
 def test_on_film_rail(conn):
@@ -322,11 +326,11 @@ def test_on_film_rail(conn):
         show("Musk", at(18, 12)),
     )
     on_film = rail_titles(conn)["On film"]
-    assert [(c.page.title, c.meta) for c in on_film.cards] == [
+    assert [(c.page.title, c.why) for c in on_film.cards] == [
         ("Dune: Part Three", "70mm"),
         ("Vertigo", "35mm"),
     ]
-    assert on_film.more == "?tag=on-film"
+    assert on_film.more == "films/?tag=on-film"
 
 
 def test_empty_rails_are_left_out(conn):
@@ -345,7 +349,7 @@ def test_coming_up_skips_what_is_on_today(conn):
 def test_rows_carry_tags_and_filter_data(conn):
     save(conn, show("Dune: Part Three", at(18, 19), "The Park", note="Presented in 70mm"))
     page = pages(conn, NOW)["showtimes/index.html"]
-    assert 'data-venue="park"' in page
+    assert 'data-venues="park"' in page
     assert 'data-tags="70mm one-screening"' in page
     assert 'class="tag tag-70mm">70mm<' in page
     assert 'data-value="on-film"' in page
@@ -363,3 +367,87 @@ def test_film_page_shows_tags(conn):
     )
     page = pages(conn, NOW)["films/vertigo/index.html"]
     assert ">35mm<" in page and ">One screening<" in page
+
+
+def test_every_rail_has_a_see_all_link(conn):
+    save(conn, show("Lots", at(18, 19)), show("Lots", at(19, 19)), show("Soon", at(20, 19)))
+    for rail in rail_titles(conn).values():
+        assert rail.more.startswith(("films/", "showtimes/")), rail.title
+
+
+def test_next_label_for_later_days(conn):
+    save(conn, show("Later", at(24, 20, 15)))
+    [card] = rail_titles(conn)["Coming up"].cards
+    assert card.next_label == "Sat Oct 24, 8:15 pm"
+
+
+def test_home_cards_show_year_reason_next_showing_and_theatres(conn):
+    save(
+        conn,
+        show("Classic", at(18, 19), year=1970),
+        show("Classic", at(20, 19), "The Cinematheque", year=1970),
+    )
+    db.save_film(conn, film("Classic", 1970, 1, letterboxd_rating=4.1, letterboxd_count=50_000))
+    home = pages(conn, NOW)["index.html"]
+    assert '<span class="year">1970</span>' in home
+    assert '<span class="card-why">4.1 on Letterboxd</span>' in home
+    assert '<span class="card-next">Today, 7:00 pm</span>' in home
+    assert 'title="The Rio"' in home and 'title="The Cinematheque"' in home
+
+
+def test_films_page_lists_each_film_once_with_dates(conn):
+    save(conn, show("Musk", at(18, 12)), show("Musk", at(25, 12)), show("Pulse", at(19, 20)))
+    page = pages(conn, NOW)["films/index.html"]
+    assert page.count('class="film-item"') == 2
+    assert "Oct 18 to Oct 25" in page
+    assert "Oct 19 only" in page
+    assert 'data-sort-screenings="2"' in page
+
+
+def test_films_page_genre_filter_data(conn):
+    save(conn, show("The Thing", at(18, 20), year=1982))
+    db.save_film(conn, film("The Thing", 1982, 1091, genres="Horror, Science Fiction"))
+    page = pages(conn, NOW)["films/index.html"]
+    assert 'data-genres="horror science-fiction"' in page
+    assert 'data-value="science-fiction"' in page
+
+
+def test_theatres_page_lists_every_venue(conn):
+    page = pages(conn, NOW)["theatres/index.html"]
+    for name in ("The Rio", "The Park", "The Cinematheque", "VIFF Centre", "VIFF Lochmaddy"):
+        assert name in page
+
+
+def test_theatre_page_has_specs_and_about(conn):
+    page = pages(conn, NOW)["theatres/cinematheque/index.html"]
+    assert "<dt>Seats</dt><dd>153</dd>" in page
+    assert "Pacific Cinémathèque Pacifique Society" in page
+
+
+def test_badge_falls_back_to_initials_without_a_logo(conn, monkeypatch, tmp_path):
+    import shutil
+
+    import cineclock.render as render
+
+    # A static folder with the stylesheet but no logo files
+    for name in ("site.css", "filters.js"):
+        shutil.copy(render.STATIC / name, tmp_path / name)
+    monkeypatch.setattr(render, "STATIC", tmp_path)
+    save(conn, show("Musk", at(18, 12)))
+    assert '<span aria-label="The Rio">R</span>' in pages(conn, NOW)["index.html"]
+
+
+def test_rating_sources_can_be_switched_off(conn):
+    save(conn, show("The Thing", at(18, 20), year=1982))
+    db.save_film(conn, film("The Thing", 1982, 1091, imdb_rating=8.2, metacritic=57))
+    page = pages(conn, NOW)["showtimes/index.html"]
+    assert 'class="rating rating-imdb"' in page and 'class="rating rating-metacritic"' in page
+    assert 'value="metacritic" checked' in page
+
+
+def test_both_viff_screens_share_one_badge(conn):
+    save(conn, show("NAZA", at(19, 16), "VIFF Centre"), show("NAZA", at(20, 16), "VIFF Lochmaddy"))
+    page = film_pages(db.upcoming(conn, NOW), {})
+    [p] = {id(x): x for x in page.values()}.values()
+    assert [v.name for v in p.venues] == ["VIFF Centre", "VIFF Lochmaddy"]
+    assert [v.name for v in p.badges] == ["VIFF Centre"]

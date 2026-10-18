@@ -33,7 +33,8 @@ def test_health(client):
 def test_serves_the_same_pages_as_the_build(client):
     assert "Scream" in client.get("/").text
     assert "Scream" in client.get("/films/scream/").text
-    assert "1660 East Broadway" in client.get("/venues/rio/").text
+    assert "1660 East Broadway" in client.get("/theatres/rio/").text
+    assert "Scream" in client.get("/films/").text
 
 
 def test_missing_slash_redirects_like_github_pages(client):

@@ -42,13 +42,15 @@ CREATE TABLE IF NOT EXISTS films (
     director TEXT,
     runtime INTEGER,
     overview TEXT,
+    genres TEXT,
     poster_url TEXT,
     backdrop_url TEXT,
     letterboxd_url TEXT,
     letterboxd_rating REAL,
     letterboxd_count INTEGER,
     imdb_rating REAL,
-    rt_score INTEGER
+    rt_score INTEGER,
+    metacritic INTEGER
 );
 """
 
@@ -68,7 +70,7 @@ class SyncResult:
 # (like the one the deploy keeps between runs) gets them added on connect.
 ADDED_COLUMNS = {
     "screenings": {"first_seen": "TEXT", "film_format": "TEXT"},
-    "films": {"letterboxd_count": "INTEGER"},
+    "films": {"letterboxd_count": "INTEGER", "genres": "TEXT", "metacritic": "INTEGER"},
 }
 
 

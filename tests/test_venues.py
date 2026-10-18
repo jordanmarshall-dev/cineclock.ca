@@ -31,3 +31,14 @@ def test_map_link_searches_the_address():
     assert BY_NAME["The Rio"].map_url.endswith(
         "query=1660+East+Broadway%2C+Vancouver%2C+BC+V5N+1W1"
     )
+
+
+def test_every_venue_has_specs_and_a_neighbourhood():
+    for v in VENUES:
+        assert v.specs and v.neighbourhood and v.short
+
+
+def test_monograms():
+    assert BY_NAME["The Rio"].monogram == "R"
+    assert BY_NAME["VIFF Lochmaddy"].monogram == "L"
+    assert BY_NAME["VIFF Centre"].monogram == "VC"

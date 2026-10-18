@@ -37,7 +37,7 @@ def choose_poster(screening: Screening, film: Film | None) -> str | None:
 
 def venue_for(name: str) -> Venue:
     # A venue missing from the registry still gets a page rather than crashing the build.
-    return BY_NAME.get(name) or Venue(name, slugify(name), "", "", "")
+    return BY_NAME.get(name) or Venue(name, name, slugify(name), "", "", "", "")
 
 
 def tags_for(s: Screening) -> list[str]:
@@ -81,6 +81,39 @@ class FilmPage:
             tags.append("One screening")
         return sort_tags(tags)
 
+    @property
+    def venues(self) -> list[Venue]:
+        names = sorted({s.venue for s in self.screenings}, key=lambda n: (order(n), n))
+        return [venue_for(n) for n in names]
+
+    @property
+    def badges(self) -> list[Venue]:
+        """One badge per logo: a film on both VIFF screens shows VIFF once."""
+        seen, out = set(), []
+        for v in self.venues:
+            key = v.logo or v.name
+            if key not in seen:
+                seen.add(key)
+                out.append(v)
+        return out
+
+    @property
+    def genres(self) -> list[str]:
+        return self.film.genre_list if self.film else []
+
+    @property
+    def last_showing(self) -> Screening:
+        return max(self.screenings, key=lambda s: s.starts_at)
+
+    @property
+    def date_range(self) -> str:
+        """Oct 18 only, or Oct 18 to Nov 2"""
+        first = self.next_showing.local_start.date()
+        last = self.last_showing.local_start.date()
+        if first == last:
+            return f"{first:%b} {first.day} only"
+        return f"{first:%b} {first.day} to {last:%b} {last.day}"
+
 
 @dataclass
 class Row:
@@ -121,17 +154,18 @@ class Day:
 
 @dataclass
 class Card:
-    """A poster in one of the home page's rows."""
+    """A poster in one of the home page's rows. `why` says why it's in that row."""
 
     page: FilmPage
-    meta: str
+    next_label: str
+    why: str | None = None
 
 
 @dataclass
 class Rail:
     title: str
     cards: list[Card]
-    more: str | None = None  # a showtimes page filter, like "?tag=70mm"
+    more: str  # where "See all" goes, relative to the site root
 
 
 def film_pages(screenings: list[Screening], films: dict[str, Film]) -> dict[int, FilmPage]:
@@ -192,35 +226,26 @@ def group_days(
     return days
 
 
-def when(s: Screening, today: date) -> str:
-    """Today 7:00 pm, Tomorrow 7:00 pm, Sat Oct 24"""
+def when(s: Screening, now: datetime) -> str:
+    """Today 7:00 pm, Tomorrow 7:00 pm, Sat Oct 24, 7:00 pm"""
+    today = now.astimezone(VANCOUVER).date()
     day = s.local_start.date()
     if day == today:
-        return f"Today {clock(s.starts_at)}"
+        return f"Today, {clock(s.starts_at)}"
     if day == today + timedelta(days=1):
-        return f"Tomorrow {clock(s.starts_at)}"
-    return f"{day:%a %b} {day.day}"
+        return f"Tomorrow, {clock(s.starts_at)}"
+    return f"{day:%a %b} {day.day}, {clock(s.starts_at)}"
 
 
 def rails(film_list: list[FilmPage], now: datetime) -> list[Rail]:
     today = now.astimezone(VANCOUVER).date()
-
-    def card(page: FilmPage, meta: str | None = None) -> Card:
-        return Card(page, meta or when(page.next_showing, today))
+    soonest = lambda p: p.next_showing.starts_at  # noqa: E731
 
     on_today = sorted(
         (p for p in film_list if any(s.local_start.date() == today for s in p.screenings)),
-        key=lambda p: p.next_showing.starts_at,
+        key=soonest,
     )
-    on_today_cards = [
-        card(p, f"{clock(p.next_showing.starts_at)}, {p.next_showing.venue.removeprefix('The ')}")
-        for p in on_today
-    ]
-
-    coming_up = sorted(
-        (p for p in film_list if p not in on_today),
-        key=lambda p: p.next_showing.starts_at,
-    )
+    coming_up = sorted((p for p in film_list if p not in on_today), key=soonest)
 
     # Films that appeared in the last two weeks, newest first. Everything seen on
     # the very first run is the baseline, not news, so it doesn't count.
@@ -228,50 +253,65 @@ def rails(film_list: list[FilmPage], now: datetime) -> list[Rail]:
     since = max(min(added), now - timedelta(days=14)) if added else now
     just_added = sorted(
         (p for p in film_list if p.added and p.added > since),
-        key=lambda p: (-p.added.timestamp(), p.next_showing.starts_at),
+        key=lambda p: (-p.added.timestamp(), soonest(p)),
     )
 
-    on_film = [p for p in film_list if {"70mm", "35mm", "16mm"} & set(p.tags)]
-    events = [p for p in film_list if "Event" in p.tags]
-
-    rated = [
-        p
-        for p in film_list
-        if p.film
-        and p.film.letterboxd_rating
-        and (p.film.letterboxd_count or 0) >= MIN_RATINGS_FOR_TOP
-    ]
-    top = sorted(rated, key=lambda p: -p.film.letterboxd_rating)
+    on_film = sorted((p for p in film_list if {"70mm", "35mm", "16mm"} & set(p.tags)), key=soonest)
+    events = sorted((p for p in film_list if "Event" in p.tags), key=soonest)
+    top = sorted(
+        (
+            p
+            for p in film_list
+            if p.film
+            and p.film.letterboxd_rating
+            and (p.film.letterboxd_count or 0) >= MIN_RATINGS_FOR_TOP
+        ),
+        key=lambda p: -p.film.letterboxd_rating,
+    )
     popular = sorted(
         (p for p in film_list if p.film and p.film.letterboxd_count),
         key=lambda p: -p.film.letterboxd_count,
     )
     busiest = sorted(
         (p for p in film_list if len(p.screenings) > 1),
-        key=lambda p: (-len(p.screenings), p.next_showing.starts_at),
+        key=lambda p: (-len(p.screenings), soonest(p)),
     )
 
+    def cards(pages, why=None):
+        return [
+            Card(p, when(p.next_showing, now), why(p) if why else None) for p in pages[:RAIL_LENGTH]
+        ]
+
     found = [
-        Rail("On today", on_today_cards[:RAIL_LENGTH], f"#d{today:%Y%m%d}"),
-        Rail("Coming up", [card(p) for p in coming_up[:RAIL_LENGTH]], ""),
-        Rail("Just added", [card(p) for p in just_added[:RAIL_LENGTH]]),
+        Rail("On today", cards(on_today), f"showtimes/#d{today:%Y%m%d}"),
+        Rail("Coming up", cards(coming_up), "films/"),
+        Rail("Just added", cards(just_added), "films/?sort=added"),
         Rail(
             "On film",
-            [card(p, " ".join(t for t in p.tags if t.endswith("mm"))) for p in on_film],
-            "?tag=on-film",
+            cards(on_film, lambda p: " and ".join(t for t in p.tags if t.endswith("mm"))),
+            "films/?tag=on-film",
         ),
         Rail(
             "Highly rated",
-            [card(p, f"{p.film.letterboxd_rating:.1f} on Letterboxd") for p in top[:RAIL_LENGTH]],
+            cards(top, lambda p: f"{p.film.letterboxd_rating:.1f} on Letterboxd"),
+            "films/?sort=rated",
         ),
         Rail(
             "Popular",
-            [card(p, f"{compact(p.film.letterboxd_count)} ratings") for p in popular[:RAIL_LENGTH]],
+            cards(popular, lambda p: f"{compact(p.film.letterboxd_count)} Letterboxd ratings"),
+            "films/?sort=popular",
         ),
-        Rail("Events and guests", [card(p) for p in events[:RAIL_LENGTH]], "?tag=event"),
+        Rail(
+            "Events and guests",
+            cards(
+                events, lambda p: next((s.note for s in p.screenings if s.note), "Special event")
+            ),
+            "films/?tag=event",
+        ),
         Rail(
             "Most screenings",
-            [card(p, f"{len(p.screenings)} screenings") for p in busiest[:RAIL_LENGTH]],
+            cards(busiest, lambda p: f"{len(p.screenings)} screenings"),
+            "films/?sort=screenings",
         ),
     ]
     return [r for r in found if r.cards]
@@ -302,23 +342,35 @@ def pages(conn: Connection, now: datetime) -> dict[str, str]:
             "showtimes/index.html",
             days=days,
             filter_tags=filter_tags,
+            genres=sorted({g for p in film_list for g in p.genres}),
             current="showtimes",
         ),
     }
+
+    by_next = sorted(film_list, key=lambda p: p.next_showing.starts_at)
+    out["films/index.html"] = render(
+        "films.html",
+        "films/index.html",
+        films=by_next,
+        filter_tags=filter_tags,
+        genres=sorted({g for p in film_list for g in p.genres}),
+        current="films",
+    )
 
     for page in film_list:
         path = f"films/{page.slug}/index.html"
         page_days = group_days(page.screenings, page_of, films, now)
         out[path] = render("film.html", path, page=page, film=page.film, days=page_days)
 
+    out["theatres/index.html"] = render("theatres.html", "theatres/index.html", current="theatres")
     for venue in VENUES:
-        path = f"venues/{venue.slug}/index.html"
+        path = f"theatres/{venue.slug}/index.html"
         mine = [s for s in screenings if s.venue == venue.name]
         out[path] = render(
             "venue.html",
             path,
             venue=venue,
-            current=venue.slug,
+            current="theatres",
             days=group_days(mine, page_of, films, now),
         )
     return out

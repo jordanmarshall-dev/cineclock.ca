@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% from "_parts.html" import venue_badge %}
+
+{% block title %}Theatres{% endblock %}
+
+{% block main %}
+<div class="wrap">
+  <h1 class="page-title">Theatres</h1>
+  <ul class="theatre-list">
+    {% for v in venues %}
+    <li>
+      <a class="theatre-item" href="{{ root }}theatres/{{ v.slug }}/">
+        <span class="theatre-logo{% if v.logo_on_light %} on-light{% endif %}">
+          {%- if v.logo and has_asset("logos/" ~ v.logo) %}<img src="{{ root }}static/logos/{{ v.logo }}" alt="">{% else %}<span>{{ v.monogram }}</span>{% endif -%}
+        </span>
+        <span class="theatre-text">
+          <span class="theatre-name">{{ v.name }}</span>
+          <span class="meta">{{ v.neighbourhood }}</span>
+          <span class="theatre-blurb">{{ v.blurb }}</span>
+        </span>
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

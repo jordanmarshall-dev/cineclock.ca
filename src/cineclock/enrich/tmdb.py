@@ -67,6 +67,7 @@ def parse_details(data: dict) -> dict:
         "director": ", ".join(directors) or None,
         "runtime": data.get("runtime") or None,
         "overview": data.get("overview") or None,
+        "genres": ", ".join(g["name"] for g in data.get("genres", [])) or None,
         "poster_url": POSTER + data["poster_path"] if data.get("poster_path") else None,
         "backdrop_url": BACKDROP + data["backdrop_path"] if data.get("backdrop_path") else None,
     }
