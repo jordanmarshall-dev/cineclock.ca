@@ -37,6 +37,8 @@ class Venue:
     # Logo files in static/logos: a compact mark for pills, a full logo for its page.
     mark: str | None = None
     full_logo: str | None = None
+    # Some marks read small at the shared size (the Cinematheque's is plain text).
+    mark_scale: float = 1.0
     # The Rio and the Park make their own posters, which beat generic ones.
     own_posters: bool = False
     about: tuple[str, ...] = ()
@@ -71,8 +73,13 @@ VENUES = [
             Room(
                 "rio-main",
                 "Main auditorium",
-                specs={"Seats": "409", "Projection": "Digital", "Sound": "Surround"},
-                sources=("https://riotheatre.ca/",),
+                specs={
+                    "Seats": "409",
+                    "Screen": "30 ft",
+                    "Projection": "Digital",
+                    "Sound": "7.1",
+                },
+                sources=("https://riotheatre.ca/", "Jordan's venue research, Oct 2026"),
             ),
         ),
         mark="rio-mark.png",
@@ -96,8 +103,16 @@ VENUES = [
             Room(
                 "park-main",
                 "Main auditorium",
-                specs={"Seats": "504", "Screen": "18 × 36 ft", "Sound": "Dolby Digital"},
-                sources=("https://en.wikipedia.org/wiki/Park_Theatre_(Vancouver)",),
+                specs={
+                    "Seats": "504",
+                    "Screen": "35 ft, curved",
+                    "Projection": "Digital, 35mm, 70mm",
+                    "Sound": "7.1",
+                },
+                sources=(
+                    "https://en.wikipedia.org/wiki/Park_Theatre_(Vancouver)",
+                    "Jordan's venue research, Oct 2026",
+                ),
             ),
         ),
         mark="park-mark.png",
@@ -121,14 +136,21 @@ VENUES = [
             Room(
                 "cinematheque-main",
                 "Main auditorium",
-                specs={"Seats": "153", "Projection": "Digital and 35mm"},
+                specs={
+                    "Seats": "153",
+                    "Screen": "31 ft",
+                    "Projection": "Digital, 35mm, 16mm",
+                    "Sound": "7.1",
+                },
                 sources=(
+                    "Jordan's venue research, Oct 2026",
                     "https://thecinematheque.ca/about/visit",
                     "https://thecinematheque.ca/about",
                 ),
             ),
         ),
         mark="cinematheque-mark.png",
+        mark_scale=1.3,
         full_logo="cinematheque-full.png",
         about=(
             "A non-profit film society and educational institution, supported by the Canada "
@@ -153,8 +175,8 @@ VENUES = [
                 specs={
                     "Seats": "169",
                     "Screen": "33 ft",
-                    "Projection": "4K digital",
-                    "Sound": "7.1 Dolby surround",
+                    "Projection": "4K digital, 35mm",
+                    "Sound": "7.1",
                 },
                 sources=("https://viff.org/rent-our-venue/",),
             ),
@@ -166,7 +188,7 @@ VENUES = [
                     "Seats": "41",
                     "Screen": "17 ft",
                     "Projection": "2K digital",
-                    "Sound": "Dolby surround",
+                    "Sound": "Surround",
                 },
                 sources=("https://viff.org/rent-our-venue/lochmaddy-studio-theatre/",),
             ),
@@ -191,8 +213,14 @@ VENUES = [
             Room(
                 "dunbar-main",
                 "Main auditorium",
-                specs={"Seats": "350"},
+                specs={
+                    "Seats": "320",
+                    "Screen": "32 ft",
+                    "Projection": "Digital, 3D",
+                    "Sound": "7.1",
+                },
                 sources=(
+                    "Jordan's venue research, Oct 2026",
                     "https://www.biv.com/news/entertainment-media-sports/"
                     "vancouver-single-screen-cinema-has-force-8245070",
                 ),

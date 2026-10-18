@@ -7,7 +7,7 @@
 {# A theatre pill: the theatre's own compact logo, or its initials if the file is missing. #}
 {% macro venue_badge(v, root) -%}
 <span class="venue-pill" title="{{ v.name }}">
-  {%- if v.mark and has_asset("logos/" ~ v.mark) %}{% set w, h = logo_size("logos/" ~ v.mark, 900, 12) %}<img src="{{ root }}static/logos/{{ v.mark }}" alt="{{ v.name }}" width="{{ w }}" height="{{ h }}">{% else %}<span class="monogram" role="img" aria-label="{{ v.name }}">{{ v.monogram }}</span>{% endif -%}
+  {%- if v.mark and has_asset("logos/" ~ v.mark) %}{% set w, h = logo_size("logos/" ~ v.mark, 900 * v.mark_scale ** 2, 12 * v.mark_scale) %}<img src="{{ root }}static/logos/{{ v.mark }}" alt="{{ v.name }}" width="{{ w }}" height="{{ h }}">{% else %}<span class="monogram" role="img" aria-label="{{ v.name }}">{{ v.monogram }}</span>{% endif -%}
 </span>
 {%- endmacro %}
 

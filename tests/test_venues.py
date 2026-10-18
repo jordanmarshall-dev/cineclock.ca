@@ -58,7 +58,7 @@ def test_specs_are_known_fields_with_a_source():
 
 
 def test_only_specs_every_room_has_are_shown():
-    assert shown_specs() == ["Seats"]
+    assert shown_specs() == ["Seats", "Screen", "Projection", "Sound"]
 
 
 def test_room_label_only_for_rooms_other_than_the_main_one():

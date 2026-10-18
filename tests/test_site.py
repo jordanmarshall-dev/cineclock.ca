@@ -494,7 +494,7 @@ def test_theatre_page_uses_its_full_logo(conn):
 def test_theatre_logos_get_about_the_same_area():
     from cineclock.render import logo_size
 
-    sizes = [logo_size(f"logos/{v.mark}", 900, 12) for v in VENUES]
+    sizes = [logo_size(f"logos/{v.mark}", 900, 12) for v in VENUES if v.mark_scale == 1]
     areas = [w * h for w, h in sizes]
     # Wide logos would drop below the minimum height, so allow some spread
     assert max(areas) / min(areas) < 1.3
