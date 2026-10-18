@@ -6,7 +6,7 @@ import httpx
 from bs4 import BeautifulSoup
 
 from cineclock.models import Screening
-from cineclock.scrapers import FilmDetails, add_details, make_client
+from cineclock.scrapers import FilmDetails, add_details, make_client, page_summary
 from cineclock.titles import clean_title, credits_year, split_year
 
 VENUE = "The Rio"
@@ -44,7 +44,11 @@ def parse_film_page(page: str) -> FilmDetails:
     soup = BeautifulSoup(page, "html.parser")
     og_image = soup.find("meta", property="og:image")
     poster = og_image.get("content") if og_image else None
-    return FilmDetails(year=credits_year(soup.get_text(" ")), poster_url=poster or None)
+    return FilmDetails(
+        year=credits_year(soup.get_text(" ")),
+        poster_url=poster or None,
+        synopsis=page_summary(soup),
+    )
 
 
 def scrape(client: httpx.Client, now: datetime | None = None) -> list[Screening]:

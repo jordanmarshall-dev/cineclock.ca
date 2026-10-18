@@ -14,7 +14,7 @@ import httpx
 from bs4 import BeautifulSoup
 
 from cineclock.models import VANCOUVER, Screening
-from cineclock.scrapers import FilmDetails, add_details, make_client
+from cineclock.scrapers import FilmDetails, add_details, make_client, page_summary
 from cineclock.titles import clean_title, split_year
 
 VENUE = "VIFF Centre"
@@ -102,7 +102,9 @@ def parse_film_page(page: str) -> FilmDetails:
     # VIFF's share image is a wide film still, not a poster.
     og_image = soup.find("meta", property="og:image")
     return FilmDetails(
-        year=year, poster_url=(og_image.get("content") if og_image else None) or None
+        year=year,
+        poster_url=(og_image.get("content") if og_image else None) or None,
+        synopsis=page_summary(soup),
     )
 
 

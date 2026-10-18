@@ -28,6 +28,8 @@ class Screening:
     film_format: str | None = None
     # The programme or festival the venue files it under ("Small File Media Festival 2026").
     series: str | None = None
+    # The theatre's own description, used when TMDB has none.
+    synopsis: str | None = None
     # When cineclock first saw this listing. Not part of what makes two screenings equal.
     first_seen: datetime | None = field(default=None, compare=False)
 

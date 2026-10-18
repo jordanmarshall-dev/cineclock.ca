@@ -11,7 +11,7 @@ import httpx
 from bs4 import BeautifulSoup
 
 from cineclock.models import VANCOUVER, Screening
-from cineclock.scrapers import FilmDetails, add_details, make_client
+from cineclock.scrapers import FilmDetails, add_details, make_client, page_summary
 from cineclock.titles import clean_title, split_year
 
 VENUE = "The Cinematheque"
@@ -102,6 +102,7 @@ def parse_film_page(page: str) -> FilmDetails:
         poster_url=(og_image.get("content") if og_image else None) or None,
         film_format=(film_format.get_text(strip=True) or None) if film_format else None,
         series=(series.get_text(" ", strip=True) or None) if series else None,
+        synopsis=page_summary(soup),
     )
 
 

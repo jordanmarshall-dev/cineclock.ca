@@ -1,7 +1,10 @@
 from datetime import UTC, datetime, timedelta
 
+import pytest
+
 from cineclock import db, scrape
 from cineclock.models import Screening
+from cineclock.scrapers import cinematheque, clean_summary, park, rio, viff
 
 NOW = datetime(2026, 10, 18, 8, 0, tzinfo=UTC)
 
@@ -92,3 +95,44 @@ def test_profiles_sync_once_a_day_and_keep_the_last_copy_on_failure(monkeypatch)
     scrape.sync_profiles(conn, None, NOW + timedelta(days=1))  # fails
     assert calls == ["me", "me"]
     assert db.load_profile(conn, "me")[0].watchlist == {"jaws"}
+
+
+# Theatre descriptions, used on film pages when TMDB has no synopsis
+
+
+@pytest.mark.parametrize(
+    "text, expected",
+    [
+        (
+            "An incisive look behind the legend of Elon Musk. MUSK (Alex Gibney, 2026 / PG) More",
+            "An incisive look behind the legend of Elon Musk.",
+        ),
+        (
+            "A deep dive into Halloween classics continues. Craven's slasher is sly ... Read more",
+            "A deep dive into Halloween classics continues.",
+        ),
+        (
+            "John Carpenter's The Thing is a bone fide arctic chiller. Researchers find something…",
+            "John Carpenter's The Thing is a bone fide arctic chiller.",
+        ),
+        ("Too short.", None),
+        (None, None),
+    ],
+)
+def test_clean_summary(text, expected):
+    assert clean_summary(text) == expected
+
+
+def test_each_theatre_page_gives_a_synopsis(fixture_text):
+    musk = rio.parse_film_page(fixture_text("rio/movie_musk.html"))
+    assert musk.synopsis.startswith("An incisive look behind the legend of Elon Musk")
+    assert "235 mins" not in musk.synopsis
+    dark = cinematheque.parse_film_page(fixture_text("cinematheque/film_daughters-darkness.html"))
+    assert dark.synopsis.startswith("A sequined Delphine Seyrig")
+    thing = viff.parse_film_page(fixture_text("viff/film_the-thing.html"))
+    assert thing.synopsis == "John Carpenter's The Thing is a bone fide arctic chiller."
+    [tony, *_] = park.parse_page(
+        fixture_text("park/page1.html"), datetime(2026, 10, 18, tzinfo=UTC)
+    )[0]
+    # The Park's descriptions open with review quotes; the synopsis skips them.
+    assert tony.synopsis.startswith("Filmmaker Matt Johnson")

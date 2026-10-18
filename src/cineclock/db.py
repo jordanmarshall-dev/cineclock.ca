@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS screenings (
     poster_url TEXT,
     film_format TEXT,
     series TEXT,
+    synopsis TEXT,
     first_seen TEXT,
     UNIQUE (venue, title, starts_at)
 );
@@ -76,7 +77,7 @@ CREATE TABLE IF NOT EXISTS profiles (
 
 FIELDS = (
     "venue", "title", "starts_at", "url", "room", "info_url", "year", "note", "poster_url",
-    "film_format", "series",
+    "film_format", "series", "synopsis",
 )  # fmt: skip
 
 
@@ -90,7 +91,13 @@ class SyncResult:
 # Columns added after the first release. A database saved by an older version
 # (like the one the deploy keeps between runs) gets them added on connect.
 ADDED_COLUMNS = {
-    "screenings": {"first_seen": "TEXT", "film_format": "TEXT", "room": "TEXT", "series": "TEXT"},
+    "screenings": {
+        "first_seen": "TEXT",
+        "film_format": "TEXT",
+        "room": "TEXT",
+        "series": "TEXT",
+        "synopsis": "TEXT",
+    },
     "films": {"letterboxd_count": "INTEGER", "genres": "TEXT", "metacritic": "INTEGER"},
 }
 
@@ -138,6 +145,7 @@ def _to_row(s: Screening) -> tuple:
         s.poster_url,
         s.film_format,
         s.series,
+        s.synopsis,
     )
 
 
@@ -190,6 +198,7 @@ def sync_venue(
                 poster_url = excluded.poster_url,
                 film_format = excluded.film_format,
                 series = excluded.series,
+                synopsis = excluded.synopsis,
                 -- Keep the date we first saw it; only fill it in for older rows.
                 first_seen = COALESCE(screenings.first_seen, excluded.first_seen)
             """,

@@ -853,3 +853,15 @@ def test_date_strip_names_the_month_once_it_changes():
     today = date(2026, 10, 18)
     assert short_day(date(2026, 10, 20), today) == "Tue 20"
     assert short_day(date(2026, 11, 1), today) == "Sun Nov 1"
+
+
+def test_film_page_falls_back_to_the_theatres_description(conn):
+    blurb = "A live score by Applied Silence for Dreyer's dreamlike 1932 horror classic."
+    save(
+        conn,
+        Screening(
+            "The Cinematheque", "Vampyr x Applied Silence", at(31, 20), "https://x", synopsis=blurb
+        ),
+    )
+    page = pages(conn, NOW)["films/vampyr-x-applied-silence/index.html"]
+    assert f'<p class="synopsis">{blurb}</p>' in page.replace("&#39;", "'")

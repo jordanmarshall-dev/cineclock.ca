@@ -13,7 +13,7 @@ from bs4 import BeautifulSoup, Tag
 
 from cineclock.dates import hour_24, month_number, resolve
 from cineclock.models import Screening
-from cineclock.scrapers import make_client
+from cineclock.scrapers import first_paragraph, make_client
 from cineclock.titles import clean_title, credits_year, split_year
 
 VENUE = "The Park"
@@ -85,6 +85,7 @@ def parse_page(page: str, now: datetime) -> tuple[list[Screening], str | None]:
                 url=url,
                 info_url=url,
                 poster_url=image.get("src") if image else None,
+                synopsis=first_paragraph(description),
             )
         )
 

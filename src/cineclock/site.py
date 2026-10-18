@@ -98,6 +98,13 @@ class FilmPage:
         return sort_tags(found + rarity(self.screenings))
 
     @property
+    def synopsis(self) -> str | None:
+        """TMDB's synopsis, or failing that the theatre's own description."""
+        if self.film and self.film.overview:
+            return self.film.overview
+        return next((s.synopsis for s in self.screenings if s.synopsis), None)
+
+    @property
     def has_score(self) -> bool:
         f = self.film
         return bool(
