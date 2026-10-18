@@ -94,9 +94,14 @@
 {# One screening isn't drawn as a badge; the date or time it describes is highlighted instead. #}
 {% set RARE = ["One screening"] %}
 
-{% macro tag_list(tags) -%}
+{# `links` maps a tag to where tapping it goes; tags without one are plain pills. #}
+{% macro tag_list(tags, links={}) -%}
 {% set tags = tags | reject("in", RARE) | list %}
-{% if tags %}<p class="tags">{% for t in tags %}<span class="tag tag-{{ t | tagkind }} tag-{{ t | tagslug }}">{{ icon(TAG_ICONS.get(t, "screen"), 12) }}{{ t }}</span>{% endfor %}</p>{% endif %}
+{% if tags %}<p class="tags">{% for t in tags %}
+  {%- set inner %}{{ icon(TAG_ICONS.get(t, "screen"), 12) }}{{ t }}{% endset -%}
+  {%- if t in links %}<a class="tag tag-link tag-{{ t | tagkind }} tag-{{ t | tagslug }}" href="{{ links[t] }}">{{ inner }}</a>
+  {%- else %}<span class="tag tag-{{ t | tagkind }} tag-{{ t | tagslug }}">{{ inner }}</span>{% endif -%}
+{% endfor %}</p>{% endif %}
 {%- endmacro %}
 
 {% macro showtime(s, label=None, rare=False) -%}

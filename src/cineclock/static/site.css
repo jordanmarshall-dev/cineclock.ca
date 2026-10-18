@@ -1444,6 +1444,8 @@ a:focus-visible {
 }
 
 .theatre-offers .tags { margin-top: 0.75rem; }
+.tag-link { text-decoration: none; }
+.tag-link:hover { border-color: var(--accent-text); color: var(--white); }
 
 .venue-blurb {
   max-width: 36rem;

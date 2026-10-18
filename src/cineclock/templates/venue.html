@@ -21,7 +21,11 @@
       <h1 class="venue-title">{{ venue.name }}</h1>
     {% endif %}
     <p class="meta">{{ icon("pin", 12) }}{{ venue.neighbourhood }}</p>
-    <div class="theatre-offers">{{ tag_list(venue.offers + (listed | reject("in", venue.offers) | list)) }}</div>
+    {# Tags on screenings here link to the Films page filtered to this theatre and tag;
+       room features (7.1, Curved) aren't on any screening, so they stay plain. #}
+    {% set links = {} %}
+    {% for t in listed %}{% set _ = links.update({t: root ~ "films/?venue=" ~ venue.slug ~ "&tag=" ~ ("event" if t == "Event" else t | tagslug)}) %}{% endfor %}
+    <div class="theatre-offers">{{ tag_list(venue.offers + (listed | reject("in", venue.offers) | list), links) }}</div>
   </div>
   <p class="venue-blurb">{{ venue.blurb }}</p>
 

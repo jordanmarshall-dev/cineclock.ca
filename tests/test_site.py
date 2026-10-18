@@ -896,3 +896,11 @@ def test_theatre_pages_fold_away_prices_and_specs(conn):
     assert 'href="https://viff.org/ticket-info/"' in viff and ">https://" not in viff
     # No published prices for the Dunbar, so no Tickets fold there.
     assert "Tickets</span>" not in built["theatres/dunbar/index.html"]
+
+
+def test_theatre_tags_link_to_films_at_that_theatre(conn):
+    save(conn, show("Gremlins", at(19, 19), year=1984, note="Live Q&A with Zach Galligan"))
+    rio = pages(conn, NOW)["theatres/rio/index.html"]
+    assert 'href="../../films/?venue=rio&amp;tag=q-a"' in rio
+    # Room features aren't on any screening, so they stay plain pills.
+    assert '<span class="tag tag-event tag-7-1">' in rio
