@@ -10,6 +10,7 @@ Early days. Version 1 covers The Cinematheque, VIFF Centre, the Park and the Rio
 
 - [x] Project skeleton, tests and CI
 - [x] Rio scraper (showtimes, year and poster from each film page)
+- [x] Save to SQLite (reruns update instead of duplicating)
 - [ ] What's playing page, by day and venue
 - [ ] Add to calendar (.ics)
 - [ ] VIFF, Cinematheque and Park scrapers
@@ -27,10 +28,10 @@ ruff check .
 fastapi dev src/cineclock/app.py
 ```
 
-To see what's on at the Rio right now:
+To scrape every venue and save to `cineclock.db`:
 
 ```sh
-python -m cineclock.scrapers.rio
+python -m cineclock.scrape
 ```
 
 ## How it's built

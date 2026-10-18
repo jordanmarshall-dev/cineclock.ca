@@ -7,11 +7,11 @@ import httpx
 from bs4 import BeautifulSoup
 
 from cineclock.models import Screening
+from cineclock.scrapers import make_client
 from cineclock.titles import clean_title, credits_year
 
 VENUE = "The Rio"
 LISTINGS_URL = "https://riotheatre.ca/wp-json/barker/v1/listings"
-USER_AGENT = "cineclock (+https://github.com/yogzoth/cineclock)"
 
 
 @dataclass(frozen=True)
@@ -76,10 +76,6 @@ def scrape(client: httpx.Client, now: datetime | None = None) -> list[Screening]
         replace(s, year=details[s.info_url].year, poster_url=details[s.info_url].poster_url)
         for s in screenings
     ]
-
-
-def make_client() -> httpx.Client:
-    return httpx.Client(headers={"User-Agent": USER_AGENT}, timeout=30, follow_redirects=True)
 
 
 if __name__ == "__main__":
