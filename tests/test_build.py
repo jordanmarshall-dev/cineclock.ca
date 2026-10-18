@@ -83,9 +83,9 @@ def test_build_adds_a_404_page_and_sitemap(conn, tmp_path):
     build(conn, out, NOW)
     missing = (out / "404.html").read_text()
     assert "This one isn't playing." in missing
-    assert 'href="https://yogzoth.github.io/cineclock/films/"' in missing
+    assert 'href="https://cineclock.ca/films/"' in missing
     sitemap = (out / "sitemap.xml").read_text()
-    assert "<loc>https://yogzoth.github.io/cineclock/</loc>" in sitemap
-    assert "<loc>https://yogzoth.github.io/cineclock/films/scream/</loc>" in sitemap
+    assert "<loc>https://cineclock.ca/</loc>" in sitemap
+    assert "<loc>https://cineclock.ca/films/scream/</loc>" in sitemap
     home = (out / "index.html").read_text()
-    assert '<link rel="canonical" href="https://yogzoth.github.io/cineclock/">' in home
+    assert '<link rel="canonical" href="https://cineclock.ca/">' in home

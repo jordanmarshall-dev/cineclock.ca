@@ -54,7 +54,7 @@ except metadata.PackageNotFoundError:
 env.globals["relay_url"] = os.environ.get("CINECLOCK_RELAY", RELAY_URL)
 
 # Link previews need full URLs, not the relative ones the pages use.
-env.globals["site_url"] = os.environ.get("CINECLOCK_URL", "https://yogzoth.github.io/cineclock/")
+env.globals["site_url"] = os.environ.get("CINECLOCK_URL", "https://cineclock.ca/")
 
 
 def has_asset(name: str) -> bool:

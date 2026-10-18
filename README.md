@@ -5,7 +5,7 @@
 
 Vancouver showtimes for film lovers. Indie and rep cinemas in one place.
 
-**Live site: https://yogzoth.github.io/cineclock/**
+**Live site: https://cineclock.ca/**
 
 Version 2.0.1. See what changed in the [changelog](CHANGELOG.md).
 

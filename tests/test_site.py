@@ -768,10 +768,9 @@ def test_link_previews_have_a_title_blurb_and_picture(conn):
     built = pages(conn, NOW)
     home = built["index.html"]
     assert (
-        '<meta property="og:image" content="https://yogzoth.github.io/cineclock/static/brand/share.png">'
-        in home
+        '<meta property="og:image" content="https://cineclock.ca/static/brand/share.png">' in home
     )
-    assert '<meta property="og:url" content="https://yogzoth.github.io/cineclock/">' in home
+    assert '<meta property="og:url" content="https://cineclock.ca/">' in home
     assert (
         "The Rio, The Park" in home and 'name="twitter:card" content="summary_large_image"' in home
     )

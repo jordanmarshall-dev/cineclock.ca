@@ -12,7 +12,13 @@
 // the rest), and the diary feed. Answers are cached for six hours.
 
 const BASE = "https://letterboxd.com";
-const ALLOWED_ORIGINS = ["https://yogzoth.github.io", "http://localhost:8000", "http://127.0.0.1:8000"];
+const ALLOWED_ORIGINS = [
+  "https://cineclock.ca",
+  "https://www.cineclock.ca",
+  "https://yogzoth.github.io",
+  "http://localhost:8000",
+  "http://127.0.0.1:8000",
+];
 const CACHE_SECONDS = 6 * 60 * 60;
 // Cloudflare's free plan allows 50 fetches per request; leave room for the rest.
 const MAX_WATCHLIST_PAGES = 45;
