@@ -104,8 +104,10 @@
     {% for c in r.cards %}
     <li class="card">
       <a href="{{ root }}films/{{ c.page.slug }}/">
-        {{ poster(c.page.poster_url, label=c.page.title) }}
-        <span class="card-venues">{% for v in c.page.venues %}{{ venue_badge(v, root) }}{% endfor %}</span>
+        <span class="card-art">
+          {{ poster(c.page.poster_url, label=c.page.title) }}
+          <span class="card-venues">{% for v in c.page.venues %}{{ venue_badge(v, root) }}{% endfor %}</span>
+        </span>
         <span class="card-title">{{ c.page.title }}{% if c.page.year %} <span class="year">{{ c.page.year }}</span>{% endif %}</span>
         {% if c.why %}<span class="card-why">{{ c.why }}</span>{% endif %}
         <span class="card-next">{{ c.next_label }}</span>
