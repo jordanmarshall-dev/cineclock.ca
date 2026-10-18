@@ -19,24 +19,24 @@ from cineclock.tags import filter_slugs, kind, said_by_tags, screening_tags, slu
             "Traces of Home",
             "With Filmmakers Dr. Gabor Maté & Colette Ghunim Q&A",
             None,
-            ["Filmmaker Q&A"],
+            ["Q&A"],
         ),
-        ("Menopause: Coming in Hot", "Filmmakers in Attendance for Q&A", None, ["Filmmaker Q&A"]),
+        ("Menopause: Coming in Hot", "Filmmakers in Attendance for Q&A", None, ["Q&A"]),
         ("Gremlins: In Conversation with Zach Galligan", None, None, ["Q&A"]),
         (
             "Shot in Vancouver: The Changeling, introduced by Sam Wiebe",
             None,
             None,
-            ["Introduction"],
+            ["Intro"],
         ),
-        ("Claudio Simonetti's Goblin Performs TENEBRE", None, None, ["Live accompaniment"]),
-        ("Nosferatu", "With a live score by Tyondai Braxton", None, ["Live accompaniment"]),
+        ("Claudio Simonetti's Goblin Performs TENEBRE", None, None, ["Live music"]),
+        ("Nosferatu", "With a live score by Tyondai Braxton", None, ["Live music"]),
         ("Queer Film Festival Opening Night", None, None, ["Festival"]),
-        ("SFMF Shorts Programme 2", None, None, ["Shorts programme"]),
-        ("The Fly", "Special Presentation", None, ["Special presentation"]),
+        ("SFMF Shorts Programme 2", None, None, ["Shorts"]),
+        ("The Fly", "Special Presentation", None, ["Special event"]),
         ("The Fly", "Special guest Jeff Goldblum", None, ["Guests"]),
-        ("Dune: Part Three", "Advance Screening", None, ["Advance screening"]),
-        ("Dune: Part Three", "Insider Screening", None, ["Insider screening"]),
+        ("Dune: Part Three", "Advance Screening", None, ["Preview"]),
+        ("Dune: Part Three", "Insider Screening", None, ["Preview"]),
         ("The Fly", "40th Anniversary Screening", None, []),
         # Words that only look like tags
         ("Alive", None, None, []),
@@ -55,12 +55,12 @@ def test_sort_tags_puts_rare_showings_then_formats_first_and_dedupes():
 
 
 def test_each_tag_belongs_to_a_family():
-    tags = ["One screening", "35mm", "Dolby Atmos", "Introduction", "Advance screening"]
+    tags = ["One screening", "35mm", "Dolby Atmos", "Intro", "Preview"]
     assert [kind(t) for t in tags] == ["rare", "format", "format", "event", "event"]
 
 
 def test_filter_slugs_add_on_film_and_event():
-    assert filter_slugs(["35mm", "Filmmaker Q&A"]) == ["35mm", "filmmaker-q-a", "on-film", "event"]
+    assert filter_slugs(["35mm", "Q&A"]) == ["35mm", "q-a", "on-film", "event"]
     assert filter_slugs(["IMAX"]) == ["imax"]
 
 
@@ -71,10 +71,10 @@ def test_slug():
 @pytest.mark.parametrize(
     "note, tags, expected",
     [
-        ("Advance Screening", ["Advance screening"], True),
+        ("Advance Screening", ["Preview"], False),
         ("Presented in 70mm", ["70mm"], True),
-        ("Insider Screening", ["Insider screening", "One screening"], True),
-        ("With Filmmakers Dr. Gabor Maté & Colette Ghunim Q&A", ["Filmmaker Q&A"], False),
+        ("Insider Screening", ["Preview", "One screening"], False),
+        ("With Filmmakers Dr. Gabor Maté & Colette Ghunim Q&A", ["Q&A"], False),
         ("40th Anniversary Screening", [], False),
         (None, ["70mm"], False),
     ],

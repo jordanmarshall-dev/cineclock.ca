@@ -83,9 +83,8 @@
 {% set TAG_ICONS = {
   "One screening": "star",
   "70mm": "film", "35mm": "film", "16mm": "film", "IMAX": "screen", "4K": "screen", "Dolby Atmos": "speaker", "3D": "eye",
-  "Filmmaker Q&A": "mic", "Q&A": "mic", "Introduction": "mic", "Live accompaniment": "music", "Festival": "star",
-  "Shorts programme": "film", "Special presentation": "star", "Guests": "people",
-  "Advance screening": "eye", "Insider screening": "eye", "Sneak preview": "eye",
+  "Q&A": "mic", "Intro": "mic", "Live music": "music", "Festival": "star",
+  "Shorts": "film", "Special event": "star", "Guests": "people", "Preview": "eye",
   "7.1 sound": "speaker", "Curved screen": "screen",
 } %}
 
@@ -237,7 +236,7 @@
       <summary>Format and events <span class="count"></span></summary>
       <div class="chips">
         <button type="button" class="chip" data-filter="tag" data-value="on-film" aria-pressed="false">On film</button>
-        <button type="button" class="chip" data-filter="tag" data-value="event" aria-pressed="false">Special events</button>
+        <button type="button" class="chip" data-filter="tag" data-value="event" aria-pressed="false">Events</button>
         <button type="button" class="chip chip-personal" data-filter="tag" data-value="watchlist" aria-pressed="false" data-needs-me hidden>On my watchlist</button>
         {% for t in filter_tags %}<button type="button" class="chip" data-filter="tag" data-value="{{ t | tagslug }}" aria-pressed="false">{{ t }}</button>{% endfor %}
       </div>

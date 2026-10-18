@@ -23,23 +23,19 @@ FORMATS = {
 }
 
 # What makes the showing more than a screening. Checked in this order.
+# Names are kept short so they read at a glance on a small pill.
 EVENTS = {
-    "Filmmaker Q&A": r"(filmmaker|director|cast|creator)s?\b.{0,60}\b(q\s?&\s?a|q and a)"
-    r"|(q\s?&\s?a|q and a)\b.{0,40}\b(filmmaker|director|cast)",
     "Q&A": r"\bq\s?&\s?a\b|\bq and a\b|talkback|in conversation",
-    "Introduction": r"introduc|\bintro\b",
-    "Live accompaniment": r"live (score|music|accompaniment|soundtrack)"
-    r"|accompanied by|\bperforms\b",
+    "Intro": r"introduc|\bintro\b",
+    "Live music": r"live (score|music|accompaniment|soundtrack)|accompanied by|\bperforms\b",
     "Festival": r"\bfestival\b|\bfest\b",
-    "Shorts programme": r"\bshorts\b|short films",
-    "Special presentation": r"special (presentation|screening|event)",
+    "Shorts": r"\bshorts\b|short films",
+    "Special event": r"special (presentation|screening|event)",
     "Guests": r"\bguests?\b|in attendance|\bpanel\b",
 }
-# Early screenings keep the venue's own wording.
+# Advance, insider and sneak screenings are all one thing: a chance to see it early.
 PREVIEWS = {
-    "Advance screening": r"advance screening",
-    "Insider screening": r"insider screening",
-    "Sneak preview": r"sneak preview|preview screening",
+    "Preview": r"advance screening|insider screening|sneak preview|preview screening",
 }
 
 RARE = ["One screening"]
@@ -51,9 +47,8 @@ def screening_tags(title: str, note: str | None, film_format: str | None) -> lis
     text = " ".join(filter(None, [title, note, film_format])).lower()
     tags = [name for name, pattern in FORMATS.items() if re.search(pattern, text)]
     tags += [name for name, pattern in EVENTS.items() if re.search(pattern, text)]
-    if "Filmmaker Q&A" in tags and "Q&A" in tags:
-        tags.remove("Q&A")
-    if "Filmmaker Q&A" in tags and "Guests" in tags:
+    # A Q&A already means someone is there to answer.
+    if "Q&A" in tags and "Guests" in tags:
         tags.remove("Guests")
     tags += [name for name, pattern in PREVIEWS.items() if re.search(pattern, text)]
     return tags

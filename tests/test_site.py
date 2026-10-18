@@ -794,10 +794,10 @@ def test_watchlist_shelf_cards_come_ready_made_in_films_json(conn):
 
 
 def test_a_card_without_a_score_shows_its_tag_there(conn):
-    save(conn, show("SFMF Series 2", at(19, 19), note="Shorts programme"), show("Jaws", at(19, 21)))
+    save(conn, show("SFMF Series 2", at(19, 19), note="Shorts"), show("Jaws", at(19, 21)))
     db.save_film(conn, film("Jaws", None, 1, letterboxd_rating=4.0))
     page = plain(pages(conn, NOW)["films/index.html"])
-    assert 'class="card-tag" title="Shorts programme">Shorts programme<' in page
+    assert 'class="card-tag" title="Shorts">Shorts<' in page
     assert page.count('class="card-tag"') == 1
 
 
