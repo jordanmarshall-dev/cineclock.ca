@@ -794,12 +794,12 @@ def test_watchlist_shelf_cards_come_ready_made_in_films_json(conn):
     )
 
 
-def test_a_card_without_a_score_shows_its_tag_there(conn):
+def test_a_special_screening_has_a_badge_on_its_poster(conn):
     save(conn, show("SFMF Series 2", at(19, 19), note="Shorts"), show("Jaws", at(19, 21)))
     db.save_film(conn, film("Jaws", None, 1, letterboxd_rating=4.0))
     page = plain(pages(conn, NOW)["films/index.html"])
-    assert 'class="card-tag" title="Shorts">Shorts<' in page
-    assert page.count('class="card-tag"') == 1
+    assert 'class="card-badge" title="Shorts">Shorts<' in page
+    assert page.count('class="card-badge"') == 1
 
 
 def test_a_festival_series_tags_its_screenings(conn):
@@ -811,7 +811,7 @@ def test_a_festival_series_tags_its_screenings(conn):
         ),
     )  # fmt: skip
     page = plain(pages(conn, NOW)["films/index.html"])
-    assert 'class="card-tag" title="Festival">Festival<' in page
+    assert 'class="card-badge" title="Festival">Festival<' in page
 
 
 def test_a_bare_listing_gets_the_general_event_tag(conn):
@@ -825,7 +825,7 @@ def test_a_bare_listing_gets_the_general_event_tag(conn):
     assert pages_by["Mystery Night"].tags == ["One screening", "Event"]
     assert pages_by["Jaws"].tags == []
     page = plain(pages(conn, NOW)["films/index.html"])
-    assert 'class="card-tag" title="Event">Event<' in page
+    assert 'class="card-badge" title="Event">Event<' in page
 
 
 def test_a_film_with_no_score_and_no_tag_says_unrated(conn):
@@ -865,3 +865,14 @@ def test_film_page_falls_back_to_the_theatres_description(conn):
     )
     page = pages(conn, NOW)["films/vampyr-x-applied-silence/index.html"]
     assert f'<p class="synopsis">{blurb}</p>' in page.replace("&#39;", "'")
+
+
+def test_a_card_with_a_score_still_shows_its_badge(conn):
+    save(conn, show("Vertigo", at(19, 19), year=1958, note="35mm"))
+    db.save_film(conn, film("Vertigo", 1958, 1, letterboxd_rating=4.2))
+    page = plain(pages(conn, NOW)["films/index.html"])
+    assert 'class="card-badge" title="35mm">35mm<' in page
+    assert 'title="4.2 on Letterboxd"' in page
+    # Where it's playing is the card's last line, below the poster.
+    card = page.split('<li class="card"', 1)[1]
+    assert card.index("card-next") < card.index("card-venues")

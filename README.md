@@ -24,7 +24,7 @@ Five theatres so far: the Rio, the Park, the Cinematheque, VIFF Centre (both scr
 - **Showtimes:** every screening, day by day, with the same filters and a date picker
 - **Theatres:** each theatre's story, room specs and photos (multi-room theatres swipe between rooms), poster rows of what's on, then the day's showtimes
 - **Film pages:** backdrop, poster, synopsis, scores from Letterboxd, IMDb, Rotten Tomatoes and Metacritic, and every showtime
-- **One card everywhere:** every poster card has the same three lines (title, year and score, date), so the details are always in the same spot. Cards show the Letterboxd score, or the next source that has one, or a tag like Q&A when there's no score
+- **One card everywhere:** every poster card has the same four lines (title, year and score, date, theatres), so the details are always in the same spot. Anything special, like 35mm or a Q&A, is a badge on the poster's corner. Cards show the Letterboxd score, or the next source that has one
 - **Tags** from what each theatre's listing says: 70mm, 35mm, 16mm, IMAX, Q&A, Intro, Live music, Festival, Shorts, Preview and more. A film with only one screening gets a star on its date instead of a badge
 - **Letterboxd:** connect a profile or upload your Letterboxd export to see what's on your watchlist and what you've seen, with a "From your watchlist" row and a calendar feed of watchlist screenings
 - **Link previews:** sharing a page shows a proper card with the film's backdrop or the theatre's photo
