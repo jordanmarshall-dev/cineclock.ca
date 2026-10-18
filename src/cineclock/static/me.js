@@ -128,19 +128,8 @@
     const index = await getJSON("films.json");
     const picks = index.filter((f) => films[f.slug] && films[f.slug].w);
     if (!picks.length) return;
-    const esc = (s) => String(s).replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
-    const cards = picks
-      .map(
-        (f) => `<li class="card" data-film="${esc(f.slug)}"><a href="${root}films/${esc(f.slug)}/">
-        <span class="card-art"><span class="poster"><span class="poster-fallback" aria-hidden="true">${esc(f.title)}</span>${
-          f.poster ? `<img src="${esc(f.poster)}" alt="${esc(f.title)}" loading="lazy" onerror="this.hidden = true">` : ""
-        }</span><span class="card-venues">${f.venues
-          .map((v) => `<span class="venue-pill"><img src="${root}${v.src}" alt="${esc(v.name)}" width="${v.w}" height="${v.h}"></span>`)
-          .join("")}</span></span>
-        <span class="card-title">${esc(f.title)}${f.year ? ` <span class="year">${f.year}</span>` : ""}</span>
-        <span class="card-next"><svg class="icon" viewBox="0 0 24 24" width="12" height="12" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>${esc(f.next)}</span></a></li>`
-      )
-      .join("");
+    // The build draws each card, so the shelf matches every other card on the site.
+    const cards = picks.map((f) => f.card.replaceAll("@root@", root)).join("");
     spot.innerHTML = `<section class="rail rail-personal"><div class="rail-head"><h2><a href="${root}films/?tag=watchlist">From your watchlist</a></h2>
       <a class="see-all" href="${root}films/?tag=watchlist" aria-label="See all from your watchlist"><svg class="icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></a></div>
       <ul class="rail-cards">${cards}</ul></section>`;

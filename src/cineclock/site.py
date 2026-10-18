@@ -529,6 +529,21 @@ def theatre_rails(
     return found
 
 
+# films.json is read from pages at different depths, so cards are drawn with this
+# stand-in for the path to the site root and the browser fills in the real one.
+ROOT_MARK = "@root@"
+
+
+def shelf_index(film_list: list[FilmPage], now: datetime) -> list[dict]:
+    """films.json: each film's details plus its finished poster card, so the
+    watchlist shelf drawn in the browser looks exactly like every other card."""
+    parts = env.get_template("_parts.html").module
+    index = personal.films_index(film_list, now, when)
+    for entry, page in zip(index, film_list, strict=True):
+        entry["card"] = str(parts.film_card(page, ROOT_MARK, when(page.next_showing, now))).strip()
+    return index
+
+
 def updated_label(now: datetime) -> str:
     local = now.astimezone(VANCOUVER)
     return f"{local:%a %b} {local.day}, {clock(now)}"
@@ -584,9 +599,7 @@ def pages(conn: Connection, now: datetime) -> dict[str, str]:
         )
 
     out["theatres/index.html"] = render("theatres.html", "theatres/index.html", current="theatres")
-    out["films.json"] = json.dumps(
-        personal.films_index(film_list, now, when), separators=(",", ":")
-    )
+    out["films.json"] = json.dumps(shelf_index(film_list, now), separators=(",", ":"))
     synced = []
     for user in profiles.SYNCED:
         stored = db.load_profile(conn, user)

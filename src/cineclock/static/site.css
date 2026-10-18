@@ -1022,16 +1022,28 @@ a:focus-visible {
 }
 
 .card-title {
-  display: -webkit-box;
+  display: block;
   margin-top: 0.5rem;
   overflow: hidden;
   color: var(--bright);
   font-size: 0.9375rem;
   font-weight: 600;
-  line-height: 1.25;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  line-height: 1.3;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
+
+/* Year on the left, score pinned to the right, so both sit in the same place on every card. */
+.card-sub {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.375rem;
+  min-height: 1.25rem;
+  font-size: 0.75rem;
+}
+
+.card-sub .year { font-size: 0.8125rem; }
 
 .card a:hover .card-title { color: var(--white); }
 
@@ -1040,7 +1052,744 @@ a:focus-visible {
   align-items: center;
   gap: 0.25rem;
   max-width: 100%;
-  margin-top: 0.3125rem;
+  margin-top: 0.375rem;
+  padding: 0.0625rem 0.4375rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--accent-wash);
+  color: var(--accent-text);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.card-rating { font-size: 0.8125rem; }
+.ratings .card-rating .source-logo { height: 0.875rem; }
+
+.rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3125rem;
+}
+
+.source-logo { width: auto; height: 0.875rem; }
+
+.source-label {
+  padding: 0 0.25rem;
+  border-radius: 3px;
+  background: var(--raised);
+  color: var(--text);
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+}
+
+/* Booking buttons. Each time is the link that books it, and they always sit
+   in their own row at the bottom of a block, from its left edge. */
+.times {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.time {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4375rem;
+  min-height: 2.375rem;
+  padding: 0.3125rem 0.75rem 0.3125rem 0.625rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--raised);
+  color: var(--white);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  text-decoration: none;
+}
+
+.time:hover { border-color: var(--accent); }
+.time .icon { color: var(--accent-text); }
+
+/* The only chance to see it: the booking button itself stands out. */
+.time-rare { border-color: var(--accent); background: var(--accent-wash); }
+.time-text { display: flex; flex-direction: column; }
+
+.time small {
+  color: var(--text);
+  font-size: 0.6875rem;
+  font-weight: 500;
+}
+
+/* 4. Filters and the date picker */
+
+.filters { margin-top: 1rem; }
+
+.filter-top {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.filter-top select {
+  flex: none;
+  padding: 0 0.625rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--raised);
+  color: var(--bright);
+  font: 500 0.875rem var(--sans);
+}
+
+.search {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-width: 0;
+}
+
+.search .icon {
+  position: absolute;
+  top: 50%;
+  left: 0.75rem;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.filters input {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  padding: 0.625rem 0.75rem 0.625rem 2.25rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--raised);
+  color: var(--white);
+  font: inherit;
+}
+
+.filters input::placeholder { color: var(--text); }
+
+.filters input:focus-visible,
+.filter-top select:focus-visible,
+.filter-menus summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* Menus open full-width under the filter bar, so they never run off a phone screen. */
+.filter-menus {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-top: 0.625rem;
+}
+
+.filter-menus summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--bright);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  list-style: none;
+  cursor: pointer;
+}
+
+.filter-menus summary::-webkit-details-marker { display: none; }
+
+.filter-menus summary::after {
+  content: "";
+  width: 0.375rem;
+  height: 0.375rem;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+}
+
+.filter-menus details[open] summary::after { transform: translateY(1px) rotate(-135deg); }
+.filter-menus details.active summary { border-color: var(--accent-text); color: var(--accent-text); }
+
+.count:empty { display: none; }
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-top: 0.625rem;
+}
+
+.filter-menus .chips {
+  position: absolute;
+  top: calc(100% + 0.375rem);
+  right: 0;
+  left: 0;
+  z-index: 5;
+  margin: 0;
+  padding: 0.625rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--raised);
+  box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.5);
+}
+
+.chip {
+  padding: 0.3125rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: none;
+  color: var(--bright);
+  font: 500 0.8125rem/1.3 var(--sans);
+  cursor: pointer;
+}
+
+.chip:hover { border-color: var(--text); }
+
+.chip[aria-pressed="true"] {
+  border-color: var(--accent-text);
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Theatre chips show the theatre's logo; unpicked ones are dimmed. */
+.chip-logo { display: inline-flex; align-items: center; padding: 0.375rem 0.875rem; }
+.chip-logo .venue-pill { min-height: 0; }
+.chip-logo img { opacity: 0.6; transition: opacity 120ms; }
+.chip-logo[aria-pressed="true"] img,
+.chip-logo:hover img { opacity: 1; }
+.chip-logo[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-wash); }
+
+.clear {
+  padding: 0.375rem 0.5rem;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: 500 0.8125rem var(--sans);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.filter-status {
+  min-height: 1.2em;
+  margin: 0.625rem 0 0;
+  font-size: 0.8125rem;
+}
+
+/* The date picker: a calendar button with a month view, then a strip of day chips. */
+.date-tools {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.date-strip {
+  display: flex;
+  flex: 1;
+  gap: 0.375rem;
+  margin-right: calc(var(--gutter) * -1);
+  padding-right: var(--gutter);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.date-strip::-webkit-scrollbar { display: none; }
+
+.date-strip a {
+  flex: none;
+  padding: 0.375rem 0.75rem;
+  border-radius: 999px;
+  background: var(--raised);
+  color: var(--bright);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.date-strip a:hover { background: var(--line); }
+
+.cal-pop summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--accent-text);
+  list-style: none;
+  cursor: pointer;
+}
+
+.cal-pop summary::-webkit-details-marker { display: none; }
+.cal-pop[open] summary { border-color: var(--accent); background: var(--raised); }
+
+.cal-panel {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  z-index: 5;
+  display: grid;
+  gap: 1.25rem;
+  width: min(20rem, 100%);
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--raised);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+
+.cal-title { margin: 0 0 0.5rem; color: var(--white); font-weight: 600; }
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.25rem;
+  text-align: center;
+}
+
+.cal-dow { color: var(--text); font-size: 0.6875rem; font-weight: 600; }
+
+.cal-day {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  border-radius: 999px;
+  color: var(--line);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.cal-day.has-shows {
+  background: rgba(136, 48, 223, 0.22);
+  color: var(--white);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.cal-day.has-shows:hover { background: var(--accent); }
+.cal-day.today { box-shadow: inset 0 0 0 1.5px var(--accent-text); }
+
+/* 5. Day listings */
+
+.day { scroll-margin-top: calc(var(--header-h) + 0.5rem); }
+
+/* The date is a bar that sticks under the header while you scroll through
+   that day, so you always know where you are. */
+.day-bar {
+  position: sticky;
+  top: calc(var(--header-h) + 1px);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 2rem calc(var(--gutter) * -1) 0;
+  padding: 0.625rem var(--gutter);
+  border-bottom: 1px solid var(--line);
+  background: rgba(20, 24, 28, 0.92);
+  backdrop-filter: blur(8px);
+  color: var(--white);
+  font: 600 1.0625rem/1.3 var(--sans);
+}
+
+.day-bar .icon { color: var(--accent-text); }
+
+/* Right under the date pills, the first day doesn't need the full gap. */
+.date-tools + .day .day-bar,
+.date-tools + script + .day .day-bar { margin-top: 0.75rem; }
+
+.venue-group { margin-top: 0.875rem; padding: 0 1.125rem 0.375rem; }
+.venue-group .row:last-child { padding-bottom: 0.875rem; }
+
+/* Each theatre's logo has a rule running out to the edge, marking where its
+   listings start. */
+.venue-heading {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 1.125rem 0 0.625rem;
+  font: 600 0.8125rem/1.3 var(--sans);
+  letter-spacing: 0.02em;
+}
+
+.venue-heading::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+.venue-heading a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+}
+
+.venue-heading a:hover { color: var(--white); }
+
+.rows { margin: 0; padding: 0; list-style: none; }
+
+.row {
+  display: grid;
+  grid-template-columns: 5.75rem 1fr;
+  gap: 0.875rem;
+  padding: 0.75rem 0;
+}
+
+.row + .row { border-top: 1px solid var(--panel-line); }
+.row .times { grid-column: 1 / -1; margin-top: 0.125rem; }
+
+.row-title {
+  margin: 0;
+  color: var(--white);
+  font: 600 1.125rem/1.25 var(--sans);
+}
+
+.row-title a { text-decoration: none; }
+.row-title a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* 6. Home */
+
+.home-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.tagline { margin: 0; }
+
+/* The way into the Letterboxd features, styled after Letterboxd's own buttons. */
+.lb-button {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--raised);
+  color: var(--white);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.lb-button img { width: auto; height: 0.75rem; }
+.lb-button:hover { border-color: var(--bright); }
+
+/* Hero: a few highlights, each a full-width slide with its art fading into the
+   page. Without the script it's a sideways scroll; with it, a looping carousel. */
+.hero {
+  position: relative;
+  margin-top: 0.875rem;
+  overflow: hidden;
+}
+
+/* Each slide is a little narrower than the hero, so the next one peeks in. */
+.hero-track {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.hero-track::-webkit-scrollbar { display: none; }
+
+.hero.is-carousel .hero-track {
+  overflow: visible;
+  touch-action: pan-y;
+  transition: transform 320ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.spotlight {
+  position: relative;
+  display: block;
+  flex: 0 0 calc(100% - 1.75rem);
+  height: 15rem;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--white);
+  text-decoration: none;
+  scroll-snap-align: start;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.spotlight-art { pointer-events: none; }
+
+.hero-dots {
+  position: absolute;
+  top: 0.75rem;
+  right: 2.625rem;
+  z-index: 2;
+  display: flex;
+  gap: 0.375rem;
+}
+
+.hero-dots button {
+  width: 0.4375rem;
+  height: 0.4375rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+}
+
+.hero-dots button[aria-current="true"] { width: 1.125rem; background: var(--white); }
+
+.hero-arrow {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin-top: -1.125rem;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(20, 24, 28, 0.7);
+  color: var(--white);
+  cursor: pointer;
+}
+
+.hero-arrow.prev { left: 0.75rem; }
+.hero-arrow.prev .icon { transform: scaleX(-1); }
+.hero-arrow.next { right: 2.5rem; }
+
+@media (hover: hover) {
+  .hero-arrow:not([hidden]) { display: flex; opacity: 0; transition: opacity 150ms; }
+  .hero:hover .hero-arrow,
+  .hero-arrow:focus-visible { opacity: 1; }
+}
+
+.spotlight-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 30%;
+}
+
+.spotlight::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(20, 24, 28, 0.95), rgba(20, 24, 28, 0.2) 65%),
+    linear-gradient(to right, rgba(20, 24, 28, 0.6), rgba(20, 24, 28, 0) 60%);
+}
+
+.spotlight-body {
+  position: absolute;
+  right: 1rem;
+  bottom: 1rem;
+  left: 1rem;
+  z-index: 1;
+  display: grid;
+  gap: 0.375rem;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3125rem;
+  justify-self: start;
+  color: var(--accent-text);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.spotlight-title { font: 700 1.75rem/1.1 var(--serif); }
+.spotlight-title .year { font-family: var(--sans); font-size: 1rem; }
+.spotlight:hover .spotlight-title { text-decoration: underline; text-underline-offset: 4px; }
+
+.spotlight-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem 0.875rem;
+  color: var(--bright);
+  font-size: 0.8125rem;
+}
+
+.spotlight-meta > span:not(.venue-pill) { display: inline-flex; align-items: center; gap: 0.3125rem; }
+.spotlight .tags { margin-top: 0.125rem; }
+
+/* Shortcuts under the spotlight. */
+/* Three shortcuts under the hero, sharing the width evenly. */
+.quick-filters {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.quick-filters a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.25rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--raised);
+  color: var(--bright);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.quick-filters a:hover { border-color: var(--accent); color: var(--white); }
+.quick-filters .icon { color: var(--accent-text); }
+
+/* Shelves */
+.rail { margin-top: 1.5rem; }
+/* On a theatre's own page its logo on every poster would just repeat the header. */
+.theatre-rails { margin-top: 1rem; }
+.theatre-rails .card-venues { display: none; }
+
+.home-top + .rail,
+.quick-filters + .rail { margin-top: 0.75rem; }
+
+.rail-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.rail-head h2 {
+  margin: 0;
+  color: var(--white);
+  font: 700 1.125rem/1.3 var(--sans);
+}
+
+.rail-head h2 a { text-decoration: none; }
+.rail-head a:hover { color: var(--white); }
+
+.rail-head .see-all {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  margin-right: -0.5rem;
+  text-decoration: none;
+}
+
+.rail-cards {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 7.25rem;
+  gap: 0.75rem;
+  margin: 0 calc(var(--gutter) * -1);
+  padding: 0.5rem var(--gutter) 0.25rem;
+  list-style: none;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: var(--gutter);
+  scrollbar-width: none;
+}
+
+.rail-cards::-webkit-scrollbar { display: none; }
+
+.card { scroll-snap-align: start; }
+.card a { display: block; text-decoration: none; }
+
+/* Theatre logos straddle the poster's bottom right corner, so they cover as
+   little of the art as possible and never move with the title. A drop
+   shadow keeps white logos readable over a light poster. */
+.card-art { position: relative; display: block; margin-bottom: 0.875rem; }
+
+.card .card-venues {
+  position: absolute;
+  right: -0.25rem;
+  bottom: -0.625rem;
+  left: 0.25rem;
+  z-index: 3;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  height: 1.25rem;
+  margin: 0;
+  pointer-events: none;
+}
+
+.card .venue-pill {
+  flex: 0 1 auto;
+  justify-content: flex-end;
+  min-width: 0;
+  min-height: 0;
+  height: 1.25rem;
+}
+
+.card .venue-pill img {
+  max-width: 100%;
+  height: auto;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.9)) drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6));
+}
+
+.card-title {
+  display: block;
+  margin-top: 0.5rem;
+  overflow: hidden;
+  color: var(--bright);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Year on the left, score pinned to the right, so both sit in the same place on every card. */
+.card-sub {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.375rem;
+  min-height: 1.25rem;
+  font-size: 0.75rem;
+}
+
+.card-sub .year { font-size: 0.8125rem; }
+
+.card a:hover .card-title { color: var(--white); }
+
+.card-why {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  max-width: 100%;
+  margin-top: 0.375rem;
   padding: 0.0625rem 0.4375rem;
   overflow: hidden;
   border-radius: 999px;
@@ -1080,6 +1829,7 @@ a:focus-visible {
   display: flex;
   align-items: center;
   gap: 0.25rem;
+  margin-top: 0.125rem;
   overflow: hidden;
   font-size: 0.6875rem;
   line-height: 1.3;

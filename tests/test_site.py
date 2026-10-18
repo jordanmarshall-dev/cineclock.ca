@@ -778,3 +778,16 @@ def test_link_previews_have_a_title_blurb_and_picture(conn):
 
     rio = built["theatres/rio/index.html"]
     assert "static/theatres/rio.jpg" in rio
+
+
+def test_watchlist_shelf_cards_come_ready_made_in_films_json(conn):
+    import json
+
+    save(conn, show("Jaws", at(19, 19), year=1975))
+    db.save_film(conn, film("Jaws", 1975, 1, letterboxd_rating=4.0))
+    [entry] = json.loads(pages(conn, NOW)["films.json"])
+    assert entry["card"].startswith('<li class="card" data-film="jaws-1975"')
+    assert 'href="@root@films/jaws-1975/"' in entry["card"]
+    assert (
+        '<span class="year">1975</span>' in entry["card"] and "4.0 on Letterboxd" in entry["card"]
+    )

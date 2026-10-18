@@ -176,8 +176,9 @@
 {% endif %}
 {%- endmacro %}
 
-{# The poster card: home rails and the Films grid share it, so a film looks the same everywhere.
-   Theatre logos sit over the poster's corner; below it, title, Letterboxd score and when it's on. #}
+{# The poster card: home rails, theatre rails, the Films grid and the watchlist shelf all use it.
+   Every card has the same fixed lines, so each detail is always in the same spot:
+   title (one line), year with the score at the right, when it's on, then the rail's reason. #}
 {% macro film_card(p, root, when, why=None, attrs="") -%}
 {% set rare = p.tags | select("in", RARE) | list %}
 <li class="card" data-film="{{ p.slug }}" {{ attrs | safe }}>
@@ -186,12 +187,10 @@
       {{ poster(p.poster_url, label=p.title) }}
       <span class="card-venues">{% for v in p.venues %}{{ venue_badge(v, root) }}{% endfor %}</span>
     </span>
-    <span class="card-title">{{ p.title }}{% if p.year %} <span class="year">{{ p.year }}</span>{% endif %}</span>
+    <span class="card-title" title="{{ p.title }}{% if p.year %} ({{ p.year }}){% endif %}">{{ p.title }}</span>
+    <span class="card-sub"><span class="year">{{ p.year or "" }}</span>{{ card_rating(p.film, root) }}</span>
+    <span class="card-next{% if rare %} rare{% endif %}"{% if rare %} title="{{ rare[0] }}"{% endif %}>{{ icon("star" if rare else "calendar", 12) }}{{ when }}</span>
     {% if why %}<span class="card-why">{% if why in TAG_ICONS %}{{ icon(TAG_ICONS[why], 11) }}{% endif %}{{ why }}</span>{% endif %}
-    <span class="card-meta">
-      {{- card_rating(p.film, root) -}}
-      <span class="card-next{% if rare %} rare{% endif %}"{% if rare %} title="{{ rare[0] }}"{% endif %}>{{ icon("star" if rare else "calendar", 12) }}{{ when }}</span>
-    </span>
   </a>
 </li>
 {%- endmacro %}
