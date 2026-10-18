@@ -84,7 +84,7 @@
   "One screening": "star",
   "70mm": "film", "35mm": "film", "16mm": "film", "IMAX": "screen", "4K": "screen", "Dolby Atmos": "speaker", "3D": "eye",
   "Q&A": "mic", "Intro": "mic", "Live music": "music", "Festival": "star",
-  "Shorts": "film", "Special event": "star", "Guests": "people", "Preview": "eye",
+  "Shorts": "film", "Event": "star", "Guests": "people", "Preview": "eye",
   "7.1 sound": "speaker", "Curved screen": "screen",
 } %}
 
@@ -187,11 +187,12 @@
       <span class="card-venues">{% for v in p.venues %}{{ venue_badge(v, root) }}{% endfor %}</span>
     </span>
     <span class="card-title" title="{{ p.title }}{% if p.year %} ({{ p.year }}){% endif %}">{{ p.title }}</span>
-    {# No score is usually a special screening, so its tag takes the score's place. #}
+    {# No score is usually a special screening, so its tag takes the score's place.
+       With no tag either, a quiet Unrated pill keeps every card the same shape. #}
     {% set score = card_rating(p.film, root) | trim %}
     {% set badge = p.tags | reject("in", RARE) | first %}
     <span class="card-sub"><span class="year">{{ p.year or "" }}</span>
-      {%- if score %}{{ score }}{% elif badge %}<span class="card-tag" title="{{ badge }}">{{ icon(TAG_ICONS.get(badge, "screen"), 10) }}{{ badge }}</span>{% endif -%}
+      {%- if score %}{{ score }}{% elif badge %}<span class="card-tag" title="{{ badge }}">{{ icon(TAG_ICONS.get(badge, "screen"), 10) }}{{ badge }}</span>{% else %}<span class="card-tag card-unrated">Unrated</span>{% endif -%}
     </span>
     <span class="card-next{% if rare %} rare{% endif %}"{% if rare %} title="{{ rare[0] }}"{% endif %}>{{ icon("star" if rare else "calendar", 12) }}{{ when }}</span>
   </a>

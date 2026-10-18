@@ -94,7 +94,7 @@ class FilmPage:
         # No year, no score and nothing the listing says: that's almost always a
         # one-off event rather than a film, so it gets the general event tag.
         if not found and not self.year and not self.has_score:
-            found = ["Special event"]
+            found = ["Event"]
         return sort_tags(found + rarity(self.screenings))
 
     @property
@@ -587,7 +587,8 @@ def pages(conn: Connection, now: datetime) -> dict[str, str]:
         root = "../" * path.count("/")
         return env.get_template(template).render(root=root, path=path, **common, **context)
 
-    filter_tags = sort_tags({t for p in film_list for t in p.tags})
+    # The Events chip already covers the plain Event tag, so it isn't listed twice.
+    filter_tags = sort_tags({t for p in film_list for t in p.tags} - {"Event"})
     out = {
         "index.html": render(
             "index.html",

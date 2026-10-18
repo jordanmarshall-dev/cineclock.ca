@@ -30,7 +30,7 @@ EVENTS = {
     "Live music": r"live (score|music|accompaniment|soundtrack)|accompanied by|\bperforms\b",
     "Festival": r"\bfestival\b|\bfest\b",
     "Shorts": r"\bshorts\b|short films",
-    "Special event": r"special (presentation|screening|event)",
+    "Event": r"special (presentation|screening|event)",
     "Guests": r"\bguests?\b|in attendance|\bpanel\b",
 }
 # Advance, insider and sneak screenings are all one thing: a chance to see it early.
@@ -88,7 +88,7 @@ def slug(tag: str) -> str:
 
 def filter_slugs(tags) -> list[str]:
     """Tag slugs for the filters, plus "on-film" and "event" for any film format or event."""
-    slugs = [slug(t) for t in tags]
+    slugs = [slug(t) for t in tags if t != "Event"]
     if ON_FILM & set(tags):
         slugs.append("on-film")
     if is_event(tags):

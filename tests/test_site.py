@@ -822,7 +822,20 @@ def test_a_bare_listing_gets_the_general_event_tag(conn):
     pages_by = {
         p.title: p for p in film_pages(db.upcoming(conn, NOW), db.films_by_key(conn)).values()
     }
-    assert pages_by["Mystery Night"].tags == ["One screening", "Special event"]
+    assert pages_by["Mystery Night"].tags == ["One screening", "Event"]
     assert pages_by["Jaws"].tags == []
     page = plain(pages(conn, NOW)["films/index.html"])
-    assert 'class="card-tag" title="Special event">Special event<' in page
+    assert 'class="card-tag" title="Event">Event<' in page
+
+
+def test_a_film_with_no_score_and_no_tag_says_unrated(conn):
+    save(conn, show("New Doc", at(19, 19), year=2026), show("New Doc", at(20, 19), year=2026))
+    page = plain(pages(conn, NOW)["films/index.html"])
+    assert '<span class="card-tag card-unrated">Unrated</span>' in page
+
+
+def test_the_event_tag_is_not_a_second_events_chip(conn):
+    save(conn, show("Mystery Night", at(19, 19)))
+    page = pages(conn, NOW)["films/index.html"]
+    assert page.count('data-value="event"') == 1
+    assert 'data-tags="one-screening event"' in page

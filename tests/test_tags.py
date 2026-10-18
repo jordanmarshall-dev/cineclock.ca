@@ -33,7 +33,7 @@ from cineclock.tags import filter_slugs, kind, said_by_tags, screening_tags, slu
         ("Nosferatu", "With a live score by Tyondai Braxton", None, ["Live music"]),
         ("Queer Film Festival Opening Night", None, None, ["Festival"]),
         ("SFMF Shorts Programme 2", None, None, ["Shorts"]),
-        ("The Fly", "Special Presentation", None, ["Special event"]),
+        ("The Fly", "Special Presentation", None, ["Event"]),
         ("The Fly", "Special guest Jeff Goldblum", None, ["Guests"]),
         ("Dune: Part Three", "Advance Screening", None, ["Preview"]),
         ("Dune: Part Three", "Insider Screening", None, ["Preview"]),

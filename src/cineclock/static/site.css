@@ -1077,6 +1077,7 @@ a:focus-visible {
 }
 
 .card-tag .icon { flex: none; }
+.card-unrated { background: var(--raised); color: var(--text); font-weight: 500; }
 
 .card-next {
   display: flex;
