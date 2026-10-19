@@ -25,8 +25,8 @@ def test_build_writes_every_page_and_asset(conn, tmp_path):
     count = build(conn, out, NOW)
 
     # home, showtimes, films, theatres, about, one film, 5 venues, films.json, Letterboxd page,
-    # then the 404 page and the sitemap
-    assert count == 1 + 1 + 1 + 1 + 1 + 1 + 5 + 1 + 1 + 2
+    # then the 404 page, the sitemap and robots.txt
+    assert count == 1 + 1 + 1 + 1 + 1 + 1 + 5 + 1 + 1 + 3
     assert "Scream" in (out / "index.html").read_text()
     assert "Scream" in (out / "showtimes/index.html").read_text()
     assert (out / "films/scream/index.html").exists()
@@ -87,5 +87,7 @@ def test_build_adds_a_404_page_and_sitemap(conn, tmp_path):
     sitemap = (out / "sitemap.xml").read_text()
     assert "<loc>https://cineclock.ca/</loc>" in sitemap
     assert "<loc>https://cineclock.ca/films/scream/</loc>" in sitemap
+    robots = (out / "robots.txt").read_text()
+    assert "Sitemap: https://cineclock.ca/sitemap.xml" in robots
     home = (out / "index.html").read_text()
     assert '<link rel="canonical" href="https://cineclock.ca/">' in home

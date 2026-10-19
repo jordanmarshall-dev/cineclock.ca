@@ -144,6 +144,8 @@ def pages(conn: Connection, now: datetime) -> dict[str, str]:
     site_url = env.globals["site_url"]
     out["404.html"] = render("404.html", "404.html", root=site_url, films=by_next[:6])
     out["sitemap.xml"] = sitemap(site_url, [p for p in out if p.endswith("index.html")])
+    # On its own domain the site sits at the root, where crawlers look for this.
+    out["robots.txt"] = f"User-agent: *\nAllow: /\n\nSitemap: {site_url}sitemap.xml\n"
     return out
 
 
