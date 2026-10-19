@@ -139,7 +139,12 @@ async function sha256(text) {
   return toBase64url(new Uint8Array(digest));
 }
 
+// The session comes from the cookie, or from an Authorization header when the
+// site reached the Worker at its workers.dev address (a network that can't find
+// api.cineclock.ca yet), where a cookie wouldn't be first-party.
 function readCookie(request) {
+  const bearer = (request.headers.get("Authorization") || "").match(/^Bearer ([A-Za-z0-9_-]{20,})$/);
+  if (bearer) return bearer[1];
   const header = request.headers.get("Cookie") || "";
   const found = header.split(/;\s*/).find((c) => c.startsWith(`${COOKIE}=`));
   return found ? found.slice(COOKIE.length + 1) : null;
@@ -161,7 +166,7 @@ function reply(body, status, origin, extra = {}) {
 function preflight(origin) {
   return reply(null, 204, origin, {
     "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Access-Control-Max-Age": "86400",
   });
 }
@@ -239,7 +244,7 @@ export async function handleAccount(request, env, { now = Date.now(), fetcher = 
   if (path === "/auth/google" && request.method === "POST") {
     const session = await signIn(db, body, now, fetcher);
     if (!session) return reply({ error: "sign-in failed" }, 401, origin);
-    return reply(await everything(db, session.user), 200, origin, {
+    return reply({ ...(await everything(db, session.user)), token: session.id }, 200, origin, {
       "Set-Cookie": sessionCookie(session.id, SESSION_DAYS * 86400),
     });
   }

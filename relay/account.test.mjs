@@ -202,3 +202,21 @@ async function signIn(env, claims = {}) {
 }
 
 console.log("account tests passed");
+
+// The same session works as a Bearer token, for the workers.dev fallback.
+{
+  const env = { DB: fakeD1() };
+  const response = await call(env, "POST", "/auth/google", { body: { credential: await googleToken({}) } });
+  const { token } = await response.json();
+  assert.match(token, /^[A-Za-z0-9_-]{40,}$/);
+  const request = new Request("https://cineclock-relay.cineclock-relay.workers.dev/me", {
+    headers: { Origin: SITE, Authorization: `Bearer ${token}` },
+  });
+  const me = await handleAccount(request, env, { now: NOW, fetcher: googleFetch });
+  assert.equal(me.status, 200);
+  const junk = new Request("https://x/me", { headers: { Origin: SITE, Authorization: "Bearer short" } });
+  assert.equal((await handleAccount(junk, env, { now: NOW, fetcher: googleFetch })).status, 401);
+  const pre = await call(env, "OPTIONS", "/me");
+  assert.match(pre.headers.get("Access-Control-Allow-Headers"), /Authorization/);
+  console.log("bearer tests passed");
+}

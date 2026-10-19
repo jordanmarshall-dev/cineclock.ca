@@ -16,14 +16,14 @@
     <p>If you connect Letterboxd, your username is saved in your own browser. To read your public watchlist and diary, the username goes to cineclock's small relay on Cloudflare, which reads those public Letterboxd pages and keeps a copy for up to 6 hours so Letterboxd isn't asked too often. Disconnect removes it from your browser.</p>
 
     <h2>Signing in with Google</h2>
-    <p>Sign-in is on its way and will be optional. When you sign in, cineclock gets your Google account ID and email address from Google, and nothing else from your Google account. It then stores, with your account:</p>
+    <p>Signing in is optional. When you sign in, cineclock gets your Google account ID and email address from Google, and nothing else from your Google account. It then stores, with your account:</p>
     <ul>
       <li>the films and theatres you save,</li>
       <li>your settings, like which rating source you prefer,</li>
       <li>your Letterboxd username or IMDb watchlist, if you add them,</li>
       <li>your alert choices, and which films you've already been emailed about.</li>
     </ul>
-    <p>This lives in a database on Cloudflare. cineclock never sees your Google password.</p>
+    <p>This lives in a database on Cloudflare. Your browser keeps a sign-in key (a cookie, and a copy in its own storage) so you stay signed in; signing out or deleting your account ends it. cineclock never sees your Google password.</p>
 
     <h2>Emails</h2>
     <p>cineclock only emails you if you turn on alerts. Every email has a one-tap unsubscribe link, and turning alerts off stops them.</p>

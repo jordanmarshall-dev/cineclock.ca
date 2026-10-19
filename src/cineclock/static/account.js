@@ -6,7 +6,11 @@
 // localStorage and are merged into the account on sign-in.
 (() => {
   const API = document.body.dataset.api || "";
+  // The same Worker at its workers.dev address, for networks that can't find
+  // api.cineclock.ca. There the session travels as a token instead of a cookie.
+  const FALLBACK = document.body.dataset.relay || "";
   const ACCOUNT = "cineclock.account";
+  const TOKEN = "cineclock.session";
   const LOCAL = "cineclock.saved";
   const SOURCES = { letterboxd: "Letterboxd", imdb: "IMDb", rt: "Rotten Tomatoes", metacritic: "Metacritic" };
 
@@ -38,20 +42,43 @@
     drawButtons();
   }
 
-  async function call(method, path, body) {
-    const response = await fetch(API + path, {
+  let base = API;
+
+  async function send(host, method, path, body) {
+    const headers = body === undefined ? {} : { "Content-Type": "application/json" };
+    const token = read(TOKEN, null);
+    if (token) headers.Authorization = `Bearer ${token}`;
+    return fetch(host + path, {
       method,
       credentials: "include",
-      headers: body === undefined ? {} : { "Content-Type": "application/json" },
+      headers,
       body: body === undefined ? undefined : JSON.stringify(body),
     });
+  }
+
+  async function call(method, path, body) {
+    let response;
+    try {
+      response = await send(base, method, path, body);
+    } catch (error) {
+      // Couldn't reach api.cineclock.ca at all: try the workers.dev address once.
+      if (!FALLBACK || base === FALLBACK) throw error;
+      base = FALLBACK;
+      response = await send(base, method, path, body);
+    }
     if (response.status === 401) {
       account = null;
+      write(TOKEN, null);
       changed();
       throw new Error("signed out");
     }
     if (!response.ok) throw new Error(`${path}: ${response.status}`);
-    return response.json();
+    const data = await response.json();
+    if (data.token) {
+      write(TOKEN, data.token);
+      delete data.token;
+    }
+    return data;
   }
 
   async function refresh() {
@@ -85,12 +112,14 @@
       await call("POST", "/auth/signout");
     } catch (e) {}
     account = null;
+    write(TOKEN, null);
     changed();
   }
 
   async function deleteAccount() {
     await call("DELETE", "/me");
     account = null;
+    write(TOKEN, null);
     changed();
   }
 
