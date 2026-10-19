@@ -930,3 +930,12 @@ def test_date_labels_carry_their_real_date_for_the_browser(conn):
     assert '<time datetime="2026-10-19" data-fmt="short">Tomorrow</time>' in showtimes
     assert 'data-day="2026-10-19"' in showtimes
     assert "static/when.js?v=" in built["index.html"]
+
+
+def test_home_has_a_heading_and_room_swipe_is_keyboard_reachable(conn):
+    save(conn, show("Musk", at(18, 12)))
+    built = pages(conn, NOW)
+    assert "<h1" in built["index.html"]
+    viff = built["theatres/viff-centre/index.html"]
+    assert 'class="room-swipe" tabindex="0" role="region" aria-label="Rooms"' in viff
+    assert 'tabindex="0"' not in built["theatres/rio/index.html"].split("room-single")[1][:40]

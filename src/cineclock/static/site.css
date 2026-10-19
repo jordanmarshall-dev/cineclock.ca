@@ -65,7 +65,8 @@ body {
 
 a { color: inherit; }
 
-a:focus-visible {
+a:focus-visible,
+.room-swipe:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: 2px;
