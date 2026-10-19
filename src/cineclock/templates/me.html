@@ -172,7 +172,7 @@
             console.error("cineclock sign-in:", e);
             $("me-account-message").textContent = e instanceof TypeError
               ? "Couldn't reach cineclock's sign-in service. Check your connection and try again."
-              : "Google sign-in didn't go through. Try again in a minute.";
+              : `${e.message}. Try again in a minute.`;
           }
         },
       });

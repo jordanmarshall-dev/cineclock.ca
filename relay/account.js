@@ -105,19 +105,21 @@ const decodeJson = (part) => JSON.parse(new TextDecoder().decode(fromBase64url(p
 
 // Returns the token's claims if Google signed it for cineclock and it hasn't
 // expired; otherwise null.
-export async function verifyGoogleToken(token, keys, now = Date.now()) {
+// Checks a Google ID token. Returns { claims } when Google signed it for
+// cineclock and it hasn't expired, or { reason } saying what was wrong.
+export async function checkGoogleToken(token, keys, now = Date.now()) {
   const parts = String(token || "").split(".");
-  if (parts.length !== 3) return null;
+  if (parts.length !== 3) return { reason: "not a token" };
   let header, claims;
   try {
     header = decodeJson(parts[0]);
     claims = decodeJson(parts[1]);
   } catch {
-    return null;
+    return { reason: "unreadable token" };
   }
-  if (header.alg !== "RS256") return null;
+  if (header.alg !== "RS256") return { reason: `algorithm ${header.alg}` };
   const jwk = keys.find((k) => k.kid === header.kid);
-  if (!jwk) return null;
+  if (!jwk) return { reason: "unknown Google key" };
   const key = await crypto.subtle.importKey(
     "jwk",
     jwk,
@@ -127,11 +129,16 @@ export async function verifyGoogleToken(token, keys, now = Date.now()) {
   );
   const signed = new TextEncoder().encode(`${parts[0]}.${parts[1]}`);
   const good = await crypto.subtle.verify("RSASSA-PKCS1-v1_5", key, fromBase64url(parts[2]), signed);
-  if (!good) return null;
-  if (!GOOGLE_ISSUERS.includes(claims.iss)) return null;
-  if (claims.aud !== GOOGLE_CLIENT_ID) return null;
-  if (!claims.sub || !(claims.exp * 1000 > now)) return null;
-  return claims;
+  if (!good) return { reason: "bad signature" };
+  if (!GOOGLE_ISSUERS.includes(claims.iss)) return { reason: "wrong issuer" };
+  if (claims.aud !== GOOGLE_CLIENT_ID) return { reason: "wrong client" };
+  if (!claims.sub) return { reason: "no account id" };
+  if (!(claims.exp * 1000 > now)) return { reason: "expired" };
+  return { claims };
+}
+
+export async function verifyGoogleToken(token, keys, now = Date.now()) {
+  return (await checkGoogleToken(token, keys, now)).claims || null;
 }
 
 async function sha256(text) {
@@ -200,8 +207,8 @@ async function everything(db, user) {
 }
 
 async function signIn(db, body, now, fetcher) {
-  const claims = await verifyGoogleToken(body?.credential, await googleKeys(fetcher, now), now);
-  if (!claims) return null;
+  const { claims, reason } = await checkGoogleToken(body?.credential, await googleKeys(fetcher, now), now);
+  if (!claims) return { reason };
   const stamp = new Date(now).toISOString();
   await db
     .prepare(
@@ -221,7 +228,19 @@ async function signIn(db, body, now, fetcher) {
 
 const validItem = (item) => KINDS.includes(item?.kind) && SLUG.test(item?.ref || "");
 
-export async function handleAccount(request, env, { now = Date.now(), fetcher = fetch } = {}) {
+export async function handleAccount(request, env, options = {}) {
+  try {
+    return await route(request, env, options);
+  } catch (error) {
+    // Without this, a crash answers with no CORS headers and the browser only
+    // sees "failed to fetch". Say what broke instead.
+    console.error("account error:", error);
+    const origin = request.headers.get("Origin") || "";
+    return reply({ error: "server error", detail: String(error?.message || error) }, 500, origin);
+  }
+}
+
+async function route(request, env, { now = Date.now(), fetcher = fetch } = {}) {
   const url = new URL(request.url);
   const origin = request.headers.get("Origin") || "";
   if (request.method === "OPTIONS") return preflight(origin);
@@ -243,7 +262,10 @@ export async function handleAccount(request, env, { now = Date.now(), fetcher = 
 
   if (path === "/auth/google" && request.method === "POST") {
     const session = await signIn(db, body, now, fetcher);
-    if (!session) return reply({ error: "sign-in failed" }, 401, origin);
+    if (!session.id) {
+      console.log("sign-in refused:", session.reason);
+      return reply({ error: "sign-in failed", reason: session.reason }, 401, origin);
+    }
     return reply({ ...(await everything(db, session.user)), token: session.id }, 200, origin, {
       "Set-Cookie": sessionCookie(session.id, SESSION_DAYS * 86400),
     });

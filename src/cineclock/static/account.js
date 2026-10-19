@@ -66,13 +66,20 @@
       base = FALLBACK;
       response = await send(base, method, path, body);
     }
+    if (response.status === 401 && path === "/auth/google") {
+      const answer = await response.json().catch(() => ({}));
+      throw new Error(`Google sign-in was refused (${answer.reason || "no reason given"})`);
+    }
     if (response.status === 401) {
       account = null;
       write(TOKEN, null);
       changed();
       throw new Error("signed out");
     }
-    if (!response.ok) throw new Error(`${path}: ${response.status}`);
+    if (!response.ok) {
+      const answer = await response.json().catch(() => ({}));
+      throw new Error(`cineclock's server had a problem (${answer.detail || response.status})`);
+    }
     const data = await response.json();
     if (data.token) {
       write(TOKEN, data.token);
