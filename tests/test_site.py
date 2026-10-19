@@ -990,3 +990,14 @@ def test_sold_out_time_says_so_instead_of_tickets(conn):
     page = pages(conn, NOW)["films/cure/index.html"]
     assert 'class="time time-closed"' in page and "<small>Sold out" in page
     assert 'aria-label="Sold out: Cure' in page and "Tickets for Cure" not in page
+
+
+def test_stats_name_theatres_that_keep_failing(conn):
+    for _ in range(3):
+        db.record_run(conn, "The Park", ok=False, now=NOW)
+    db.record_run(conn, "The Rio", ok=True, now=NOW)
+    db.record_run(conn, "The Dunbar", ok=False, now=NOW)
+    summary = stats(conn, NOW)
+    assert summary["stale"] == ["The Park"]
+    assert summary["venues"]["The Rio"] == {"last_ok": NOW.isoformat(), "failures": 0}
+    assert list(summary["venues"]) == ["The Rio", "The Park", "The Dunbar"]

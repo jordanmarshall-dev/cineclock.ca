@@ -136,3 +136,40 @@ def test_each_theatre_page_gives_a_synopsis(fixture_text):
     )[0]
     # The Park's descriptions open with review quotes; the synopsis skips them.
     assert tony.synopsis.startswith("Filmmaker Matt Johnson")
+
+
+def test_failures_are_counted_until_a_scrape_works(monkeypatch):
+    conn = db.connect(":memory:")
+
+    def broken(client, now):
+        raise RuntimeError("site is down")
+
+    for _ in range(3):
+        run(conn, monkeypatch, [(broken, ("The Park",))])
+    assert db.load_runs(conn)["The Park"] == (None, 3)
+
+    run(conn, monkeypatch, [(lambda client, now: [show("The Park", "Jaws")], ("The Park",))])
+    assert db.load_runs(conn)["The Park"] == (NOW, 0)
+
+
+def test_an_empty_scrape_counts_as_a_failure(monkeypatch):
+    conn = db.connect(":memory:")
+    run(conn, monkeypatch, [(lambda client, now: [], ("The Rio",))])
+    assert db.load_runs(conn)["The Rio"] == (None, 1)
+
+
+def test_a_sudden_mass_disappearance_deletes_nothing(monkeypatch, capsys):
+    conn = db.connect(":memory:")
+    titles = [f"Film {i}" for i in range(20)]
+    full = [show("The Cinematheque", t) for t in titles]
+    run(conn, monkeypatch, [(lambda client, now: full, ("The Cinematheque",))])
+
+    # The page half-loads: 6 of 20 shows come back.
+    run(conn, monkeypatch, [(lambda client, now: full[:6], ("The Cinematheque",))])
+    assert len(db.upcoming(conn, NOW)) == 20
+    assert "none were deleted" in capsys.readouterr().out
+    assert db.load_runs(conn)["The Cinematheque"][1] == 1
+
+    # A normal cancellation still goes through.
+    run(conn, monkeypatch, [(lambda client, now: full[1:], ("The Cinematheque",))])
+    assert len(db.upcoming(conn, NOW)) == 19

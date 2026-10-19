@@ -24,11 +24,18 @@ def run_scrapers(conn, client, now) -> None:
             screenings = scrape(client, now=now)
         except Exception as error:
             print(f"{', '.join(venues)}: failed ({error})")
+            for venue in venues:
+                db.record_run(conn, venue, ok=False, now=now)
             continue
         for venue in venues:
             mine = [s for s in screenings if s.venue == venue]
             result = db.sync_venue(conn, venue, mine, now, allow_empty=bool(screenings))
             print(f"{venue}: {result.added} new, {result.kept} kept, {result.removed} removed")
+            if not screenings:
+                print(f"{venue}: nothing found, keeping the saved listings")
+            elif result.held:
+                print(f"{venue}: most saved shows went missing, so none were deleted")
+            db.record_run(conn, venue, ok=bool(screenings) and not result.held, now=now)
 
 
 # Letterboxd lists change slowly, and reading them is ~50 page loads, so once a day is plenty.

@@ -58,3 +58,18 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  # A theatre whose scraper keeps failing still shows its last listings, so the
+  # site looks fine. Failing here makes GitHub email Jordan.
+  health:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check every theatre is updating
+        run: |
+          stale=$(curl -sf https://cineclock.ca/stats.json | jq -r '.stale | join(", ")')
+          if [ -n "$stale" ]; then
+            echo "::error::No fresh listings from: $stale (3+ failed scrapes in a row)"
+            exit 1
+          fi
+          echo "Every theatre updated."

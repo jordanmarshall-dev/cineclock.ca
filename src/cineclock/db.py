@@ -36,6 +36,13 @@ CREATE TABLE IF NOT EXISTS screenings (
 );
 CREATE INDEX IF NOT EXISTS screenings_starts_at ON screenings (starts_at);
 
+-- How each theatre's last scrapes went, so a broken scraper gets noticed.
+CREATE TABLE IF NOT EXISTS venue_runs (
+    venue TEXT PRIMARY KEY,
+    last_ok TEXT,
+    failures INTEGER NOT NULL DEFAULT 0
+);
+
 -- Each theatre's ticket prices as last read from its website (prices.py).
 CREATE TABLE IF NOT EXISTS prices (
     venue TEXT PRIMARY KEY,
@@ -95,6 +102,12 @@ class SyncResult:
     added: int
     kept: int
     removed: int
+    # True when the scrape found far fewer upcoming shows than are saved, so nothing was deleted.
+    held: bool = False
+
+
+# Below this many saved upcoming shows, a big drop isn't unusual enough to doubt.
+HOLD_MINIMUM = 10
 
 
 # Columns added after the first release. A database saved by an older version
@@ -217,13 +230,21 @@ def sync_venue(
             [(*_to_row(s), cutoff) for s in screenings],
         )
         gone = {key for key in existing - scraped if key[1] >= cutoff}
+        upcoming = sum(1 for key in existing if key[1] >= cutoff)
+        # A page that half-loaded looks like a mass cancellation; keep what's saved.
+        held = upcoming >= HOLD_MINIMUM and len(gone) > upcoming / 2
+        if held:
+            gone = set()
         conn.executemany(
             "DELETE FROM screenings WHERE venue = ? AND title = ? AND starts_at = ?",
             [(venue, title, starts_at) for title, starts_at in gone],
         )
 
     return SyncResult(
-        added=len(scraped - existing), kept=len(scraped & existing), removed=len(gone)
+        added=len(scraped - existing),
+        kept=len(scraped & existing),
+        removed=len(gone),
+        held=held,
     )
 
 
@@ -310,6 +331,33 @@ def load_profile(conn: sqlite3.Connection, user: str) -> tuple[Profile, datetime
         if row["last_watched"]:
             profile.diary[row["slug"]] = date.fromisoformat(row["last_watched"])
     return profile, datetime.fromisoformat(head["fetched_at"])
+
+
+def record_run(conn: sqlite3.Connection, venue: str, ok: bool, now: datetime) -> None:
+    with conn:
+        if ok:
+            conn.execute(
+                "INSERT INTO venue_runs (venue, last_ok, failures) VALUES (?, ?, 0) "
+                "ON CONFLICT (venue) DO UPDATE SET last_ok = excluded.last_ok, failures = 0",
+                (venue, _utc_text(now)),
+            )
+        else:
+            conn.execute(
+                "INSERT INTO venue_runs (venue, failures) VALUES (?, 1) "
+                "ON CONFLICT (venue) DO UPDATE SET failures = failures + 1",
+                (venue,),
+            )
+
+
+def load_runs(conn: sqlite3.Connection) -> dict[str, tuple[datetime | None, int]]:
+    rows = conn.execute("SELECT venue, last_ok, failures FROM venue_runs")
+    return {
+        row["venue"]: (
+            datetime.fromisoformat(row["last_ok"]) if row["last_ok"] else None,
+            row["failures"],
+        )
+        for row in rows
+    }
 
 
 def save_prices(conn: sqlite3.Connection, venue: str, data: dict, now: datetime) -> None:

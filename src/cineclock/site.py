@@ -161,10 +161,15 @@ def sitemap(site_url: str, paths: list[str]) -> str:
     )
 
 
+# Scrapes run every 4 hours, so 3 failures in a row is about 12 hours of stale listings.
+STALE_AFTER = 3
+
+
 def stats(conn: Connection, now: datetime) -> dict:
     """A summary for checking a deploy at a glance (published as stats.json)."""
     screenings = db.upcoming(conn, now)
     films = db.films_by_key(conn)
+    runs = db.load_runs(conn)
     keys = {match_key(s.title, s.year) for s in screenings}
     known = [films[k] for k in keys if k in films]
     per_venue: dict[str, int] = defaultdict(int)
@@ -186,4 +191,10 @@ def stats(conn: Connection, now: datetime) -> dict:
         "with_imdb_rating": sum(f.imdb_rating is not None for f in known),
         "with_rt_score": sum(f.rt_score is not None for f in known),
         "unmatched": sorted(k for k in keys if k not in films or not films[k].matched),
+        "venues": {
+            venue: {"last_ok": last_ok.isoformat() if last_ok else None, "failures": failures}
+            for venue, (last_ok, failures) in sorted(runs.items(), key=lambda item: order(item[0]))
+        },
+        # Theatres whose last few scrapes all failed; the Deploy workflow fails on these.
+        "stale": [v for v, (_, failures) in runs.items() if failures >= STALE_AFTER],
     }
