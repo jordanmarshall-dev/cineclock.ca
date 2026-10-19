@@ -707,7 +707,10 @@ def test_theatre_page_has_the_date_picker(conn):
 def test_film_without_a_poster_shows_its_title_in_the_frame(conn):
     save(conn, show("Obscure Thing", at(19, 19)))
     page = pages(conn, NOW)["films/index.html"]
-    assert '<span class="poster-fallback" aria-hidden="true">Obscure Thing</span>' in page
+    assert '<span class="poster-fallback-title">Obscure Thing</span>' in page
+    # Each title keeps its own colour from build to build.
+    hues = re.findall(r'class="poster-fallback" aria-hidden="true" style="--hue: (\d+)"', page)
+    assert hues and all(0 <= int(h) < 360 for h in hues)
 
 
 def test_film_page_groups_days_under_their_theatre(conn):

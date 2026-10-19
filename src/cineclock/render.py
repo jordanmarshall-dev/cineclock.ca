@@ -4,6 +4,7 @@ import hashlib
 import os
 import re
 import struct
+import zlib
 from functools import cache
 from importlib import metadata
 from pathlib import Path
@@ -45,6 +46,8 @@ def score_text(film, source: str) -> str:
 
 
 env.filters["score_text"] = score_text
+# A steady colour for each title, for posters that haven't been found yet.
+env.filters["hue"] = lambda text: zlib.crc32(str(text).encode()) % 360
 env.filters["stamp"] = stamp
 env.filters["tagslug"] = slug
 env.filters["filter_slugs"] = filter_slugs

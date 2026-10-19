@@ -9,7 +9,8 @@
 
 {% macro poster(url, href=None, label="") -%}
 {% if href %}<a class="poster" href="{{ href }}" tabindex="-1" aria-hidden="true">{% else %}<div class="poster">{% endif %}
-  <span class="poster-fallback" aria-hidden="true">{{ label }}</span>
+  {# No poster yet: a made-up one in a colour of its own, picked from the title. #}
+  <span class="poster-fallback" aria-hidden="true" style="--hue: {{ label | hue }}"><svg class="poster-fallback-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M8 3v18M16 3v18M4 7.5h4M4 12h4M4 16.5h4M16 7.5h4M16 12h4M16 16.5h4"/></svg><span class="poster-fallback-title">{{ label }}</span></span>
   {%- if url %}<img src="{{ url }}" alt="{{ label }}" loading="lazy" onerror="this.hidden = true">{% endif -%}
 {% if href %}</a>{% else %}</div>{% endif %}
 {%- endmacro %}

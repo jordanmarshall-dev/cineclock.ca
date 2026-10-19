@@ -254,16 +254,34 @@ a:focus-visible,
 }
 
 /* A film with no poster shows its title in the frame instead of an empty box. */
+/* A stand-in poster: a glow in the film's own colour, a strip of sprocket holes
+   down each side, and the title set like a title card. */
 .poster-fallback {
+  --hue: 270;
   position: absolute;
   inset: 0;
   display: flex;
-  align-items: flex-end;
+  flex-direction: column;
+  justify-content: space-between;
   overflow: hidden;
-  padding: 0.5rem;
-  background: linear-gradient(160deg, #2a2236, var(--panel) 70%);
-  color: var(--bright);
-  font: 600 0.75rem/1.2 var(--serif);
+  padding: 0.75rem 0.875rem 0.875rem;
+  background:
+    repeating-linear-gradient(to bottom, transparent 0 6px, rgba(0, 0, 0, 0.45) 6px 10px) left / 5px 100% no-repeat,
+    repeating-linear-gradient(to bottom, transparent 0 6px, rgba(0, 0, 0, 0.45) 6px 10px) right / 5px 100% no-repeat,
+    radial-gradient(120% 70% at 25% 15%, hsl(var(--hue) 55% 34% / 0.9), transparent 65%),
+    linear-gradient(170deg, hsl(var(--hue) 30% 17%), #101317 80%);
+  color: #f1ecf7;
+  container-type: inline-size;
+}
+.poster-fallback-mark { width: 1.125rem; height: 1.125rem; opacity: 0.45; }
+.poster-fallback-title {
+  display: -webkit-box;
+  overflow: hidden;
+  font: 700 clamp(0.75rem, 13cqi, 1.5rem)/1.15 var(--serif);
+  text-wrap: balance;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.5);
 }
 
 /* Pills. Each family has its own look so they can be told apart at a glance:
@@ -1189,7 +1207,7 @@ a:focus-visible,
    title, so a long note can't push the poster down. */
 .film-details { grid-column: 1 / -1; }
 .film-details > :first-child { margin-top: 0; }
-.film-head .poster-fallback { padding: 0.75rem; font-size: 1.125rem; }
+.film-head .poster-fallback { padding: 0.875rem 1rem 1rem; }
 
 .film-title {
   margin: 0;
