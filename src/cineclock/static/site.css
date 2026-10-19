@@ -1725,6 +1725,22 @@ a:focus-visible,
       linear-gradient(to bottom, rgba(20, 24, 28, 0) 55%, var(--bg));
   }
   .theatre-head.over-hero { margin-top: -15rem; }
+
+  /* Full width, the backdrop became an upscaled sliver of the image. Keep it at
+     the image's own width and shape, centred, with the sides fading out. */
+  .backdrop {
+    height: auto;
+    max-width: 80rem;
+    margin: 0 auto;
+    aspect-ratio: 16 / 7;
+    background: none;
+  }
+  .backdrop img { object-position: center 30%; }
+  .backdrop::after {
+    background: linear-gradient(to bottom, rgba(20, 24, 28, 0) 50%, var(--bg)),
+      linear-gradient(to right, var(--bg), rgba(20, 24, 28, 0) 20%, rgba(20, 24, 28, 0) 80%, var(--bg));
+  }
+  .has-backdrop .film-head { margin-top: -12rem; }
 }
 
 @media (prefers-reduced-motion: no-preference) {
