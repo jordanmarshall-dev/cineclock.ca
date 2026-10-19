@@ -204,3 +204,16 @@ def test_profile_round_trip_replaces_the_old_copy(conn):
     loaded, fetched = db.load_profile(conn, "me")
     assert loaded == second and fetched == NOW
     assert db.load_profile(conn, "someone-else") is None
+
+
+def test_a_renamed_show_keeps_when_it_was_first_seen():
+    conn = db.connect(":memory:")
+    first = NOW
+    later = NOW + timedelta(hours=4)
+    start = NOW + timedelta(days=3)
+    db.sync_venue(conn, "The Rio", [Screening("The Rio", "Jaws", start, "https://x")], first)
+    renamed = Screening("The Rio", "Jaws in 35mm", start, "https://x")
+    other = Screening("The Rio", "Alien", start + timedelta(hours=3), "https://y")
+    db.sync_venue(conn, "The Rio", [renamed, other], later)
+    seen = {s.title: s.first_seen for s in db.upcoming(conn, NOW)}
+    assert seen == {"Jaws in 35mm": first, "Alien": later}

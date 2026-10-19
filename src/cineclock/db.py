@@ -203,12 +203,23 @@ def sync_venue(
 
     # "with conn" makes this one transaction: if anything fails, nothing changes.
     with conn:
-        existing = {
-            (row["title"], row["starts_at"])
-            for row in conn.execute(
-                "SELECT title, starts_at FROM screenings WHERE venue = ?", (venue,)
-            )
+        rows = conn.execute(
+            "SELECT title, starts_at, room, first_seen FROM screenings WHERE venue = ?", (venue,)
+        ).fetchall()
+        existing = {(row["title"], row["starts_at"]) for row in rows}
+        # A show that vanished while a new title appeared in the same room at the same
+        # time was renamed ("Jaws" became "Jaws (35mm)"), not added: keep its first_seen.
+        renamed_from = {
+            (row["starts_at"], row["room"]): row["first_seen"]
+            for row in rows
+            if (row["title"], row["starts_at"]) not in scraped
         }
+
+        def first_seen(s: Screening) -> str:
+            if (s.title, _utc_text(s.starts_at)) in existing:
+                return cutoff
+            return renamed_from.get((_utc_text(s.starts_at), s.room)) or cutoff
+
         conn.executemany(
             f"""
             INSERT INTO screenings ({", ".join(FIELDS)}, first_seen)
@@ -227,7 +238,7 @@ def sync_venue(
                 -- Keep the date we first saw it; only fill it in for older rows.
                 first_seen = COALESCE(screenings.first_seen, excluded.first_seen)
             """,
-            [(*_to_row(s), cutoff) for s in screenings],
+            [(*_to_row(s), first_seen(s)) for s in screenings],
         )
         gone = {key for key in existing - scraped if key[1] >= cutoff}
         upcoming = sum(1 for key in existing if key[1] >= cutoff)
