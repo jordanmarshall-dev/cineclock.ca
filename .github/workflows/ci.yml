@@ -17,5 +17,9 @@ jobs:
       - run: ruff check .
       - run: ruff format --check .
       - run: pytest
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       - run: node relay/test.mjs
+      - run: node relay/account.test.mjs
       - run: node tests/when.test.mjs

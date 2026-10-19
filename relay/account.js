@@ -1,0 +1,315 @@
+// cineclock accounts: Google sign-in, saved films and theatres, settings.
+//
+// The site is plain files, so this part of the Worker holds everything that
+// belongs to a signed-in person, in a D1 (SQLite) database. Sign-in is Google's
+// button: the browser gets a signed ID token from Google and posts it here; the
+// Worker checks Google's signature, finds or creates the user, and sets a
+// session cookie. Only a hash of the session id is stored.
+//
+//   POST   /auth/google   { credential }   sign in
+//   POST   /auth/signout                   sign out
+//   GET    /me                             everything saved for this user
+//   PUT    /me/saved      { kind, ref, saved }
+//   POST   /me/saved      { items: [{ kind, ref }] }   merge saves made signed out
+//   PUT    /me/settings   { rating_source?, letterboxd? }
+//   PUT    /me/imdb       { ids: ["tt0000001", ...] }  replace the IMDb watchlist
+//   DELETE /me                             delete the account and everything in it
+
+export const GOOGLE_CLIENT_ID =
+  "358607256767-mkorjtl09q7ii10nuhfo1fesjfcvgnnv.apps.googleusercontent.com";
+const GOOGLE_KEYS_URL = "https://www.googleapis.com/oauth2/v3/certs";
+const GOOGLE_ISSUERS = ["accounts.google.com", "https://accounts.google.com"];
+
+export const SITE_ORIGINS = [
+  "https://cineclock.ca",
+  "https://www.cineclock.ca",
+  "http://localhost:8000",
+  "http://127.0.0.1:8000",
+];
+
+const COOKIE = "cc_session";
+const SESSION_DAYS = 180;
+export const RATING_SOURCES = ["letterboxd", "imdb", "rt", "metacritic"];
+const KINDS = ["film", "theatre"];
+const SLUG = /^[a-z0-9][a-z0-9-]{0,119}$/;
+const IMDB_ID = /^tt\d{5,10}$/;
+const LETTERBOXD_USER = /^[A-Za-z0-9_]{1,30}$/;
+const MAX_IMDB = 10000;
+const MAX_MERGE = 500;
+
+const SCHEMA = [
+  `CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY,
+    google_sub TEXT NOT NULL UNIQUE,
+    email TEXT,
+    letterboxd TEXT,
+    rating_source TEXT NOT NULL DEFAULT 'letterboxd',
+    created TEXT NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS sessions (
+    hash TEXT PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    expires TEXT NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS saved (
+    user_id INTEGER NOT NULL,
+    kind TEXT NOT NULL,
+    ref TEXT NOT NULL,
+    created TEXT NOT NULL,
+    PRIMARY KEY (user_id, kind, ref)
+  )`,
+  `CREATE TABLE IF NOT EXISTS imdb (
+    user_id INTEGER NOT NULL,
+    imdb_id TEXT NOT NULL,
+    PRIMARY KEY (user_id, imdb_id)
+  )`,
+];
+
+const schemaReady = new WeakMap();
+
+async function setup(db) {
+  // Tables are created the first time this Worker instance touches the database.
+  if (!schemaReady.has(db)) {
+    const ready = db.batch(SCHEMA.map((sql) => db.prepare(sql))).catch((error) => {
+      schemaReady.delete(db);
+      throw error;
+    });
+    schemaReady.set(db, ready);
+  }
+  await schemaReady.get(db);
+}
+
+// Google's signing keys, kept for an hour.
+let keyCache = { keys: null, until: 0 };
+
+export async function googleKeys(fetcher = fetch, now = Date.now()) {
+  if (keyCache.keys && now < keyCache.until) return keyCache.keys;
+  const response = await fetcher(GOOGLE_KEYS_URL);
+  if (!response.ok) throw new Error(`Google keys: ${response.status}`);
+  const { keys } = await response.json();
+  keyCache = { keys, until: now + 60 * 60 * 1000 };
+  return keys;
+}
+
+function fromBase64url(text) {
+  const base64 = text.replace(/-/g, "+").replace(/_/g, "/");
+  const binary = atob(base64 + "=".repeat((4 - (base64.length % 4)) % 4));
+  return Uint8Array.from(binary, (c) => c.charCodeAt(0));
+}
+
+function toBase64url(bytes) {
+  return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+const decodeJson = (part) => JSON.parse(new TextDecoder().decode(fromBase64url(part)));
+
+// Returns the token's claims if Google signed it for cineclock and it hasn't
+// expired; otherwise null.
+export async function verifyGoogleToken(token, keys, now = Date.now()) {
+  const parts = String(token || "").split(".");
+  if (parts.length !== 3) return null;
+  let header, claims;
+  try {
+    header = decodeJson(parts[0]);
+    claims = decodeJson(parts[1]);
+  } catch {
+    return null;
+  }
+  if (header.alg !== "RS256") return null;
+  const jwk = keys.find((k) => k.kid === header.kid);
+  if (!jwk) return null;
+  const key = await crypto.subtle.importKey(
+    "jwk",
+    jwk,
+    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+    false,
+    ["verify"],
+  );
+  const signed = new TextEncoder().encode(`${parts[0]}.${parts[1]}`);
+  const good = await crypto.subtle.verify("RSASSA-PKCS1-v1_5", key, fromBase64url(parts[2]), signed);
+  if (!good) return null;
+  if (!GOOGLE_ISSUERS.includes(claims.iss)) return null;
+  if (claims.aud !== GOOGLE_CLIENT_ID) return null;
+  if (!claims.sub || !(claims.exp * 1000 > now)) return null;
+  return claims;
+}
+
+async function sha256(text) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return toBase64url(new Uint8Array(digest));
+}
+
+function readCookie(request) {
+  const header = request.headers.get("Cookie") || "";
+  const found = header.split(/;\s*/).find((c) => c.startsWith(`${COOKIE}=`));
+  return found ? found.slice(COOKIE.length + 1) : null;
+}
+
+function sessionCookie(id, maxAge) {
+  return `${COOKIE}=${id}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`;
+}
+
+function reply(body, status, origin, extra = {}) {
+  const headers = { "Content-Type": "application/json", "Cache-Control": "no-store", Vary: "Origin", ...extra };
+  if (SITE_ORIGINS.includes(origin)) {
+    headers["Access-Control-Allow-Origin"] = origin;
+    headers["Access-Control-Allow-Credentials"] = "true";
+  }
+  return new Response(body === null ? null : JSON.stringify(body), { status, headers });
+}
+
+function preflight(origin) {
+  return reply(null, 204, origin, {
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Max-Age": "86400",
+  });
+}
+
+async function currentUser(db, request, now) {
+  const id = readCookie(request);
+  if (!id) return null;
+  return db
+    .prepare(
+      "SELECT users.* FROM sessions JOIN users ON users.id = sessions.user_id WHERE sessions.hash = ? AND sessions.expires > ?",
+    )
+    .bind(await sha256(id), new Date(now).toISOString())
+    .first();
+}
+
+async function everything(db, user) {
+  const saved = { film: [], theatre: [] };
+  const rows = await db
+    .prepare("SELECT kind, ref FROM saved WHERE user_id = ? ORDER BY created, rowid")
+    .bind(user.id)
+    .all();
+  for (const row of rows.results) saved[row.kind]?.push(row.ref);
+  const imdb = await db.prepare("SELECT imdb_id FROM imdb WHERE user_id = ?").bind(user.id).all();
+  return {
+    email: user.email,
+    letterboxd: user.letterboxd,
+    rating_source: user.rating_source,
+    saved,
+    imdb: imdb.results.map((r) => r.imdb_id),
+  };
+}
+
+async function signIn(db, body, now, fetcher) {
+  const claims = await verifyGoogleToken(body?.credential, await googleKeys(fetcher, now), now);
+  if (!claims) return null;
+  const stamp = new Date(now).toISOString();
+  await db
+    .prepare(
+      "INSERT INTO users (google_sub, email, created) VALUES (?, ?, ?) ON CONFLICT (google_sub) DO UPDATE SET email = excluded.email",
+    )
+    .bind(claims.sub, claims.email || null, stamp)
+    .run();
+  const user = await db.prepare("SELECT * FROM users WHERE google_sub = ?").bind(claims.sub).first();
+  const id = toBase64url(crypto.getRandomValues(new Uint8Array(32)));
+  const expires = new Date(now + SESSION_DAYS * 864e5).toISOString();
+  await db.batch([
+    db.prepare("DELETE FROM sessions WHERE expires <= ?").bind(stamp),
+    db.prepare("INSERT INTO sessions VALUES (?, ?, ?)").bind(await sha256(id), user.id, expires),
+  ]);
+  return { user, id };
+}
+
+const validItem = (item) => KINDS.includes(item?.kind) && SLUG.test(item?.ref || "");
+
+export async function handleAccount(request, env, { now = Date.now(), fetcher = fetch } = {}) {
+  const url = new URL(request.url);
+  const origin = request.headers.get("Origin") || "";
+  if (request.method === "OPTIONS") return preflight(origin);
+  // Anything that changes data must come from the site itself.
+  if (request.method !== "GET" && !SITE_ORIGINS.includes(origin)) {
+    return reply({ error: "forbidden" }, 403, origin);
+  }
+  const db = env.DB;
+  await setup(db);
+  const path = url.pathname.replace(/\/+$/, "");
+  let body = null;
+  if (["POST", "PUT"].includes(request.method)) {
+    try {
+      body = await request.json();
+    } catch {
+      body = null;
+    }
+  }
+
+  if (path === "/auth/google" && request.method === "POST") {
+    const session = await signIn(db, body, now, fetcher);
+    if (!session) return reply({ error: "sign-in failed" }, 401, origin);
+    return reply(await everything(db, session.user), 200, origin, {
+      "Set-Cookie": sessionCookie(session.id, SESSION_DAYS * 86400),
+    });
+  }
+
+  if (path === "/auth/signout" && request.method === "POST") {
+    const id = readCookie(request);
+    if (id) await db.prepare("DELETE FROM sessions WHERE hash = ?").bind(await sha256(id)).run();
+    return reply({ ok: true }, 200, origin, { "Set-Cookie": sessionCookie("", 0) });
+  }
+
+  const user = await currentUser(db, request, now);
+  if (!user) return reply({ error: "signed out" }, 401, origin);
+  const stamp = new Date(now).toISOString();
+
+  if (path === "/me" && request.method === "GET") return reply(await everything(db, user), 200, origin);
+
+  if (path === "/me" && request.method === "DELETE") {
+    await db.batch(
+      ["sessions", "saved", "imdb"].map((table) =>
+        db.prepare(`DELETE FROM ${table} WHERE user_id = ?`).bind(user.id),
+      ).concat(db.prepare("DELETE FROM users WHERE id = ?").bind(user.id)),
+    );
+    return reply({ ok: true }, 200, origin, { "Set-Cookie": sessionCookie("", 0) });
+  }
+
+  if (path === "/me/saved" && request.method === "PUT") {
+    if (!validItem(body) || typeof body.saved !== "boolean") return reply({ error: "bad request" }, 400, origin);
+    const statement = body.saved
+      ? db.prepare("INSERT OR IGNORE INTO saved VALUES (?, ?, ?, ?)").bind(user.id, body.kind, body.ref, stamp)
+      : db.prepare("DELETE FROM saved WHERE user_id = ? AND kind = ? AND ref = ?").bind(user.id, body.kind, body.ref);
+    await statement.run();
+    return reply(await everything(db, user), 200, origin);
+  }
+
+  if (path === "/me/saved" && request.method === "POST") {
+    const items = Array.isArray(body?.items) ? body.items.filter(validItem).slice(0, MAX_MERGE) : null;
+    if (!items) return reply({ error: "bad request" }, 400, origin);
+    // One statement for the lot: D1's free plan allows 50 queries per request.
+    await db
+      .prepare(
+        "INSERT OR IGNORE INTO saved SELECT ?, json_extract(value, '$.kind'), json_extract(value, '$.ref'), ? FROM json_each(?)",
+      )
+      .bind(user.id, stamp, JSON.stringify(items.map(({ kind, ref }) => ({ kind, ref }))))
+      .run();
+    return reply(await everything(db, user), 200, origin);
+  }
+
+  if (path === "/me/settings" && request.method === "PUT") {
+    const source = body?.rating_source ?? user.rating_source;
+    const letterboxd = body?.letterboxd === undefined ? user.letterboxd : body.letterboxd || null;
+    if (!RATING_SOURCES.includes(source)) return reply({ error: "bad request" }, 400, origin);
+    if (letterboxd !== null && !LETTERBOXD_USER.test(letterboxd)) return reply({ error: "bad request" }, 400, origin);
+    await db
+      .prepare("UPDATE users SET rating_source = ?, letterboxd = ? WHERE id = ?")
+      .bind(source, letterboxd, user.id)
+      .run();
+    return reply(await everything(db, { ...user, rating_source: source, letterboxd }), 200, origin);
+  }
+
+  if (path === "/me/imdb" && request.method === "PUT") {
+    const ids = Array.isArray(body?.ids) ? [...new Set(body.ids)].filter((id) => IMDB_ID.test(id)) : null;
+    if (!ids || ids.length > MAX_IMDB) return reply({ error: "bad request" }, 400, origin);
+    await db.batch([
+      db.prepare("DELETE FROM imdb WHERE user_id = ?").bind(user.id),
+      db.prepare("INSERT INTO imdb SELECT ?, value FROM json_each(?)").bind(user.id, JSON.stringify(ids)),
+    ]);
+    return reply(await everything(db, user), 200, origin);
+  }
+
+  return reply({ error: "not found" }, 404, origin);
+}
+
+export const isAccountPath = (pathname) => /^\/(auth|me)(\/|$)/.test(pathname);

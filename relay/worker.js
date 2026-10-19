@@ -11,6 +11,8 @@
 // page of the watchlist, the first page of watched films (Letterboxd blocks
 // the rest), and the diary feed. Answers are cached for six hours.
 
+import { handleAccount, isAccountPath } from "./account.js";
+
 const BASE = "https://letterboxd.com";
 const ALLOWED_ORIGINS = [
   "https://cineclock.ca",
@@ -113,6 +115,10 @@ function respond(body, status, origin) {
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    if (isAccountPath(url.pathname)) {
+      if (!env?.DB) return respond({ error: "accounts aren't set up" }, 503, "");
+      return handleAccount(request, env);
+    }
     const origin = request.headers.get("Origin") || "";
     const match = url.pathname.match(/^\/profile\/([A-Za-z0-9_]{1,30})\/?$/);
     if (request.method !== "GET" || !match) return respond({ error: "not found" }, 404, origin);

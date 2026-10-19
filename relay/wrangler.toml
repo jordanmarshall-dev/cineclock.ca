@@ -1,6 +1,16 @@
-# Cloudflare Worker settings for the Letterboxd relay. Cloudflare deploys it
-# from this folder of the repo (Workers & Pages, Import a repository, root
-# directory "relay"), and again on every push that changes it.
+# Cloudflare Worker settings for the Letterboxd relay and cineclock accounts.
+# Cloudflare deploys it from this folder of the repo (Workers & Pages, Import a
+# repository, root directory "relay"), and again on every push that changes it.
 name = "cineclock-relay"
 main = "worker.js"
 compatibility_date = "2026-10-01"
+
+# Accounts answer at api.cineclock.ca, on the site's own domain, so the sign-in
+# cookie counts as first-party. The old workers.dev address keeps working.
+routes = [{ pattern = "api.cineclock.ca", custom_domain = true }]
+workers_dev = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "cineclock"
+database_id = "11e99609-9a00-47eb-b7d2-2d7124b5b92e"
