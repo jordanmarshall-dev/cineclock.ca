@@ -1007,3 +1007,51 @@ def test_privacy_page_is_built_and_linked_from_every_page(conn):
     built = pages(conn, NOW)
     assert "Privacy" in built["privacy/index.html"]
     assert 'href="privacy/"' in built["index.html"]
+
+
+def test_films_json_carries_every_score_and_the_imdb_id(conn):
+    import json
+
+    save(conn, show("Jaws", at(19, 19), year=1975))
+    db.save_film(
+        conn,
+        film(
+            "Jaws",
+            1975,
+            1,
+            imdb_id="tt0073195",
+            letterboxd_rating=4.0,
+            letterboxd_count=900000,
+            imdb_rating=8.1,
+            rt_score=97,
+            metacritic=87,
+        ),
+    )
+    [entry] = json.loads(pages(conn, NOW)["films.json"])
+    assert entry["imdb"] == "tt0073195" and entry["lb_count"] == 900000
+    assert entry["scores"] == {"letterboxd": 4.0, "imdb": 8.1, "rt": 97, "metacritic": 87}
+    assert "<b>97%</b>" in entry["rated"]["rt"] and "card-rating-rt" in entry["rated"]["rt"]
+    # The card itself still leads with Letterboxd.
+    assert "card-rating-letterboxd" in entry["card"]
+
+
+def test_films_and_theatres_have_save_buttons(conn):
+    save(conn, show("Jaws", at(19, 19), year=1975))
+    built = pages(conn, NOW)
+    assert 'data-save="film" data-ref="jaws-1975"' in built["films/jaws-1975/index.html"]
+    assert 'data-save="theatre" data-ref="rio"' in built["theatres/rio/index.html"]
+    assert "static/account.js" in built["index.html"]
+    assert 'data-api="https://api.cineclock.ca"' in built["index.html"]
+
+
+def test_account_page_offers_google_sign_in(conn):
+    page = pages(conn, NOW)["me/index.html"]
+    assert "accounts.google.com/gsi/client" in page
+    assert "358607256767-mkorjtl09q7ii10nuhfo1fesjfcvgnnv.apps.googleusercontent.com" in page
+    assert '"viff-centre"' in page  # saved theatres are named from the venue list
+
+
+def test_highly_rated_rail_has_the_id_the_rating_switch_looks_for(conn):
+    save(conn, show("Jaws", at(19, 19), year=1975))
+    db.save_film(conn, film("Jaws", 1975, 1, letterboxd_rating=4.0, letterboxd_count=900000))
+    assert 'aria-labelledby="rail-highly-rated"' in pages(conn, NOW)["index.html"]

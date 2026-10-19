@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_parts.html" import poster, showtime, tag_list, venue_label, source_mark, icon, RARE %}
+{% from "_parts.html" import poster, showtime, tag_list, venue_label, source_mark, icon, save_button, RARE %}
 
 {% block title %}{{ page.title }}{% if page.year %} ({{ page.year }}){% endif %} showtimes in Vancouver{% endblock %}
 {% block description %}{{ page.date_range }} at {% for v in page.venues %}{% if loop.last and not loop.first %} and {% elif not loop.first %}, {% endif %}{{ v.name }}{% endfor %}.{% if page.synopsis %} {{ page.synopsis | truncate(140) }}{% endif %}{% endblock %}
@@ -27,6 +27,7 @@
     </div>
     <div class="film-details" data-film="{{ page.slug }}">
       <p class="tags personal" hidden></p>
+      {{ save_button("film", page.slug, page.title) }}
       {% if page.genres %}<p class="genres">{% for g in page.genres %}<span class="genre">{{ g }}</span>{% endfor %}</p>{% endif %}
       {{ tag_list(page.tags) }}
       {% if page.shared_note and not (page.shared_note | said_by_tags(page.tags)) %}<p class="film-note">{{ page.shared_note }}</p>{% endif %}

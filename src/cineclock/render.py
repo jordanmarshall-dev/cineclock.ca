@@ -20,6 +20,31 @@ STATIC = Path(__file__).parent / "static"
 
 env = Environment(loader=PackageLoader("cineclock"), autoescape=select_autoescape())
 env.filters["clock"] = clock
+
+
+def score_value(film, source: str) -> float | None:
+    """A film's score from one source, as a number for sorting."""
+    if film is None:
+        return None
+    return {
+        "letterboxd": film.letterboxd_rating,
+        "imdb": film.imdb_rating,
+        "rt": film.rt_score,
+        "metacritic": film.metacritic,
+    }[source]
+
+
+def score_text(film, source: str) -> str:
+    """How a card shows that score: "3.9", "7.4", "92%", "81"; "" if there's none."""
+    value = score_value(film, source)
+    if value is None or (source in ("letterboxd", "imdb") and not value):
+        return ""
+    if source in ("letterboxd", "imdb"):
+        return f"{value:.1f}"
+    return f"{value}%" if source == "rt" else str(value)
+
+
+env.filters["score_text"] = score_text
 env.filters["stamp"] = stamp
 env.filters["tagslug"] = slug
 env.filters["filter_slugs"] = filter_slugs
@@ -53,6 +78,11 @@ except metadata.PackageNotFoundError:
 # The Letterboxd relay (relay/worker.js on Cloudflare). Empty means only synced
 # profiles can connect.
 env.globals["relay_url"] = os.environ.get("CINECLOCK_RELAY", RELAY_URL)
+# Accounts live on the same Worker, at the site's own api subdomain.
+env.globals["api_url"] = os.environ.get("CINECLOCK_API", "https://api.cineclock.ca")
+env.globals["google_client_id"] = (
+    "358607256767-mkorjtl09q7ii10nuhfo1fesjfcvgnnv.apps.googleusercontent.com"
+)
 
 # Link previews need full URLs, not the relative ones the pages use.
 env.globals["site_url"] = os.environ.get("CINECLOCK_URL", "https://cineclock.ca/")

@@ -1,46 +1,93 @@
 {% extends "base.html" %}
-{% from "_parts.html" import icon %}
+{% from "_parts.html" import icon, source_mark %}
 
-{% block title %}Your Letterboxd{% endblock %}
-{% block description %}See which films from your Letterboxd watchlist are playing in Vancouver.{% endblock %}
+{% block title %}Your cineclock{% endblock %}
+{% block description %}Your saved films and theatres, and which films from your Letterboxd or IMDb watchlist are playing in Vancouver.{% endblock %}
 
 {% block main %}
 <div class="wrap me-page">
-  <h1 class="page-title">Your Letterboxd</h1>
+  <h1 class="page-title">Your cineclock</h1>
 
-  <section id="me-connect">
-    <p class="page-intro">Enter your Letterboxd username to see which films on your watchlist are playing, and which ones you've already seen.</p>
-    <form id="me-user-form" class="me-form">
-      <label class="search"><img class="source-logo" src="{{ root }}static/logos/letterboxd.png" alt=""><input name="user" placeholder="Letterboxd username" aria-label="Letterboxd username" autocomplete="username" autocapitalize="none" spellcheck="false" required></label>
-      <button type="submit" class="me-button">Connect</button>
-    </form>
-    <p class="filter-status" id="me-message" aria-live="polite"></p>
-  </section>
-
-  <section id="me-connected" hidden>
-    <div class="me-bar">
-      <p class="me-status"><img class="source-logo" src="{{ root }}static/logos/letterboxd.png" alt=""><span>Connected as <b id="me-name"></b></span></p>
-      <button type="button" class="clear" id="me-disconnect">Disconnect</button>
+  <section class="me-section" id="me-account" aria-labelledby="me-account-title">
+    <h2 id="me-account-title" class="visually-hidden">Account</h2>
+    <div id="me-signed-out">
+      <p class="page-intro">Sign in to keep your saved films and theatres on every device, pick which ratings cineclock shows, and add your IMDb watchlist. Browsing never needs an account.</p>
+      <div id="me-google"></div>
+      <p class="filter-status" id="me-account-message" aria-live="polite"></p>
     </div>
-
-    <div class="rail">
-      <div class="rail-head">
-        <h2><a href="{{ root }}films/?tag=watchlist">{{ icon("bookmark", "md") }}On your watchlist, playing now</a></h2>
-        <a class="see-all" href="{{ root }}films/?tag=watchlist" aria-label="See your watchlist films with filters">{{ icon("chevron", "lg") }}</a>
-      </div>
-      <ul class="film-grid" id="me-watchlist"></ul>
-      <p class="meta" id="me-watchlist-empty" hidden>Nothing from your watchlist is playing right now. New screenings show up here as theatres add them.</p>
-    </div>
-
-    <div class="rail">
-      <div class="rail-head">
-        <h2><a href="{{ root }}films/?tag=seen">{{ icon("eye", "md") }}Seen it, playing again</a></h2>
-        <a class="see-all" href="{{ root }}films/?tag=seen" aria-label="See films you've seen with filters">{{ icon("chevron", "lg") }}</a>
-      </div>
-      <ul class="film-grid" id="me-seen"></ul>
-      <p class="meta" id="me-seen-empty" hidden>None of the films you've logged are playing right now.</p>
+    <div id="me-signed-in" class="me-bar" hidden>
+      <p class="me-status">{{ icon("people", "sm") }}<span>Signed in as <b id="me-email"></b></span></p>
+      <button type="button" class="clear" id="me-signout">Sign out</button>
     </div>
   </section>
+
+  <section class="me-section" id="me-ratings" hidden aria-labelledby="me-ratings-title">
+    <h2 id="me-ratings-title">Ratings</h2>
+    <fieldset class="source-picker">
+      <legend>Show scores and rank Highly rated by</legend>
+      {% for source, name in [("letterboxd", "Letterboxd"), ("imdb", "IMDb"), ("rt", "Rotten Tomatoes"), ("metacritic", "Metacritic")] %}
+      <label><input type="radio" name="rating_source" value="{{ source }}">{{ source_mark(source, root) }}<span>{{ name }}</span></label>
+      {% endfor %}
+    </fieldset>
+  </section>
+
+  <section class="me-section" aria-labelledby="me-saved-title">
+    <div class="rail-head">
+      <h2 id="me-saved-title">{{ icon("bookmark", "md") }}Saved films playing now</h2>
+    </div>
+    <ul class="film-grid" id="me-saved"></ul>
+    <p class="meta" id="me-saved-empty">Tap Save on any film's page and it shows up here.</p>
+    <h2 class="me-subhead">Saved theatres</h2>
+    <ul class="me-theatres" id="me-theatres"></ul>
+    <p class="meta" id="me-theatres-empty">Tap Save on a theatre's page to keep it here.</p>
+  </section>
+
+  <section class="me-section" aria-labelledby="me-lb-title">
+    <h2 id="me-lb-title">Letterboxd</h2>
+    <div id="me-connect">
+      <p class="page-intro">Enter your Letterboxd username to see which films on your watchlist are playing, and which ones you've already seen.</p>
+      <form id="me-user-form" class="me-form">
+        <label class="search"><img class="source-logo" src="{{ root }}static/logos/letterboxd.png" alt=""><input name="user" placeholder="Letterboxd username" aria-label="Letterboxd username" autocomplete="username" autocapitalize="none" spellcheck="false" required></label>
+        <button type="submit" class="me-button">Connect</button>
+      </form>
+      <p class="filter-status" id="me-message" aria-live="polite"></p>
+    </div>
+
+    <div id="me-connected" hidden>
+      <div class="me-bar">
+        <p class="me-status"><img class="source-logo" src="{{ root }}static/logos/letterboxd.png" alt=""><span>Connected as <b id="me-name"></b></span></p>
+        <button type="button" class="clear" id="me-disconnect">Disconnect</button>
+      </div>
+
+      <div class="rail">
+        <div class="rail-head">
+          <h2><a href="{{ root }}films/?tag=watchlist">{{ icon("bookmark", "md") }}On your watchlist, playing now</a></h2>
+          <a class="see-all" href="{{ root }}films/?tag=watchlist" aria-label="See your watchlist films with filters">{{ icon("chevron", "lg") }}</a>
+        </div>
+        <ul class="film-grid" id="me-watchlist"></ul>
+        <p class="meta" id="me-watchlist-empty" hidden>Nothing from your watchlist is playing right now. New screenings show up here as theatres add them.</p>
+      </div>
+
+      <div class="rail">
+        <div class="rail-head">
+          <h2><a href="{{ root }}films/?tag=seen">{{ icon("eye", "md") }}Seen it, playing again</a></h2>
+          <a class="see-all" href="{{ root }}films/?tag=seen" aria-label="See films you've seen with filters">{{ icon("chevron", "lg") }}</a>
+        </div>
+        <ul class="film-grid" id="me-seen"></ul>
+        <p class="meta" id="me-seen-empty" hidden>None of the films you've logged are playing right now.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="me-section" id="me-imdb" hidden aria-labelledby="me-imdb-title">
+    <h2 id="me-imdb-title">IMDb watchlist</h2>
+    <p class="page-intro">On IMDb, open your watchlist and export it as a CSV file, then choose that file here. Films on it get the same watchlist marks. Upload again whenever your list changes.</p>
+    <label class="me-button" for="me-imdb-file">Choose IMDb file</label>
+    <input type="file" id="me-imdb-file" accept=".csv,text/csv" class="visually-hidden">
+    <p class="filter-status" id="me-imdb-message" aria-live="polite"></p>
+  </section>
+
+  <p class="me-danger" id="me-delete-row" hidden><button type="button" class="clear" id="me-delete">Delete my account</button> removes your account and everything saved in it, right away.</p>
 </div>
 {% endblock %}
 
@@ -48,8 +95,12 @@
 <script>
   (() => {
     const me = window.cineclockMe;
+    const account = window.cineclockAccount;
     const $ = (id) => document.getElementById(id);
     const say = (text) => ($("me-message").textContent = text);
+    const filmCount = (n) => `${n} ${n === 1 ? "film" : "films"} from your IMDb watchlist.`;
+    const venues = {{ venues | map(attribute="slug") | list | tojson }};
+    const venueNames = {{ venues | map(attribute="name") | list | tojson }};
 
     async function fill(films, id, test) {
       const list = await me.cards(films, test);
@@ -78,6 +129,85 @@
       }
     }
 
+    // Saved films playing now, saved theatres, and the signed-in parts.
+    async function drawAccount() {
+      const signedIn = Boolean(account.current);
+      $("me-signed-out").hidden = signedIn;
+      $("me-signed-in").hidden = !signedIn;
+      for (const id of ["me-ratings", "me-imdb", "me-delete-row"]) $(id).hidden = !signedIn;
+      if (signedIn) {
+        $("me-email").textContent = account.current.email || "your Google account";
+        const radio = document.querySelector(`input[name=rating_source][value=${account.source()}]`);
+        if (radio) radio.checked = true;
+        const count = account.current.imdb.length;
+        if (count && !$("me-imdb-message").textContent) $("me-imdb-message").textContent = filmCount(count);
+      }
+      const saved = Object.fromEntries(account.savedList("film").map((slug) => [slug, { w: 1 }]));
+      await fill(saved, "me-saved", () => true);
+      const theatres = account.savedList("theatre").filter((slug) => venues.includes(slug));
+      $("me-theatres").innerHTML = theatres
+        .map((slug) => `<li><a href="${me.root}theatres/${slug}/">${venueNames[venues.indexOf(slug)]}</a></li>`)
+        .join("");
+      $("me-theatres-empty").hidden = theatres.length > 0;
+    }
+
+    function googleButton() {
+      if (!account.enabled || account.current || !window.google?.accounts?.id) return;
+      google.accounts.id.initialize({
+        client_id: "{{ google_client_id }}",
+        callback: async ({ credential }) => {
+          $("me-account-message").textContent = "Signing in...";
+          try {
+            await account.signIn(credential);
+            $("me-account-message").textContent = "";
+            const lb = account.current.letterboxd;
+            if (lb && !me.saved()) me.save({ user: lb }) && refresh();
+            else if (!lb && me.saved()) account.settings({ letterboxd: me.saved().user }).catch(() => {});
+          } catch (e) {
+            $("me-account-message").textContent = "Sign-in didn't work. Try again in a minute.";
+          }
+        },
+      });
+      google.accounts.id.renderButton($("me-google"), { theme: "filled_black", size: "large", shape: "pill", text: "signin_with" });
+    }
+
+    document.querySelectorAll("input[name=rating_source]").forEach((radio) =>
+      radio.addEventListener("change", () => account.settings({ rating_source: radio.value }).catch(drawAccount)),
+    );
+
+    $("me-signout").addEventListener("click", async () => {
+      await account.signOut();
+      location.reload();
+    });
+
+    $("me-delete").addEventListener("click", async () => {
+      if (!confirm("Delete your cineclock account and everything saved in it? This can't be undone.")) return;
+      try {
+        await account.deleteAccount();
+        location.reload();
+      } catch (e) {
+        alert("That didn't work. Try again, or email yogzoth@gmail.com and I'll delete it for you.");
+      }
+    });
+
+    $("me-imdb-file").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const ids = account.imdbIds(await file.text());
+      if (!ids.length) {
+        $("me-imdb-message").textContent = "That file has no IMDb films in it. It should be the CSV export of your watchlist.";
+        return;
+      }
+      $("me-imdb-message").textContent = "Uploading...";
+      try {
+        await account.setImdb(ids);
+        $("me-imdb-message").textContent = filmCount(ids.length);
+      } catch (err) {
+        $("me-imdb-message").textContent = "That didn't upload. Try again in a minute.";
+      }
+      e.target.value = "";
+    });
+
     $("me-user-form").addEventListener("submit", async (e) => {
       e.preventDefault();
       const user = e.target.user.value.trim().toLowerCase().replace(/^@/, "").replace(/^.*letterboxd\.com\//, "").replace(/\/.*$/, "");
@@ -92,15 +222,26 @@
         return;
       }
       say("");
-      me.save({ user }) ? refresh() : say("Your browser blocked saving this.");
+      if (!me.save({ user })) return say("Your browser blocked saving this.");
+      if (account.current) account.settings({ letterboxd: user }).catch(() => {});
+      refresh();
     });
 
-    $("me-disconnect").addEventListener("click", () => {
+    $("me-disconnect").addEventListener("click", async () => {
       me.save(null);
+      if (account.current) await account.settings({ letterboxd: "" }).catch(() => {});
       location.reload();
     });
 
+    document.addEventListener("cineclock:account", drawAccount);
+    window.addEventListener("load", googleButton);
+    account.ready.then(() => {
+      drawAccount();
+      googleButton();
+    });
+    drawAccount();
     refresh();
   })();
 </script>
+<script src="https://accounts.google.com/gsi/client" async></script>
 {% endblock %}

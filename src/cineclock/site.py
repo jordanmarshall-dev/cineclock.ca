@@ -23,7 +23,7 @@ from cineclock.listings import (
     when,
 )
 from cineclock.models import VANCOUVER
-from cineclock.render import env
+from cineclock.render import env, score_text, score_value
 from cineclock.shelves import highlights, rails, theatre_rails
 from cineclock.tags import kind, sort_tags
 from cineclock.timefmt import clock, stamp
@@ -32,6 +32,7 @@ from cineclock.venues import VENUES, order, shown_specs
 # films.json is read from pages at different depths, so cards are drawn with this
 # stand-in for the path to the site root and the browser fills in the real one.
 ROOT_MARK = "@root@"
+SOURCES = ("letterboxd", "imdb", "rt", "metacritic")
 
 
 def shelf_index(film_list: list[FilmPage], now: datetime) -> list[dict]:
@@ -48,6 +49,19 @@ def shelf_index(film_list: list[FilmPage], now: datetime) -> list[dict]:
     for entry, page in zip(index, film_list, strict=True):
         label = stamp(when(page.next_showing, now), page.next_showing.starts_at, "card")
         entry["card"] = str(parts.film_card(page, ROOT_MARK, label)).strip()
+        if page.film and page.film.imdb_id:
+            entry["imdb"] = page.film.imdb_id
+        # Every score the film has, for visitors who rank by another source:
+        # the number to sort by and the card's score as drawn.
+        scores = {s: score_value(page.film, s) for s in SOURCES}
+        scores = {s: v for s, v in scores.items() if score_text(page.film, s)}
+        if scores:
+            entry["scores"] = scores
+            entry["rated"] = {
+                s: str(parts.source_rating(page.film, s, ROOT_MARK)).strip() for s in scores
+            }
+        if page.film and page.film.letterboxd_count:
+            entry["lb_count"] = page.film.letterboxd_count
     return index
 
 

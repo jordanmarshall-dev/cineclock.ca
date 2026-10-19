@@ -1,10 +1,12 @@
-// Personal touches from a visitor's Letterboxd, all in their own browser.
+// Personal touches: a visitor's Letterboxd, the films they saved here, their
+// IMDb watchlist, and the rating source they prefer.
 //
-// A connected visitor is remembered in localStorage as { user: "yogzoth" }.
+// A connected Letterboxd user is remembered in localStorage as { user: "yogzoth" }.
 // Profiles the site syncs daily load from me/<user>.json; anyone else is read
 // through the relay (relay/worker.js), since Letterboxd won't let a browser read
-// profiles itself. Every film on a page carries data-film="<slug>"; we mark the
-// ones that match, then tell the filters (which listen for "cineclock:personal").
+// profiles itself. Saves and the IMDb list come from account.js. Every film on a
+// page carries data-film="<slug>"; we mark the ones that match, then tell the
+// filters (which listen for "cineclock:personal").
 (() => {
   const root = document.body.dataset.root || "";
   const KEY = "cineclock.letterboxd";
@@ -36,10 +38,14 @@
     }
   }
 
-  async function getJSON(path) {
-    const response = await fetch(root + path, { cache: "no-cache" });
-    if (!response.ok) throw new Error(`${path}: ${response.status}`);
-    return response.json();
+  const fetched = {};
+  function getJSON(path) {
+    fetched[path] ||= fetch(root + path, { cache: "no-cache" }).then((response) => {
+      if (!response.ok) throw new Error(`${path}: ${response.status}`);
+      return response.json();
+    });
+    fetched[path].catch(() => delete fetched[path]);
+    return fetched[path];
   }
 
   // A film's place in a member's lists, in the same short keys the build uses:
@@ -116,10 +122,18 @@
   function mark(films) {
     for (const el of document.querySelectorAll("[data-film]")) {
       const status = films[el.dataset.film];
-      if (!status) continue;
       const item = el.closest("[data-item]") || el;
+      // Start from the page's own tags and marks, so an unsaved film loses its mark.
+      if (item.dataset.tags !== undefined) item.dataset.baseTags ??= item.dataset.tags;
+      el.querySelector(".card-mark")?.remove();
+      if (!status) {
+        if (item.dataset.baseTags !== undefined) item.dataset.tags = item.dataset.baseTags;
+        const slot = el.querySelector(".personal");
+        if (slot) slot.hidden = true;
+        continue;
+      }
       if (item.dataset.tags !== undefined) {
-        const tags = item.dataset.tags.split(" ").filter(Boolean);
+        const tags = item.dataset.baseTags.split(" ").filter(Boolean);
         if (status.w) tags.push("watchlist");
         if (status.s) tags.push("seen");
         item.dataset.tags = tags.join(" ");
@@ -147,7 +161,10 @@
     if (!spot) return;
     // The build draws each card, so the shelf matches every other card on the site.
     const list = await cards(films, (f) => f.w);
-    if (!list) return;
+    if (!list) {
+      spot.innerHTML = "";
+      return;
+    }
     spot.innerHTML = `<section class="rail rail-personal"><div class="rail-head"><h2><a href="${root}films/?tag=watchlist">From your watchlist</a></h2>
       <a class="see-all" href="${root}films/?tag=watchlist" aria-label="See all from your watchlist"><svg class="icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></a></div>
       <ul class="rail-cards">${list}</ul></section>`;
@@ -159,26 +176,86 @@
     document.querySelectorAll("[data-needs-no-me]").forEach((el) => (el.hidden = connected));
   }
 
+  // Films saved on cineclock and on an uploaded IMDb watchlist count as watchlist.
+  async function withSaves(films) {
+    const account = window.cineclockAccount;
+    if (!account) return films;
+    const savedFilms = new Set(account.savedList("film"));
+    const imdb = new Set(account.current?.imdb || []);
+    if (!savedFilms.size && !imdb.size) return films;
+    const out = { ...films };
+    for (const film of await getJSON("films.json")) {
+      if (savedFilms.has(film.slug) || (film.imdb && imdb.has(film.imdb))) {
+        out[film.slug] = { ...out[film.slug], w: 1 };
+      }
+    }
+    return out;
+  }
+
+  // Scores from the visitor's chosen source, on every card and in Highly rated.
+  async function useSource() {
+    const source = window.cineclockAccount?.source() || "letterboxd";
+    if (source === "letterboxd" && !document.body.dataset.ratedBy) return;
+    document.body.dataset.ratedBy = source;
+    const index = await getJSON("films.json");
+    const bySlug = Object.fromEntries(index.map((f) => [f.slug, f]));
+    const scoreOf = (film) => film?.scores?.[source];
+
+    const top = document.querySelector('[aria-labelledby="rail-highly-rated"] .rail-cards');
+    if (top) {
+      const ranked = index
+        // Same bar as the build: well-known films only, so a 100% from five reviews doesn't top it.
+        .filter((f) => scoreOf(f) != null && (f.lb_count || 0) >= 1000)
+        .sort((a, b) => scoreOf(b) - scoreOf(a) || (b.lb_count || 0) - (a.lb_count || 0))
+        .slice(0, 15);
+      if (ranked.length) top.innerHTML = ranked.map((f) => f.card.replaceAll("@root@", root)).join("");
+    }
+
+    for (const el of document.querySelectorAll("[data-film]")) {
+      const film = bySlug[el.dataset.film];
+      const shown = el.querySelector(".card-rating");
+      const wanted = film?.rated?.[source];
+      if (shown && wanted) shown.outerHTML = wanted.replaceAll("@root@", root);
+      const item = el.closest("[data-sort-rated]");
+      if (item) item.dataset.sortRated = scoreOf(film) ?? 0;
+    }
+    window.cineclockWhen?.();
+  }
+
+  let lastFilms = null;
   async function start() {
     const value = saved();
     show(Boolean(value));
-    if (!value) return;
     // Connected: the Letterboxd button shows whose profile it is.
-    document.querySelectorAll("[data-me-name]").forEach((el) => (el.textContent = value.user));
-    try {
-      const me = await load(value);
-      if (!me) return;
-      mark(me.films);
-      await shelf(me.films);
-      mark(me.films);
-      window.cineclockPersonal = me;
-      document.dispatchEvent(new CustomEvent("cineclock:personal", { detail: me }));
-    } catch (e) {
-      // A profile that stopped syncing shouldn't break the page.
-      show(false);
+    if (value) document.querySelectorAll("[data-me-name]").forEach((el) => (el.textContent = value.user));
+    let films = {};
+    let me = null;
+    if (value) {
+      try {
+        me = await load(value);
+        films = me?.films || {};
+      } catch (e) {
+        // A profile that stopped syncing shouldn't break the page.
+        show(false);
+      }
     }
+    try {
+      films = await withSaves(films);
+      await useSource();
+    } catch (e) {}
+    if (!Object.keys(films).length && !lastFilms) return;
+    lastFilms = films;
+    mark(films);
+    await shelf(films);
+    mark(films);
+    // The shelf's cards arrive after the first score swap, so swap again.
+    await useSource().catch(() => {});
+    me = { ...(me || {}), films };
+    window.cineclockPersonal = me;
+    document.dispatchEvent(new CustomEvent("cineclock:personal", { detail: me }));
   }
 
-  window.cineclockMe = { saved, save, load, cards, mark, root };
+  window.cineclockMe = { saved, save, load, cards, mark, root, withSaves, getJSON };
+  document.addEventListener("cineclock:account", () => start());
   start();
 })();
