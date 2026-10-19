@@ -1001,3 +1001,9 @@ def test_stats_name_theatres_that_keep_failing(conn):
     assert summary["stale"] == ["The Park"]
     assert summary["venues"]["The Rio"] == {"last_ok": NOW.isoformat(), "failures": 0}
     assert list(summary["venues"]) == ["The Rio", "The Park", "The Dunbar"]
+
+
+def test_privacy_page_is_built_and_linked_from_every_page(conn):
+    built = pages(conn, NOW)
+    assert "Privacy" in built["privacy/index.html"]
+    assert 'href="privacy/"' in built["index.html"]

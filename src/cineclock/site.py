@@ -119,6 +119,7 @@ def pages(conn: Connection, now: datetime) -> dict[str, str]:
         out[f"me/{user}.json"] = json.dumps(data, separators=(",", ":"))
     out["me/index.html"] = render("me.html", "me/index.html")
     out["about/index.html"] = render("about.html", "about/index.html")
+    out["privacy/index.html"] = render("privacy.html", "privacy/index.html")
     for venue in VENUES:
         path = f"theatres/{venue.slug}/index.html"
         mine = [s for s in screenings if s.venue == venue.name]
