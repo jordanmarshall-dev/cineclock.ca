@@ -54,6 +54,7 @@
     async function fill(films, id, test) {
       const list = await me.cards(films, test);
       $(id).innerHTML = list;
+      window.cineclockWhen?.();
       $(id).hidden = !list;
       $(`${id}-empty`).hidden = Boolean(list);
     }

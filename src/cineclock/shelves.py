@@ -6,9 +6,12 @@ leaving soon, on film, just added...) from the FilmPages in listings.py.
 from dataclasses import dataclass, replace
 from datetime import datetime, timedelta
 
+from markupsafe import Markup
+
 from cineclock.listings import RARE, FilmPage, compact, last_day, when
 from cineclock.models import VANCOUVER
 from cineclock.tags import EVENTS, ON_FILM, is_event
+from cineclock.timefmt import stamp
 from cineclock.venues import Venue
 
 RAIL_LENGTH = 15
@@ -23,6 +26,13 @@ class Card:
     page: FilmPage
     next_label: str
     why: str | None = None
+    ends: bool = False
+
+    @property
+    def stamped(self) -> Markup:
+        if self.ends:
+            return stamp(self.next_label, self.page.last_showing.starts_at, "ends")
+        return stamp(self.next_label, self.page.next_showing.starts_at, "card")
 
 
 @dataclass
@@ -52,6 +62,10 @@ class Slide:
     page: FilmPage
     label: str
     when: str
+
+    @property
+    def stamped(self) -> Markup:
+        return stamp(self.when, self.page.next_showing.starts_at, "card")
 
 
 def highlights(film_list: list[FilmPage], now: datetime, count: int = 3) -> list[Slide]:
@@ -173,10 +187,15 @@ def rails(
     )
 
     # `why` is kept on each card for reference but not drawn; the rail's title says it.
-    # A rail can swap the date line for its own (Leaving soon shows when it ends).
-    def cards(pages, why=None, label=None):
+    # Leaving soon swaps the date line for when the run ends.
+    def cards(pages, why=None, ends=False):
         return [
-            Card(p, label(p) if label else when(p.next_showing, now), why(p) if why else None)
+            Card(
+                p,
+                f"Ends {last_day(p.last_showing, now)}" if ends else when(p.next_showing, now),
+                why(p) if why else None,
+                ends,
+            )
             for p in pages[:RAIL_LENGTH]
         ]
 
@@ -187,7 +206,7 @@ def rails(
             cards(
                 leaving,
                 lambda p: f"Ends {last_day(p.last_showing, now)}",
-                label=lambda p: f"Ends {last_day(p.last_showing, now)}",
+                ends=True,
             ),
             "films/?sort=leaving",
         ),

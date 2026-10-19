@@ -26,7 +26,7 @@ from cineclock.models import VANCOUVER
 from cineclock.render import env
 from cineclock.shelves import highlights, rails, theatre_rails
 from cineclock.tags import kind, sort_tags
-from cineclock.timefmt import clock
+from cineclock.timefmt import clock, stamp
 from cineclock.venues import VENUES, order, shown_specs
 
 # films.json is read from pages at different depths, so cards are drawn with this
@@ -46,7 +46,8 @@ def shelf_index(film_list: list[FilmPage], now: datetime) -> list[dict]:
         for page in film_list
     ]
     for entry, page in zip(index, film_list, strict=True):
-        entry["card"] = str(parts.film_card(page, ROOT_MARK, when(page.next_showing, now))).strip()
+        label = stamp(when(page.next_showing, now), page.next_showing.starts_at, "card")
+        entry["card"] = str(parts.film_card(page, ROOT_MARK, label)).strip()
     return index
 
 

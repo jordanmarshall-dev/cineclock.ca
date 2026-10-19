@@ -441,7 +441,10 @@ def test_home_cards_show_year_score_next_showing_and_theatres(conn):
     home = pages(conn, NOW)["index.html"]
     assert '<span class="year">1970</span>' in home
     assert 'title="4.1 on Letterboxd"' in home
-    assert '<span class="card-next">Today, 7:00 pm</span>' in plain(home)
+    assert (
+        '<span class="card-next"><time datetime="2026-10-18T19:00" data-fmt="card">'
+        "Today, 7:00 pm</time></span>"
+    ) in plain(home)
     assert 'title="The Rio"' in home and 'title="The Cinematheque"' in home
 
 
@@ -481,8 +484,8 @@ def test_badge_falls_back_to_initials_without_a_logo(conn, monkeypatch, tmp_path
     import cineclock.render as render
 
     # A static folder with the stylesheet but no logo files
-    for name in ("site.css", "filters.js", "calendar.js", "me.js", "hero.js"):
-        shutil.copy(render.STATIC / name, tmp_path / name)
+    for path in [*render.STATIC.glob("*.js"), render.STATIC / "site.css"]:
+        shutil.copy(path, tmp_path / path.name)
     monkeypatch.setattr(render, "STATIC", tmp_path)
     save(conn, show("Musk", at(18, 12)))
     page = pages(conn, NOW)["index.html"]
@@ -916,3 +919,14 @@ def test_booking_opens_in_a_new_tab(conn):
     save(conn, show("Jaws", at(19, 19), year=1975))
     page = pages(conn, NOW)["showtimes/index.html"]
     assert 'target="_blank" rel="noopener" aria-label="Tickets for Jaws' in page
+
+
+def test_date_labels_carry_their_real_date_for_the_browser(conn):
+    # The build's "Today" goes stale overnight, so each label keeps its date for when.js.
+    save(conn, show("Late", at(18, 21)), show("Next", at(19, 13)))
+    built = pages(conn, NOW)
+    showtimes = plain(built["showtimes/index.html"])
+    assert '<time datetime="2026-10-18" data-fmt="day">Today, Oct 18</time>' in showtimes
+    assert '<time datetime="2026-10-19" data-fmt="short">Tomorrow</time>' in showtimes
+    assert 'data-day="2026-10-19"' in showtimes
+    assert "static/when.js?v=" in built["index.html"]

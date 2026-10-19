@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Today, Tomorrow and Tonight are worked out in your browser from the real date, so a page built last night no longer calls today's shows "Tomorrow".
+
 ## 2.0.1 (October 18, 2026)
 
 - Prices refresh themselves: once a month the update re-reads VIFF's, the Rio's and the Cinematheque's price pages and updates the numbers and the date checked, keeping the last good prices if a page changes. The Dunbar shows prices reported by local guides in 2024, labelled as such.

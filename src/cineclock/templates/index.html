@@ -21,11 +21,11 @@
       <a class="spotlight" href="{{ root }}films/{{ p.slug }}/" aria-roledescription="slide" aria-label="{{ loop.index }} of {{ slides | length }}: {{ p.title }}">
         <img class="spotlight-art" src="{{ p.film.backdrop_url }}" alt=""{% if not loop.first %} loading="lazy"{% endif %} onerror="this.hidden = true">
         <span class="spotlight-body">
-          <span class="eyebrow">{% if sl.label in TAG_ICONS %}{{ icon(TAG_ICONS[sl.label], "xs") }}{% endif %}{{ sl.label }}</span>
+          <span class="eyebrow">{% if sl.label in TAG_ICONS %}{{ icon(TAG_ICONS[sl.label], "xs") }}{% endif %}{% if loop.first %}<span data-tonight="{{ p.next_showing.local_start.date().isoformat() }}">{{ sl.label }}</span>{% else %}{{ sl.label }}{% endif %}</span>
           <span class="spotlight-title">{{ p.title }}{% if p.year %} <span class="year">{{ p.year }}</span>{% endif %}</span>
           <span class="spotlight-meta">
             {%- for v in p.venues %}{{ venue_badge(v, root) }}{% endfor -%}
-            <span>{{ icon("calendar", "sm") }}{{ sl.when }}</span>
+            <span>{{ icon("calendar", "sm") }}{{ sl.stamped }}</span>
             {%- if p.film.director %}<span>{{ icon("clapper", "sm") }}{{ p.film.director }}</span>{% endif -%}
             {{- card_rating(p.film, root) -}}
           </span>

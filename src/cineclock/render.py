@@ -11,7 +11,7 @@ from pathlib import Path
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 from cineclock.tags import filter_slugs, kind, said_by_tags, slug
-from cineclock.timefmt import clock
+from cineclock.timefmt import clock, stamp
 from cineclock.venues import room_label
 
 RELAY_URL = "https://cineclock-relay.cineclock-relay.workers.dev"
@@ -20,6 +20,7 @@ STATIC = Path(__file__).parent / "static"
 
 env = Environment(loader=PackageLoader("cineclock"), autoescape=select_autoescape())
 env.filters["clock"] = clock
+env.filters["stamp"] = stamp
 env.filters["tagslug"] = slug
 env.filters["filter_slugs"] = filter_slugs
 env.filters["tagkind"] = kind

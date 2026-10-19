@@ -2,6 +2,8 @@
 
 from datetime import date, datetime, timedelta
 
+from markupsafe import Markup
+
 from cineclock.models import VANCOUVER
 
 
@@ -29,3 +31,14 @@ def short_day(day: date, today: date) -> str:
     if (day.year, day.month) != (today.year, today.month):
         return f"{day:%a} {day:%b} {day.day}"
     return f"{day:%a} {day.day}"
+
+
+def stamp(text: str, at: date, fmt: str) -> Markup:
+    """A date label as it read at build time, wrapped with the real date. Pages are
+    rebuilt every few hours, so static/when.js redoes Today and Tomorrow from the
+    visitor's own day."""
+    if isinstance(at, datetime):
+        value = at.astimezone(VANCOUVER).strftime("%Y-%m-%dT%H:%M")
+    else:
+        value = at.isoformat()
+    return Markup('<time datetime="{}" data-fmt="{}">{}</time>').format(value, fmt, text)

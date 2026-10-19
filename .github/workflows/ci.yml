@@ -18,3 +18,4 @@ jobs:
       - run: ruff format --check .
       - run: pytest
       - run: node relay/test.mjs
+      - run: node tests/when.test.mjs
