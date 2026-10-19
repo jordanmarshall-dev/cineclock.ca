@@ -5,6 +5,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#14181c">
+{# Google sign-in only trusts https://cineclock.ca, so an http:// or github.io
+   visit moves to the real address before anything else loads. #}
+<script>
+  if (/^(http:$)/.test(location.protocol) && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)
+      || /github\.io$/.test(location.hostname)) {
+    location.replace("https://cineclock.ca" + location.pathname.replace(/^\/cineclock/, "") + location.search + location.hash);
+  }
+</script>
 <link rel="manifest" href="{{ root }}static/brand/manifest.webmanifest">
 <title>{% block title %}cineclock{% endblock %}</title>
 <meta name="description" content="{% block description %}Every showtime at Vancouver's independent cinemas in one place: {% for v in venues %}{% if loop.last %}and {% endif %}{{ v.name }}{% if not loop.last %}, {% endif %}{% endfor %}.{% endblock %}">

@@ -1100,3 +1100,8 @@ def test_home_invites_visitors_to_sign_in_for_their_watchlist(conn):
     home = pages(conn, NOW)["index.html"]
     assert 'class="signin-nudge panel" href="me/" data-signin-prompt hidden' in home
     assert "lb-button" not in home
+
+
+def test_pages_move_http_and_github_io_visits_to_the_real_address(conn):
+    page = pages(conn, NOW)["index.html"]
+    assert 'location.replace("https://cineclock.ca"' in page
