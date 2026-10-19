@@ -595,7 +595,7 @@ def test_about_page_and_footer_links(conn):
     assert 'href="about/"' in home and 'href="https://boxd.it/7T1D"' in home
 
 
-def test_theatre_page_has_a_photo_header_and_offer_pills(conn):
+def test_theatre_page_has_a_photo_header_and_offer_pills(conn, photos):
     page = pages(conn, NOW)["theatres/park/index.html"]
     assert 'class="theatre-hero"' in page and "static/theatres/park.jpg" in page
     assert 'class="tag tag-format tag-70mm">70mm<' in plain(page)
@@ -690,11 +690,11 @@ def test_most_screenings_needs_a_real_run(conn):
     assert [(c.page.title, c.why) for c in cards] == [("Lots", "4 screenings")]
 
 
-def test_theatre_page_frames_the_inside_photo_beside_the_specs(conn):
+def test_theatre_page_frames_the_inside_photo_beside_the_specs(conn, photos):
     page = pages(conn, NOW)["theatres/rio/index.html"]
     assert 'class="room-photo"' in page and "static/rooms/rio-main.jpg" in page
     viff = pages(conn, NOW)["theatres/viff-centre/index.html"]
-    assert "static/rooms/viff-lochmaddy.jpg" in viff and "static/rooms/viff-main.jpg" in viff
+    assert 'class="room-photo"' not in viff
 
 
 def test_theatre_page_has_the_date_picker(conn):
@@ -764,7 +764,7 @@ def test_home_has_a_letterboxd_button(conn):
     assert 'class="lb-button" href="me/"' in home
 
 
-def test_link_previews_have_a_title_blurb_and_picture(conn):
+def test_link_previews_have_a_title_blurb_and_picture(conn, photos):
     save(
         conn, show("Alien", at(19, 19), year=1979), show("Alien", at(21, 19), "The Park", year=1979)
     )
@@ -939,3 +939,46 @@ def test_home_has_a_heading_and_room_swipe_is_keyboard_reachable(conn):
     viff = built["theatres/viff-centre/index.html"]
     assert 'class="room-swipe" tabindex="0" role="region" aria-label="Rooms"' in viff
     assert 'tabindex="0"' not in built["theatres/rio/index.html"].split("room-single")[1][:40]
+
+
+def test_every_photo_has_an_author_and_a_known_licence():
+    from cineclock.venues import LICENCES
+
+    photos = [v.photo for v in VENUES] + [r.photo for v in VENUES for r in v.rooms]
+    for photo in filter(None, photos):
+        assert photo.author and photo.licence in LICENCES
+        assert photo.page_url.startswith("https://commons.wikimedia.org/wiki/File:")
+
+
+def test_photos_show_only_with_their_credit(conn, photos):
+    (photos / "rooms" / "viff-main.jpg").write_bytes(b"jpg")
+    save(conn, show("Musk", at(18, 12)))
+    built = pages(conn, NOW)
+
+    rio = built["theatres/rio/index.html"]
+    assert 'class="theatre-hero"' in rio and "static/rooms/rio-main.jpg" in rio
+    assert rio.count('class="photo-credit"') == 2
+    assert "Canmenwalker</a>" in rio and "CC BY 4.0</a>, toned" in rio
+    # A photo file with no credit in venues.py is never shown.
+    assert "static/rooms/viff-main.jpg" not in built["theatres/viff-centre/index.html"]
+    assert "Rio photo:" in built["theatres/index.html"]
+
+
+@pytest.fixture
+def photos(monkeypatch, tmp_path):
+    """A static folder holding a stand-in file for every credited photo."""
+    import shutil
+
+    import cineclock.render as render
+
+    shutil.copytree(render.STATIC, tmp_path, dirs_exist_ok=True)
+    for folder in ("theatres", "rooms"):
+        (tmp_path / folder).mkdir(exist_ok=True)
+    for venue in VENUES:
+        if venue.photo:
+            (tmp_path / "theatres" / f"{venue.slug}.jpg").write_bytes(b"jpg")
+        for room in venue.rooms:
+            if room.photo:
+                (tmp_path / "rooms" / f"{room.id}.jpg").write_bytes(b"jpg")
+    monkeypatch.setattr(render, "STATIC", tmp_path)
+    return tmp_path

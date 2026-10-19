@@ -10,7 +10,7 @@ theatre pages stay comparable and nothing is filled in by guesswork.
 
 import re
 from dataclasses import dataclass, field
-from urllib.parse import quote_plus
+from urllib.parse import quote, quote_plus
 
 # The order specs appear in on theatre pages.
 SPEC_FIELDS = ["Seats", "Screen", "Projection", "Sound"]
@@ -27,6 +27,30 @@ OFFERS = [
 ]
 
 
+# Every theatre photo is openly licensed on Wikimedia Commons and credited on the page.
+# tools/fetch_photos.py downloads and grades them into static/theatres and static/rooms.
+LICENCES = {
+    "CC BY 4.0": "https://creativecommons.org/licenses/by/4.0/",
+    "CC BY-SA 3.0": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "CC BY-SA 4.0": "https://creativecommons.org/licenses/by-sa/4.0/",
+}
+
+
+@dataclass(frozen=True)
+class Photo:
+    file: str  # the Wikimedia Commons file name
+    author: str
+    licence: str  # a key of LICENCES
+
+    @property
+    def page_url(self) -> str:
+        return "https://commons.wikimedia.org/wiki/File:" + quote(self.file.replace(" ", "_"))
+
+    @property
+    def licence_url(self) -> str:
+        return LICENCES[self.licence]
+
+
 @dataclass(frozen=True)
 class Room:
     id: str  # stable, never shown; e.g. "viff-lochmaddy"
@@ -34,6 +58,7 @@ class Room:
     short: str = ""  # shown on showtimes at theatres with more than one room
     specs: dict[str, str] = field(default_factory=dict)
     sources: tuple[str, ...] = ()
+    photo: Photo | None = None
 
 
 @dataclass(frozen=True)
@@ -76,6 +101,7 @@ class Venue:
     mark_scale: float = 1.0
     # Which part of the theatre's photo to keep when it's cropped into the header.
     photo_focus: str = "center"
+    photo: Photo | None = None
     # The Rio and the Park make their own posters, which beat generic ones.
     own_posters: bool = False
     about: tuple[str, ...] = ()
@@ -229,12 +255,13 @@ VENUES = [
                     "Sound": "7.1",
                 },
                 sources=("https://riotheatre.ca/", "Jordan's venue research, Oct 2026"),
+                photo=Photo("Rio Theatre interior 2026.JPEG", "Canmenwalker", "CC BY 4.0"),
             ),
         ),
         mark="rio-mark.png",
         full_logo="rio-full.png",
         own_posters=True,
-        photo_focus="center 30%",
+        photo=Photo("RIO Theatre 2026.jpg", "Canmenwalker", "CC BY 4.0"),
         about=(
             "Built in 1938 and restored with a digital projector, surround sound and a large "
             "stage, so nights here swing between repertory screenings, burlesque and comedy.",
@@ -264,12 +291,13 @@ VENUES = [
                     "https://en.wikipedia.org/wiki/Park_Theatre_(Vancouver)",
                     "Jordan's venue research, Oct 2026",
                 ),
+                photo=Photo("The Park Theatre inside 2025.jpg", "Canmenwalker", "CC BY 4.0"),
             ),
         ),
         mark="park-mark.png",
         full_logo="park-full.png",
         own_posters=True,
-        photo_focus="center 25%",
+        photo=Photo("The Park Theatre in Vancouver 202510.jpg", "Canmenwalker", "CC BY 4.0"),
         about=(
             "Opened in August 1941. A 2005 renovation brought new seats, the larger screen "
             "and Dolby Digital sound.",
@@ -305,7 +333,7 @@ VENUES = [
         mark="cinematheque-mark.png",
         mark_scale=1.3,
         full_logo="cinematheque-full.png",
-        photo_focus="center 55%",
+        photo=Photo("The Cinematheque Marquee 2020.jpg", "EmptySockets", "CC BY-SA 4.0"),
         about=(
             "A non-profit film society and educational institution, supported by the Canada "
             "Council, the BC Arts Council, the City of Vancouver, donors and volunteers.",
@@ -351,7 +379,7 @@ VENUES = [
         ),
         mark="viff.svg",
         full_logo="viff.svg",
-        photo_focus="center 45%",
+        photo=Photo("Vancity Theatre.jpg", "Tom Niu", "CC BY-SA 3.0"),
         about=(
             "Home of the Vancouver International Film Festival, programming new releases, "
             "restorations and series all year.",
@@ -386,7 +414,7 @@ VENUES = [
         ),
         mark="dunbar-mark.png",
         full_logo="dunbar-full.png",
-        photo_focus="center 15%",
+        photo=Photo("Dunbar Theatre 20190103 1.jpg", "Gjtreat", "CC BY-SA 3.0"),
         about=(
             "Built in 1935 and one of the last neighbourhood movie houses in Vancouver.",
             "Run independently by Ken Charko since 1998, with a focus on first-run films.",

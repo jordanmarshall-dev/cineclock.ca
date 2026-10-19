@@ -1,18 +1,19 @@
 {% extends "base.html" %}
-{% from "_parts.html" import day_sections, date_tools, icon, tag_list, rail %}
+{% from "_parts.html" import day_sections, date_tools, icon, tag_list, rail, photo_credit %}
 
 {% block title %}{{ venue.name }} showtimes{% endblock %}
 {% block description %}{{ venue.blurb }} Showtimes and what's on now.{% endblock %}
-{% block og_image %}{% if has_asset("theatres/" ~ venue.slug ~ ".jpg") %}{{ site_url }}static/theatres/{{ venue.slug }}.jpg{% else %}{{ site_url }}static/brand/share.png{% endif %}{% endblock %}
+{% block og_image %}{% if venue.photo and has_asset("theatres/" ~ venue.slug ~ ".jpg") %}{{ site_url }}static/theatres/{{ venue.slug }}.jpg{% else %}{{ site_url }}static/brand/share.png{% endif %}{% endblock %}
 
 {% block main %}
 {% set SPEC_ICONS = {"Seats": "seat", "Screen": "screen", "Projection": "projector", "Sound": "speaker"} %}
 {% set photo = "theatres/" ~ venue.slug ~ ".jpg" %}
-{% if has_asset(photo) %}
+{% set has_photo = venue.photo and has_asset(photo) %}
+{% if has_photo %}
 <div class="theatre-hero" aria-hidden="true"><img src="{{ root }}static/{{ photo }}" alt="" style="object-position: {{ venue.photo_focus }}" onerror="this.hidden = true"></div>
 {% endif %}
 <div class="wrap">
-  <div class="theatre-head{% if has_asset(photo) %} over-hero{% endif %}">
+  <div class="theatre-head{% if has_photo %} over-hero{% endif %}">
     {% if venue.full_logo and has_asset("logos/" ~ venue.full_logo) %}
       {% set w, h = logo_size("logos/" ~ venue.full_logo, 22000, 64) %}
       <img class="theatre-full-logo" src="{{ root }}static/logos/{{ venue.full_logo }}" alt="{{ venue.name }}" width="{{ w }}" height="{{ h }}" style="--w: {{ w }}px; --h: {{ h }}px">
@@ -28,6 +29,7 @@
     <div class="theatre-offers">{{ tag_list(venue.offers + (listed | reject("in", venue.offers) | list), links) }}</div>
   </div>
   <p class="venue-blurb">{{ venue.blurb }}</p>
+  {% if has_photo %}{{ photo_credit(venue.photo) }}{% endif %}
 
   <ul class="links">
     {% if venue.address %}<li><a href="{{ venue.map_url }}">{{ icon("pin") }}{{ venue.address.split(",")[0] }}</a></li>{% endif %}
@@ -65,10 +67,11 @@
     <div class="{{ 'room-swipe' if multi else 'room-single' }}"{% if multi %} tabindex="0" role="region" aria-label="Rooms"{% endif %}>
     {% for room in venue.rooms %}
     {% set room_photo = "rooms/" ~ room.id ~ ".jpg" %}
+    {% set room_has_photo = room.photo and has_asset(room_photo) %}
     <div class="room" data-room="{{ room.id }}">
       {% if multi %}<h3 class="room-name">{{ room.name }}</h3>{% endif %}
-      <div class="room-layout{% if has_asset(room_photo) %} has-photo{% endif %}">
-        {% if has_asset(room_photo) %}<figure class="room-photo"><img src="{{ root }}static/{{ room_photo }}" alt="Inside {{ room.name if multi else venue.name }}" loading="lazy"></figure>{% endif %}
+      <div class="room-layout{% if room_has_photo %} has-photo{% endif %}">
+        {% if room_has_photo %}<figure class="room-photo"><img src="{{ root }}static/{{ room_photo }}" alt="Inside {{ room.name if multi else venue.name }}" loading="lazy">{{ photo_credit(room.photo, "figcaption") }}</figure>{% endif %}
         <dl class="specs">
           {% for f in spec_fields %}<div><dt>{{ icon(SPEC_ICONS[f]) }}{{ f }}</dt><dd>{{ room.specs[f] }}</dd></div>{% endfor %}
         </dl>

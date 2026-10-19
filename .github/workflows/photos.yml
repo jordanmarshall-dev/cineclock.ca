@@ -1,0 +1,34 @@
+name: Photos
+
+# Run by hand from the Actions tab (or the API) after changing a photo in
+# venues.py. Downloads each credited photo from Wikimedia Commons, grades it
+# with tools/grade_photo.py and commits it. Run Deploy afterwards to publish.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e . pillow
+      - run: python tools/fetch_photos.py
+
+      - name: Commit the photos
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/cineclock/static/theatres src/cineclock/static/rooms
+          if git diff --cached --quiet; then
+            echo "Photos unchanged."
+          else
+            git commit -m "Fetch theatre photos from Wikimedia Commons"
+            git push
+          fi

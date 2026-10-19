@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_parts.html" import icon, tag_list %}
+{% from "_parts.html" import icon, tag_list, photo_credit %}
 
 {% block title %}Theatres{% endblock %}
 
@@ -12,7 +12,7 @@
     <li>
       <a class="theatre-card panel" href="{{ root }}theatres/{{ v.slug }}/">
         <span class="theatre-card-art">
-          {%- if has_asset(photo) %}<img src="{{ root }}static/{{ photo }}" alt="" loading="lazy" style="object-position: {{ v.photo_focus }}">{% endif -%}
+          {%- if v.photo and has_asset(photo) %}<img src="{{ root }}static/{{ photo }}" alt="" loading="lazy" style="object-position: {{ v.photo_focus }}">{% endif -%}
           {%- if v.full_logo and has_asset("logos/" ~ v.full_logo) %}{% set w, h = logo_size("logos/" ~ v.full_logo, 9000, 40) %}<img class="theatre-card-logo" src="{{ root }}static/logos/{{ v.full_logo }}" alt="" width="{{ w }}" height="{{ h }}">{% endif -%}
         </span>
         <span class="theatre-card-body">
@@ -25,5 +25,8 @@
     </li>
     {% endfor %}
   </ul>
+  <div class="photo-credits">
+    {% for v in venues if v.photo and has_asset("theatres/" ~ v.slug ~ ".jpg") %}{{ photo_credit(v.photo) | replace("Photo:", v.short ~ " photo:") }}{% endfor %}
+  </div>
 </div>
 {% endblock %}

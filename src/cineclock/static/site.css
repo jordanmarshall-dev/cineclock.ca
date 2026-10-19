@@ -1730,3 +1730,13 @@ a:focus-visible,
   .links a,
   .date-strip a { transition: background-color 120ms, border-color 120ms, color 120ms; }
 }
+
+/* Photo credits: required by the photos' licences, kept small and next to the image. */
+.photo-credit {
+  margin: 0.25rem 0 0;
+  font-size: 0.75rem;
+  color: var(--text);
+}
+.photo-credit a { text-decoration: underline; text-underline-offset: 2px; }
+.room-photo figcaption { padding: 0.25rem 0 0; }
+.photo-credits { margin-top: 1.5rem; display: grid; gap: 0.25rem; }

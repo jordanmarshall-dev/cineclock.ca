@@ -1,3 +1,7 @@
+{% macro photo_credit(p, tag="p") -%}
+<{{ tag }} class="photo-credit">Photo: <a href="{{ p.page_url }}" target="_blank" rel="noopener">{{ p.author }}</a>, <a href="{{ p.licence_url }}" target="_blank" rel="noopener">{{ p.licence }}</a>, toned</{{ tag }}>
+{%- endmacro %}
+
 {% macro poster(url, href=None, label="") -%}
 {% if href %}<a class="poster" href="{{ href }}" tabindex="-1" aria-hidden="true">{% else %}<div class="poster">{% endif %}
   <span class="poster-fallback" aria-hidden="true">{{ label }}</span>
