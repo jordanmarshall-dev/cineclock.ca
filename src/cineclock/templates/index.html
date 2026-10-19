@@ -9,10 +9,7 @@
   <h1 class="visually-hidden">Showtimes at Vancouver's independent cinemas</h1>
   <div class="home-top">
     <p class="tagline">Support local cinemas.</p>
-    <a class="lb-button" href="{{ root }}me/">
-      <img src="{{ root }}static/logos/letterboxd.png" alt="" width="32" height="12">
-      <span data-me-name>Letterboxd</span>
-    </a>
+    <p class="freshness">{{ icon("clock", "xs") }}<span>Updated <span class="freshness-day">{{ updated_day }}, </span>{{ updated_time }}</span></p>
   </div>
   {% if slides %}
   <section class="hero" aria-roledescription="carousel" aria-label="Highlights">
@@ -46,6 +43,12 @@
     <a href="{{ root }}films/?tag=on-film">{{ icon("film", "md") }}On film</a>
     <a href="{{ root }}films/?tag=event">{{ icon("mic", "md") }}Events</a>
   </nav>
+  {# For visitors who haven't signed in or connected Letterboxd; account.js shows it. #}
+  <a class="signin-nudge panel" href="{{ root }}me/" data-signin-prompt hidden>
+    <span class="signin-nudge-logos"><img src="{{ root }}static/logos/letterboxd.png" alt="" width="32" height="12"><img src="{{ root }}static/logos/imdb.png" alt="" height="12"></span>
+    <span class="signin-nudge-text"><b>See your watchlist here.</b> Sign in to connect Letterboxd or IMDb and save films.</span>
+    {{ icon("chevron", "md") }}
+  </a>
   <div id="mine-rail"></div>
   {% if rails %}
     {% for r in rails %}{{ rail(r, root) }}{% endfor %}

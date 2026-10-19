@@ -44,7 +44,12 @@
   }
 
   // The header's account link: "Sign in", or the first letter of your email.
+  // Also the home page's nudge, for visitors with no account and no Letterboxd.
   function drawHeader() {
+    const letterboxd = read("cineclock.letterboxd", null);
+    for (const nudge of document.querySelectorAll("[data-signin-prompt]")) {
+      nudge.hidden = Boolean(account || letterboxd);
+    }
     for (const link of document.querySelectorAll("[data-account-link]")) {
       const email = account?.email || "";
       link.classList.toggle("signed-in", Boolean(account));

@@ -762,10 +762,11 @@ def test_theatre_rails_always_fill_and_topics_need_enough_films(conn):
     assert 'class="theatre-rails"' in page and ">Now playing<" in page
 
 
-def test_home_has_a_letterboxd_button(conn):
+def test_home_says_when_listings_were_updated(conn):
     save(conn, show("Jaws", at(19, 19)))
     home = pages(conn, NOW)["index.html"]
-    assert 'class="lb-button" href="me/"' in home
+    assert 'class="freshness"' in home
+    assert 'Updated <span class="freshness-day">Sun Oct 18, </span>1:00 am' in home
 
 
 def test_link_previews_have_a_title_blurb_and_picture(conn, photos):
@@ -1092,3 +1093,10 @@ def test_account_page_has_alert_settings(conn):
     for name in ("last", "added", "imdb"):
         assert f'<input type="checkbox" name="{name}">' in page
     assert 'id="me-alerts-test"' in page
+
+
+def test_home_invites_visitors_to_sign_in_for_their_watchlist(conn):
+    save(conn, show("Jaws", at(19, 19)))
+    home = pages(conn, NOW)["index.html"]
+    assert 'class="signin-nudge panel" href="me/" data-signin-prompt hidden' in home
+    assert "lb-button" not in home

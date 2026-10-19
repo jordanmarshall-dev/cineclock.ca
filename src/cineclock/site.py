@@ -99,6 +99,12 @@ def updated_label(now: datetime) -> str:
     return f"{local:%a %b} {local.day}, {clock(now)}"
 
 
+def updated_day(now: datetime) -> str:
+    """The date part alone, which phones drop from the home page's Updated line."""
+    local = now.astimezone(VANCOUVER)
+    return f"{local:%a %b} {local.day}"
+
+
 def pages(conn: Connection, now: datetime) -> dict[str, str]:
     screenings = db.upcoming(conn, now)
     films = db.films_by_key(conn)
@@ -109,7 +115,12 @@ def pages(conn: Connection, now: datetime) -> dict[str, str]:
     venue_prices = prices.current(
         {venue: prices.from_json(data) for venue, (data, _) in db.load_prices(conn).items()}
     )
-    common = {"updated": updated_label(now), "venues": VENUES}
+    common = {
+        "updated": updated_label(now),
+        "updated_day": updated_day(now),
+        "updated_time": clock(now),
+        "venues": VENUES,
+    }
 
     def render(template: str, path: str, root: str | None = None, **context) -> str:
         root = "../" * path.count("/") if root is None else root

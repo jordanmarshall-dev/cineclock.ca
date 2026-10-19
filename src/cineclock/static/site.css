@@ -766,24 +766,18 @@ a:focus-visible,
 
 .tagline { margin: 0; white-space: nowrap; }
 
-/* The way into the Letterboxd features, styled after Letterboxd's own buttons. */
-.lb-button {
+/* How fresh the listings are, so nobody has to scroll to the footer to find out. */
+.freshness {
   display: inline-flex;
-  flex: none;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.375rem 0.75rem;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--raised);
-  color: var(--white);
+  gap: 0.375rem;
+  margin: 0;
+  overflow: hidden;
+  color: var(--text);
   font-size: 0.8125rem;
-  font-weight: 600;
-  text-decoration: none;
+  white-space: nowrap;
 }
-
-.lb-button img { width: auto; height: 0.75rem; }
-.lb-button:hover { border-color: var(--bright); }
+.freshness .icon { flex: none; color: var(--accent-text); }
 
 /* Hero: a few highlights, each a full-width slide with its art fading into the
    page. Without the script it's a sideways scroll; with it, a looping carousel. */
@@ -2002,3 +1996,29 @@ a:focus-visible,
 @media (prefers-reduced-motion: reduce) {
   .switch span, .switch span::after { transition: none; }
 }
+
+@media (max-width: 30rem) {
+  .freshness-day { display: none; }
+}
+
+/* Home: a quiet invitation to sign in and bring a watchlist along. */
+.signin-nudge {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  margin-top: 1rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius);
+  background: linear-gradient(100deg, var(--accent-wash), transparent 70%), var(--panel);
+  color: var(--text);
+  font-size: 0.875rem;
+  line-height: 1.4;
+  text-decoration: none;
+}
+.signin-nudge:hover { border-color: var(--accent); }
+.signin-nudge b { display: block; color: var(--white); font-size: 0.9375rem; }
+.signin-nudge-logos { display: grid; flex: none; gap: 0.375rem; justify-items: center; }
+.signin-nudge-logos img { width: auto; height: 0.75rem; }
+.signin-nudge-text { flex: 1; }
+.signin-nudge > .icon { flex: none; color: var(--text); }
