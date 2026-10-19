@@ -1,7 +1,8 @@
 name: API check
 
 # Run by hand to see how api.cineclock.ca answers from outside: DNS, TLS and
-# the sign-in service's reply.
+# the sign-in service's reply. Results are posted as annotations, which show
+# on the run's page.
 on:
   workflow_dispatch:
 
@@ -9,12 +10,13 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - name: DNS
+      - name: Check
         run: |
-          dig +short NS cineclock.ca @1.1.1.1
-          echo "api A:"; dig +short A api.cineclock.ca @1.1.1.1
-          echo "api AAAA:"; dig +short AAAA api.cineclock.ca @1.1.1.1
-          echo "api via Google:"; dig +short A api.cineclock.ca @8.8.8.8
-          echo "authoritative:"; dig +short A api.cineclock.ca @alexis.ns.cloudflare.com
-      - name: Request
-        run: curl -sS -m 20 -v https://api.cineclock.ca/me 2>&1 | tail -25 || true
+          note() { echo "::notice title=$1::$(echo "$2" | tr '\n' ' ' | cut -c1-900)"; }
+          note "NS" "$(dig +short NS cineclock.ca @1.1.1.1)"
+          note "api A (1.1.1.1)" "$(dig +short A api.cineclock.ca @1.1.1.1)"
+          note "api A (8.8.8.8)" "$(dig +short A api.cineclock.ca @8.8.8.8)"
+          note "api A (Cloudflare NS)" "$(dig +short A api.cineclock.ca @alexis.ns.cloudflare.com)"
+          note "api any (Cloudflare NS)" "$(dig api.cineclock.ca ANY @alexis.ns.cloudflare.com +noall +answer +authority)"
+          note "request" "$(curl -sS -m 20 -w ' HTTP %{http_code}' https://api.cineclock.ca/me 2>&1)"
+          note "workers.dev" "$(curl -sS -m 20 -w ' HTTP %{http_code}' https://cineclock-relay.cineclock-relay.workers.dev/me 2>&1)"
