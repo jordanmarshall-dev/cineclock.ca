@@ -1,4 +1,5 @@
 <!doctype html>
+{% from "_parts.html" import icon as base_icon %}
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -30,6 +31,10 @@
       <a href="{{ root }}showtimes/"{% if current == "showtimes" %} aria-current="page"{% endif %}>Showtimes</a>
       <a href="{{ root }}theatres/"{% if current == "theatres" %} aria-current="page"{% endif %}>Theatres</a>
     </nav>
+    {# account.js swaps in the signed-in look: your initial in a filled circle. #}
+    <a class="account-link" href="{{ root }}me/" data-account-link aria-label="Sign in"{% if path == "me/index.html" %} aria-current="page"{% endif %}>
+      <span class="account-icon">{{ base_icon("person", "md") }}</span><span class="account-initial" hidden></span><span class="account-text">Sign in</span>
+    </a>
   </div>
 </header>
 

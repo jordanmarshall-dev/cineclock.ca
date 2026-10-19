@@ -224,6 +224,9 @@
 
   let lastFilms = null;
   async function start() {
+    // Signed in on a new device: bring back the Letterboxd saved to the account.
+    const fromAccount = window.cineclockAccount?.current?.letterboxd;
+    if (fromAccount && !saved()) save({ user: fromAccount });
     const value = saved();
     show(Boolean(value));
     // Connected: the Letterboxd button shows whose profile it is.

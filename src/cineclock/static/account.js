@@ -40,6 +40,19 @@
     write(ACCOUNT, account);
     document.dispatchEvent(new CustomEvent("cineclock:account", { detail: account }));
     drawButtons();
+    drawHeader();
+  }
+
+  // The header's account link: "Sign in", or the first letter of your email.
+  function drawHeader() {
+    for (const link of document.querySelectorAll("[data-account-link]")) {
+      const email = account?.email || "";
+      link.classList.toggle("signed-in", Boolean(account));
+      const initial = link.querySelector(".account-initial");
+      initial.textContent = email.slice(0, 1) || "?";
+      initial.hidden = !account;
+      link.setAttribute("aria-label", account ? `Your cineclock, signed in as ${email}` : "Sign in");
+    }
   }
 
   let base = API;
@@ -216,4 +229,5 @@
     enabled: Boolean(API),
   };
   drawButtons();
+  drawHeader();
 })();

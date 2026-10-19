@@ -1061,3 +1061,10 @@ def test_highly_rated_rail_has_the_id_the_rating_switch_looks_for(conn):
 def test_a_theatre_without_a_photo_gets_the_designed_card(conn):
     page = pages(conn, NOW)["theatres/index.html"]
     assert page.count("theatre-card-art no-photo") == 1  # only the Dunbar, for now
+
+
+def test_every_page_has_the_header_account_link(conn):
+    built = pages(conn, NOW)
+    assert 'data-account-link aria-label="Sign in"' in built["films/index.html"]
+    assert 'href="../me/" data-account-link' in built["films/index.html"]
+    assert 'data-account-link aria-label="Sign in" aria-current="page"' in built["me/index.html"]
