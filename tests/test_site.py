@@ -951,8 +951,13 @@ def test_every_photo_has_an_author_and_a_known_licence():
 
     photos = [v.photo for v in VENUES] + [r.photo for v in VENUES for r in v.rooms]
     for photo in filter(None, photos):
-        assert photo.author and photo.licence in LICENCES
-        assert photo.page_url.startswith("https://commons.wikimedia.org/wiki/File:")
+        assert photo.author and photo.licence
+        if photo.source_url:
+            # An archive photo: its credit links to the archive's own record.
+            assert photo.page_url == photo.source_url and photo.licence_url is None
+        else:
+            assert photo.licence in LICENCES
+            assert photo.page_url.startswith("https://commons.wikimedia.org/wiki/File:")
 
 
 def test_photos_show_only_with_their_credit(conn, photos):
@@ -1064,7 +1069,7 @@ def test_highly_rated_rail_has_the_id_the_rating_switch_looks_for(conn):
 
 def test_a_theatre_without_a_photo_gets_the_designed_card(conn):
     page = pages(conn, NOW)["theatres/index.html"]
-    assert page.count("theatre-card-art no-photo") == 1  # only the Dunbar, for now
+    assert page.count("theatre-card-art no-photo") == 0  # every theatre has one now
 
 
 def test_every_page_has_the_header_account_link(conn):

@@ -38,17 +38,22 @@ LICENCES = {
 
 @dataclass(frozen=True)
 class Photo:
-    file: str  # the Wikimedia Commons file name
+    file: str  # the Wikimedia Commons file name, or a short name for an archive photo
     author: str
-    licence: str  # a key of LICENCES
+    licence: str  # a key of LICENCES, or how an archive lets it be used
+    # An archive's record for the photo, when it isn't on Commons. Those files are
+    # committed already graded, since tools/fetch_photos.py only reads Commons.
+    source_url: str | None = None
 
     @property
     def page_url(self) -> str:
+        if self.source_url:
+            return self.source_url
         return "https://commons.wikimedia.org/wiki/File:" + quote(self.file.replace(" ", "_"))
 
     @property
-    def licence_url(self) -> str:
-        return LICENCES[self.licence]
+    def licence_url(self) -> str | None:
+        return LICENCES.get(self.licence)
 
 
 @dataclass(frozen=True)
@@ -420,6 +425,16 @@ VENUES = [
         ),
         mark="dunbar-mark.png",
         full_logo="dunbar-full.png",
+        # The Dunbar when it opened in the 1930s. Downloadable images from the City
+        # of Vancouver Archives are public domain or City copyright, free to reuse;
+        # the credit shows when it was taken instead of a licence.
+        photo=Photo(
+            "New Dunbar Theatre at 4555 Dunbar Street",
+            "City of Vancouver Archives",
+            "about 1935",
+            source_url="https://searcharchives.vancouver.ca/new-dunbar-theatre-at-4555-dunbar-street",
+        ),
+        photo_focus="center 35%",
         about=(
             "Built in 1935 and one of the last neighbourhood movie houses in Vancouver.",
             "Run independently by Ken Charko since 1998, with a focus on first-run films.",
