@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.0.2 (October 19, 2026)
 
 - Today, Tomorrow and Tonight are worked out in your browser from the real date, so a page built last night no longer calls today's shows "Tomorrow".
 
