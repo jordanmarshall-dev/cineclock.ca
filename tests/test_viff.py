@@ -158,3 +158,19 @@ def test_scrape_fails_clearly_without_token():
     with httpx.Client(transport=httpx.MockTransport(handler)) as client:
         with pytest.raises(RuntimeError, match="no API token"):
             viff.scrape(client)
+
+
+def test_sold_out_card_links_to_info_and_says_why():
+    sold_out = (
+        '<h3 class="c-calendar-instance__title">Cure</h3>'
+        '<span class="c-btn c-btn--ghost c-btn--primary c-btn--disabled '
+        'c-event-instance__booking-message">Sold Out</span>'
+        '<a class="c-btn c-btn--ghost" href="https://viff.org/whats-on/cure/">More Info</a>'
+    )
+    items = [
+        {"start": "2026-12-05T19:00:00", "eventType": "Film", "title": t, "resourceId": ROOM}
+        for t in (sold_out, card())
+    ]
+    closed, open_ = viff.parse_instances(items)
+    assert (closed.url, closed.status) == ("https://viff.org/whats-on/cure/", "Sold out")
+    assert open_.status is None

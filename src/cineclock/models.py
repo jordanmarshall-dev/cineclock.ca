@@ -30,6 +30,8 @@ class Screening:
     series: str | None = None
     # The theatre's own description, used when TMDB has none.
     synopsis: str | None = None
+    # Why there's no booking link, as the theatre puts it ("Sold out", "Standby").
+    status: str | None = None
     # When cineclock first saw this listing. Not part of what makes two screenings equal.
     first_seen: datetime | None = field(default=None, compare=False)
 

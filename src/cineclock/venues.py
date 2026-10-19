@@ -262,6 +262,7 @@ VENUES = [
         full_logo="rio-full.png",
         own_posters=True,
         photo=Photo("RIO Theatre 2026.jpg", "Canmenwalker", "CC BY 4.0"),
+        photo_focus="center 55%",
         about=(
             "Built in 1938 and restored with a digital projector, surround sound and a large "
             "stage, so nights here swing between repertory screenings, burlesque and comedy.",
@@ -298,6 +299,7 @@ VENUES = [
         full_logo="park-full.png",
         own_posters=True,
         photo=Photo("The Park Theatre in Vancouver 202510.jpg", "Canmenwalker", "CC BY 4.0"),
+        photo_focus="center 62%",
         about=(
             "Opened in August 1941. A 2005 renovation brought new seats, the larger screen "
             "and Dolby Digital sound.",
@@ -334,6 +336,7 @@ VENUES = [
         mark_scale=1.3,
         full_logo="cinematheque-full.png",
         photo=Photo("The Cinematheque Marquee 2020.jpg", "EmptySockets", "CC BY-SA 4.0"),
+        photo_focus="center 25%",
         about=(
             "A non-profit film society and educational institution, supported by the Canada "
             "Council, the BC Arts Council, the City of Vancouver, donors and volunteers.",
@@ -380,6 +383,7 @@ VENUES = [
         mark="viff.svg",
         full_logo="viff.svg",
         photo=Photo("Vancity Theatre.jpg", "Tom Niu", "CC BY-SA 3.0"),
+        photo_focus="center 40%",
         about=(
             "Home of the Vancouver International Film Festival, programming new releases, "
             "restorations and series all year.",
@@ -414,7 +418,6 @@ VENUES = [
         ),
         mark="dunbar-mark.png",
         full_logo="dunbar-full.png",
-        photo=Photo("Dunbar Theatre 20190103 1.jpg", "Gjtreat", "CC BY-SA 3.0"),
         about=(
             "Built in 1935 and one of the last neighbourhood movie houses in Vancouver.",
             "Run independently by Ken Charko since 1998, with a focus on first-run films.",

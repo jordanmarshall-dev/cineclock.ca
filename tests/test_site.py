@@ -982,3 +982,11 @@ def photos(monkeypatch, tmp_path):
                 (tmp_path / "rooms" / f"{room.id}.jpg").write_bytes(b"jpg")
     monkeypatch.setattr(render, "STATIC", tmp_path)
     return tmp_path
+
+
+def test_sold_out_time_says_so_instead_of_tickets(conn):
+    sold = Screening("VIFF Centre", "Cure", at(19, 19), "https://viff.org/cure/", status="Sold out")
+    db.sync_venue(conn, "VIFF Centre", [sold], NOW)
+    page = pages(conn, NOW)["films/cure/index.html"]
+    assert 'class="time time-closed"' in page and "<small>Sold out" in page
+    assert 'aria-label="Sold out: Cure' in page and "Tickets for Cure" not in page

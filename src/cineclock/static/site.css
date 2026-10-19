@@ -380,6 +380,8 @@ a:focus-visible,
 
 /* The only chance to see it: the booking button itself stands out. */
 .time-rare { border-color: var(--accent); background: var(--accent-wash); }
+/* No tickets online (sold out, standby): still a link to the theatre's page, but quieter. */
+.time-closed { border-style: dashed; color: var(--text); }
 .time-text { display: flex; flex-direction: column; }
 
 .time small {

@@ -73,6 +73,8 @@ def parse_instances(data: list[dict]) -> list[Screening]:
         info = card.select_one("a.c-btn--ghost")
         if not heading or not (book or info):
             continue
+        # With no Book button, VIFF says why ("Sold Out", "Standby").
+        message = None if book else card.select_one(".c-event-instance__booking-message")
         title, note = clean_title(heading.get_text(" ", strip=True))
         title, year = split_year(title)
         screenings.append(
@@ -85,6 +87,7 @@ def parse_instances(data: list[dict]) -> list[Screening]:
                 starts_at=parse_start(item, card),
                 url=(book or info)["href"],
                 info_url=info["href"] if info else None,
+                status=message.get_text(strip=True).capitalize() if message else None,
             )
         )
     return screenings

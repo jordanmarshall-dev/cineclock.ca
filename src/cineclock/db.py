@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS screenings (
     film_format TEXT,
     series TEXT,
     synopsis TEXT,
+    status TEXT,
     first_seen TEXT,
     UNIQUE (venue, title, starts_at)
 );
@@ -85,7 +86,7 @@ CREATE TABLE IF NOT EXISTS profiles (
 
 FIELDS = (
     "venue", "title", "starts_at", "url", "room", "info_url", "year", "note", "poster_url",
-    "film_format", "series", "synopsis",
+    "film_format", "series", "synopsis", "status",
 )  # fmt: skip
 
 
@@ -105,6 +106,7 @@ ADDED_COLUMNS = {
         "room": "TEXT",
         "series": "TEXT",
         "synopsis": "TEXT",
+        "status": "TEXT",
     },
     "films": {"letterboxd_count": "INTEGER", "genres": "TEXT", "metacritic": "INTEGER"},
 }
@@ -154,6 +156,7 @@ def _to_row(s: Screening) -> tuple:
         s.film_format,
         s.series,
         s.synopsis,
+        s.status,
     )
 
 
@@ -207,6 +210,7 @@ def sync_venue(
                 film_format = excluded.film_format,
                 series = excluded.series,
                 synopsis = excluded.synopsis,
+                status = excluded.status,
                 -- Keep the date we first saw it; only fill it in for older rows.
                 first_seen = COALESCE(screenings.first_seen, excluded.first_seen)
             """,
