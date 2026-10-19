@@ -1749,6 +1749,27 @@ a:focus-visible,
   }
   .theatre-head.over-hero { margin-top: -15rem; }
 
+  /* Wide screens: times sit beside the film instead of under its poster, and the
+     date strip stays inside the page, fading out where it scrolls. */
+  .row { grid-template-columns: 7rem minmax(0, 1fr) minmax(0, 24rem); align-items: start; gap: 1.25rem; }
+  .row .times { grid-column: 3; grid-row: 1; justify-content: flex-end; margin-top: 0; }
+  /* Film pages: each day's date on the left, its times beside it. */
+  .showing { display: grid; grid-template-columns: 13rem minmax(0, 1fr); column-gap: 1rem; align-items: start; }
+  .showing-when { grid-column: 1; grid-row: 1 / span 9; padding-top: 0.5rem; }
+  .showing > :not(.showing-when) { grid-column: 2; }
+  .showing .times { margin-top: 0; }
+  .showing .times + .times,
+  .showing .tags,
+  .showing .showing-note { margin-top: 0.5rem; }
+  .showing .tags:first-of-type,
+  .showing .showing-when + .showing-note { margin-top: 0.5rem; }
+
+  .date-strip {
+    margin-right: 0;
+    padding-right: 2rem;
+    mask-image: linear-gradient(to right, #000 calc(100% - 3rem), transparent);
+  }
+
   /* Full width, the backdrop became an upscaled sliver of the image. Keep it at
      the image's own width and shape, centred, with the sides fading out. */
   .backdrop {
