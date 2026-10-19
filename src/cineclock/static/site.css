@@ -1815,3 +1815,22 @@ a:focus-visible,
 .me-theatres a { display: inline-block; padding: 0.375rem 0.75rem; border: 1px solid var(--line); border-radius: 999px; color: var(--bright); font-size: 0.8125rem; text-decoration: none; }
 .me-danger { margin-top: 3rem; color: var(--text); font-size: 0.8125rem; }
 .me-file { color: var(--text); font-size: 0.8125rem; }
+
+/* Sign-in card on Your cineclock. */
+.signin-card {
+  max-width: 28rem;
+  margin: 1.5rem 0 0;
+  padding: 1.5rem;
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+.signin-title { margin: 0; color: var(--white); font-size: 1.25rem; }
+.signin-perks { display: grid; gap: 0.625rem; margin: 1.125rem 0 1.5rem; padding: 0; list-style: none; }
+.signin-perks li { display: flex; align-items: flex-start; gap: 0.625rem; color: var(--bright); font-size: 0.9375rem; line-height: 1.4; }
+.signin-perks .icon { flex: none; margin-top: 0.125rem; color: var(--accent-text); }
+.signin-button { min-height: 44px; }
+.signin-error { margin: 0.75rem 0 0; color: #f0a8a8; font-size: 0.875rem; }
+.signin-error:empty { display: none; }
+.signin-note { margin: 1.25rem 0 0; padding-top: 1rem; border-top: 1px solid var(--panel-line); color: var(--text); font-size: 0.8125rem; line-height: 1.5; }
+.signin-note a { color: var(--bright); text-decoration: underline; text-underline-offset: 2px; }

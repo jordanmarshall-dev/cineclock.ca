@@ -8,12 +8,17 @@
 <div class="wrap me-page">
   <h1 class="page-title">Your cineclock</h1>
 
-  <section class="me-section" id="me-account" aria-labelledby="me-account-title">
-    <h2 id="me-account-title" class="visually-hidden">Account</h2>
-    <div id="me-signed-out">
-      <p class="page-intro">Sign in to keep your saved films and theatres on every device, pick which ratings cineclock shows, and add your IMDb watchlist. Browsing never needs an account.</p>
-      <div id="me-google"></div>
-      <p class="filter-status" id="me-account-message" aria-live="polite"></p>
+  <section class="me-section" id="me-account" aria-label="Account">
+        <div id="me-signed-out" class="panel signin-card">
+      <h2 class="signin-title">Sign in to cineclock</h2>
+      <ul class="signin-perks">
+        <li>{{ icon("bookmark", "sm") }}<span>Your saved films and theatres on every device</span></li>
+        <li>{{ icon("star", "sm") }}<span>Scores from Letterboxd, IMDb, Rotten Tomatoes or Metacritic</span></li>
+        <li>{{ icon("film", "sm") }}<span>Your IMDb watchlist, marked across the site</span></li>
+      </ul>
+      <div class="signin-button" id="me-google"></div>
+      <p class="signin-error" id="me-account-message" role="status" aria-live="polite"></p>
+      <p class="signin-note">Browsing never needs an account. Google shares only your email address with cineclock. <a href="{{ root }}privacy/">Privacy</a></p>
     </div>
     <div id="me-signed-in" class="me-bar" hidden>
       <p class="me-status">{{ icon("people", "sm") }}<span>Signed in as <b id="me-email"></b></span></p>
@@ -164,11 +169,14 @@
             if (lb && !me.saved()) me.save({ user: lb }) && refresh();
             else if (!lb && me.saved()) account.settings({ letterboxd: me.saved().user }).catch(() => {});
           } catch (e) {
-            $("me-account-message").textContent = "Sign-in didn't work. Try again in a minute.";
+            console.error("cineclock sign-in:", e);
+            $("me-account-message").textContent = e instanceof TypeError
+              ? "Couldn't reach cineclock's sign-in service. Check your connection and try again."
+              : "Google sign-in didn't go through. Try again in a minute.";
           }
         },
       });
-      google.accounts.id.renderButton($("me-google"), { theme: "filled_black", size: "large", shape: "pill", text: "signin_with" });
+      google.accounts.id.renderButton($("me-google"), { theme: "outline", size: "large", shape: "pill", text: "continue_with", logo_alignment: "left", width: Math.min(320, $("me-google").clientWidth || 320) });
     }
 
     document.querySelectorAll("input[name=rating_source]").forEach((radio) =>
