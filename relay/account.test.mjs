@@ -110,6 +110,8 @@ async function signIn(env, claims = {}) {
     rating_source: "letterboxd",
     saved: { film: [], theatre: [] },
     imdb: [],
+    alerts: { enabled: false, added: true, last: true, imdb: false },
+    email_ready: false,
   });
 
   // Saving twice keeps one row; unsaving removes it.

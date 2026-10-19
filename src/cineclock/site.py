@@ -27,7 +27,7 @@ from cineclock.render import env, score_text, score_value
 from cineclock.shelves import highlights, rails, theatre_rails
 from cineclock.tags import kind, sort_tags
 from cineclock.timefmt import clock, stamp
-from cineclock.venues import VENUES, order, shown_specs
+from cineclock.venues import VENUES, order, room_label, shown_specs
 
 # films.json is read from pages at different depths, so cards are drawn with this
 # stand-in for the path to the site root and the browser fills in the real one.
@@ -63,6 +63,35 @@ def shelf_index(film_list: list[FilmPage], now: datetime) -> list[dict]:
         if page.film and page.film.letterboxd_count:
             entry["lb_count"] = page.film.letterboxd_count
     return index
+
+
+def alert_feed(film_list: list[FilmPage]) -> list[dict]:
+    """alerts.json: every upcoming screening of every film, with when cineclock
+    first saw it, for the email alerts the Worker sends (relay/alerts.js)."""
+    feed = []
+    for page in film_list:
+        poster = page.poster_url
+        feed.append(
+            {
+                "slug": page.slug,
+                "title": page.title,
+                "year": page.year,
+                "imdb": page.film.imdb_id if page.film else None,
+                "poster": poster if poster and poster.startswith("http") else None,
+                "screenings": [
+                    {
+                        "at": s.starts_at.isoformat(),
+                        "venue": s.venue,
+                        "room": room_label(s.venue, s.room) or None,
+                        "url": s.url,
+                        "status": s.status,
+                        "seen": s.first_seen.isoformat() if s.first_seen else None,
+                    }
+                    for s in sorted(page.screenings, key=lambda s: s.starts_at)
+                ],
+            }
+        )
+    return feed
 
 
 def updated_label(now: datetime) -> str:
@@ -125,6 +154,7 @@ def pages(conn: Connection, now: datetime) -> dict[str, str]:
 
     out["theatres/index.html"] = render("theatres.html", "theatres/index.html", current="theatres")
     out["films.json"] = json.dumps(shelf_index(film_list, now), separators=(",", ":"))
+    out["alerts.json"] = json.dumps(alert_feed(film_list), separators=(",", ":"))
     for user in profiles.SYNCED:
         stored = db.load_profile(conn, user)
         if not stored:

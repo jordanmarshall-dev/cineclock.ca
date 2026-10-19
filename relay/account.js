@@ -13,7 +13,10 @@
 //   POST   /me/saved      { items: [{ kind, ref }] }   merge saves made signed out
 //   PUT    /me/settings   { rating_source?, letterboxd? }
 //   PUT    /me/imdb       { ids: ["tt0000001", ...] }  replace the IMDb watchlist
+//   PUT    /me/alerts     { enabled?, added?, last?, imdb? }   email alert settings
+//   POST   /me/alerts/test                 email a test alert now
 //   DELETE /me                             delete the account and everything in it
+//   GET|POST /alerts/off?u=&t=             one-tap unsubscribe from an alert email
 
 export const GOOGLE_CLIENT_ID =
   "358607256767-mkorjtl09q7ii10nuhfo1fesjfcvgnnv.apps.googleusercontent.com";
@@ -36,6 +39,8 @@ const IMDB_ID = /^tt\d{5,10}$/;
 const LETTERBOXD_USER = /^[A-Za-z0-9_]{1,30}$/;
 const MAX_IMDB = 10000;
 const MAX_MERGE = 500;
+
+import { ALERT_SCHEMA, DEFAULT_ALERTS, sendTest, unsubscribe } from "./alerts.js";
 
 const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS users (
@@ -70,7 +75,7 @@ const schemaReady = new WeakMap();
 async function setup(db) {
   // Tables are created the first time this Worker instance touches the database.
   if (!schemaReady.has(db)) {
-    const ready = db.batch(SCHEMA.map((sql) => db.prepare(sql))).catch((error) => {
+    const ready = db.batch([...SCHEMA, ...ALERT_SCHEMA].map((sql) => db.prepare(sql))).catch((error) => {
       schemaReady.delete(db);
       throw error;
     });
@@ -197,14 +202,25 @@ async function everything(db, user) {
     .all();
   for (const row of rows.results) saved[row.kind]?.push(row.ref);
   const imdb = await db.prepare("SELECT imdb_id FROM imdb WHERE user_id = ?").bind(user.id).all();
+  const row = await alertSettings(db, user.id);
   return {
     email: user.email,
     letterboxd: user.letterboxd,
     rating_source: user.rating_source,
     saved,
     imdb: imdb.results.map((r) => r.imdb_id),
+    alerts: row
+      ? { enabled: Boolean(row.enabled), added: Boolean(row.added), last: Boolean(row.last), imdb: Boolean(row.imdb) }
+      : DEFAULT_ALERTS,
+    email_ready: emailReady,
   };
 }
+
+// Whether the Worker has an email key, so the page can say alerts aren't live yet.
+let emailReady = false;
+
+const alertSettings = (db, userId) =>
+  db.prepare("SELECT * FROM alert_settings WHERE user_id = ?").bind(userId).first();
 
 async function signIn(db, body, now, fetcher) {
   const { claims, reason } = await checkGoogleToken(body?.credential, await googleKeys(fetcher, now), now);
@@ -244,6 +260,12 @@ async function route(request, env, { now = Date.now(), fetcher = fetch } = {}) {
   const url = new URL(request.url);
   const origin = request.headers.get("Origin") || "";
   if (request.method === "OPTIONS") return preflight(origin);
+  emailReady = Boolean(env.RESEND_API_KEY);
+  // Mail apps post here with no Origin, so this comes before the origin check.
+  if (url.pathname.replace(/\/+$/, "") === "/alerts/off") {
+    await setup(env.DB);
+    return unsubscribe(request, env.DB);
+  }
   // Anything that changes data must come from the site itself.
   if (request.method !== "GET" && !SITE_ORIGINS.includes(origin)) {
     return reply({ error: "forbidden" }, 403, origin);
@@ -285,7 +307,7 @@ async function route(request, env, { now = Date.now(), fetcher = fetch } = {}) {
 
   if (path === "/me" && request.method === "DELETE") {
     await db.batch(
-      ["sessions", "saved", "imdb"].map((table) =>
+      ["sessions", "saved", "imdb", "alert_settings", "alerts_sent"].map((table) =>
         db.prepare(`DELETE FROM ${table} WHERE user_id = ?`).bind(user.id),
       ).concat(db.prepare("DELETE FROM users WHERE id = ?").bind(user.id)),
     );
@@ -336,7 +358,41 @@ async function route(request, env, { now = Date.now(), fetcher = fetch } = {}) {
     return reply(await everything(db, user), 200, origin);
   }
 
+  if (path === "/me/alerts" && request.method === "PUT") {
+    const current = (await alertSettings(db, user.id)) || { ...DEFAULT_ALERTS, since: null, token: null };
+    const next = {};
+    for (const key of ["enabled", "added", "last", "imdb"]) {
+      const value = body?.[key] === undefined ? Boolean(current[key]) : body[key];
+      if (typeof value !== "boolean") return reply({ error: "bad request" }, 400, origin);
+      next[key] = value;
+    }
+    // Turning alerts on starts the clock: only screenings found from now on are news.
+    const since = next.enabled && !current.enabled ? stamp : current.since;
+    const token = current.token || toBase64url(crypto.getRandomValues(new Uint8Array(24)));
+    await db
+      .prepare(
+        `INSERT INTO alert_settings (user_id, enabled, added, last, imdb, since, token) VALUES (?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT (user_id) DO UPDATE SET enabled = excluded.enabled, added = excluded.added,
+           last = excluded.last, imdb = excluded.imdb, since = excluded.since, token = excluded.token`,
+      )
+      .bind(user.id, +next.enabled, +next.added, +next.last, +next.imdb, since, token)
+      .run();
+    return reply(await everything(db, user), 200, origin);
+  }
+
+  if (path === "/me/alerts/test" && request.method === "POST") {
+    const settings = await alertSettings(db, user.id);
+    if (!settings?.token) return reply({ error: "turn on alerts first" }, 400, origin);
+    if (!env.RESEND_API_KEY) return reply({ error: "email isn't set up yet" }, 503, origin);
+    try {
+      await sendTest(env, user, settings, { now, fetcher });
+    } catch (error) {
+      return reply({ error: String(error.message || error) }, 400, origin);
+    }
+    return reply({ ok: true, to: user.email }, 200, origin);
+  }
+
   return reply({ error: "not found" }, 404, origin);
 }
 
-export const isAccountPath = (pathname) => /^\/(auth|me)(\/|$)/.test(pathname);
+export const isAccountPath = (pathname) => /^\/(auth|me|alerts)(\/|$)/.test(pathname);

@@ -1068,3 +1068,24 @@ def test_every_page_has_the_header_account_link(conn):
     assert 'data-account-link aria-label="Sign in"' in built["films/index.html"]
     assert 'href="../me/" data-account-link' in built["films/index.html"]
     assert 'data-account-link aria-label="Sign in" aria-current="page"' in built["me/index.html"]
+
+
+def test_alerts_feed_lists_each_screening_with_when_it_was_first_seen(conn):
+    import json
+
+    save(conn, show("Jaws", at(19, 19), year=1975), show("Jaws", at(21, 19), year=1975))
+    db.save_film(conn, film("Jaws", 1975, 1, imdb_id="tt0073195"))
+    [entry] = json.loads(pages(conn, NOW)["alerts.json"])
+    assert entry["slug"] == "jaws-1975" and entry["imdb"] == "tt0073195"
+    assert [s["venue"] for s in entry["screenings"]] == ["The Rio", "The Rio"]
+    first, last = entry["screenings"]
+    assert first["at"] < last["at"] and first["seen"] == NOW.isoformat()
+    assert first["url"].startswith("http")
+
+
+def test_account_page_has_alert_settings(conn):
+    page = pages(conn, NOW)["me/index.html"]
+    assert 'id="me-alerts-on"' in page and 'role="switch"' in page
+    for name in ("last", "added", "imdb"):
+        assert f'<input type="checkbox" name="{name}">' in page
+    assert 'id="me-alerts-test"' in page

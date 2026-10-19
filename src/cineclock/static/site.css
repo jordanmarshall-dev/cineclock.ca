@@ -1888,3 +1888,78 @@ a:focus-visible,
   .account-link .account-text { display: none; }
   .account-initial { width: 1.875rem; height: 1.875rem; font-size: 0.875rem; }
 }
+
+/* Your cineclock: account card, headings, and settings cards. */
+.account-card {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  max-width: 40rem;
+  margin-top: 1.5rem;
+  padding: 1rem 1.125rem;
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+.account-initial-lg { width: 2.75rem; height: 2.75rem; font-size: 1.125rem; flex: none; }
+.account-card-who { display: grid; flex: 1; min-width: 0; margin: 0; }
+.account-card-who b { overflow: hidden; color: var(--white); text-overflow: ellipsis; white-space: nowrap; }
+.account-card-who .meta { font-size: 0.8125rem; }
+
+.me-heading { display: flex; align-items: center; gap: 0.5rem; margin: 0 0 0.75rem; color: var(--bright); font-size: 1.125rem; }
+.me-heading .icon { color: #6fd3a4; }
+.me-heading.me-subhead { margin-top: 2rem; }
+.me-heading.me-subhead .icon { color: var(--accent-text); }
+.me-settings-title { margin: 3rem 0 0; color: var(--white); font: 700 1.5rem/1.2 var(--serif); }
+
+.settings-card {
+  max-width: 40rem;
+  margin-top: 1rem;
+  padding: 1.25rem;
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+.settings-card + .settings-card { margin-top: 0.75rem; }
+.me-settings-title + .settings-card { margin-top: 1rem; }
+.settings-card h3 { margin: 0; color: var(--white); font-size: 1.0625rem; }
+.settings-note { margin: 0.375rem 0 1rem; color: var(--text); font-size: 0.875rem; line-height: 1.5; }
+.settings-note b { color: var(--bright); font-weight: 600; }
+.settings-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.settings-head .settings-note { margin-bottom: 0; }
+.settings-card .me-form { margin-top: 0; }
+.settings-card .source-picker { margin-top: 0; }
+.settings-card .me-bar { margin: 0; }
+
+.settings-options { display: grid; gap: 0.25rem; margin: 1rem 0 0; padding: 1rem 0 0; border: 0; border-top: 1px solid var(--panel-line); }
+.settings-options.is-off { opacity: 0.5; }
+.check { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.5rem 0; cursor: pointer; }
+.check input { flex: none; width: 1.125rem; height: 1.125rem; margin: 0.125rem 0 0; accent-color: var(--accent); }
+.check span { display: grid; gap: 0.125rem; color: var(--text); font-size: 0.8125rem; line-height: 1.45; }
+.check b { color: var(--bright); font-size: 0.9375rem; font-weight: 600; }
+.settings-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin-top: 1rem; }
+.settings-foot .filter-status { margin: 0; }
+.me-button-quiet { border-color: var(--line); background: none; color: var(--bright); }
+.me-button-quiet:hover { border-color: var(--text); }
+
+/* A plain on/off switch. */
+.switch { position: relative; flex: none; width: 2.75rem; height: 1.625rem; cursor: pointer; }
+.switch input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.switch span { position: absolute; inset: 0; border-radius: 999px; background: var(--line); transition: background-color 150ms; }
+.switch span::after {
+  content: "";
+  position: absolute;
+  top: 0.1875rem;
+  left: 0.1875rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  background: var(--white);
+  transition: transform 150ms;
+}
+.switch input:checked + span { background: var(--accent); }
+.switch input:checked + span::after { transform: translateX(1.125rem); }
+.switch input:focus-visible + span { outline: 2px solid var(--accent-text); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .switch span, .switch span::after { transition: none; }
+}

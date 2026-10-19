@@ -12,6 +12,7 @@
 // the rest), and the diary feed. Answers are cached for six hours.
 
 import { handleAccount, isAccountPath } from "./account.js";
+import { runAlerts } from "./alerts.js";
 
 const BASE = "https://letterboxd.com";
 const ALLOWED_ORIGINS = [
@@ -113,6 +114,12 @@ function respond(body, status, origin) {
 }
 
 export default {
+  // Email alerts, a few times each morning (wrangler.toml's crons).
+  async scheduled(event, env, ctx) {
+    if (!env.DB) return;
+    ctx.waitUntil(runAlerts(env).then((done) => console.log("alerts:", JSON.stringify(done))));
+  },
+
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     if (isAccountPath(url.pathname)) {

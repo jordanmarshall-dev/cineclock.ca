@@ -16,3 +16,8 @@ workers_dev = true
 binding = "DB"
 database_name = "cineclock"
 database_id = "11e99609-9a00-47eb-b7d2-2d7124b5b92e"
+
+# Email alerts: hourly from 9 to 4 Vancouver time (UTC-7 all year), each run
+# checking a handful of users who haven't been checked yet today.
+[triggers]
+crons = ["5 16-23 * * *"]

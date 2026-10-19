@@ -165,6 +165,19 @@
     changed();
   }
 
+  async function setAlerts(values) {
+    account = await call("PUT", "/me/alerts", values);
+    changed();
+  }
+
+  // Throws with the server's own words ("turn on alerts first") when it can't send.
+  async function testAlert() {
+    const response = await send(base, "POST", "/me/alerts/test", {});
+    const answer = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(answer.error || "the test didn't send");
+    return answer;
+  }
+
   async function setImdb(ids) {
     account = await call("PUT", "/me/imdb", { ids });
     changed();
@@ -222,6 +235,8 @@
     deleteAccount,
     toggle,
     settings,
+    setAlerts,
+    testAlert,
     setImdb,
     imdbIds,
     source,
