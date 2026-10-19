@@ -330,6 +330,7 @@ VENUES = [
                     "https://thecinematheque.ca/about/visit",
                     "https://thecinematheque.ca/about",
                 ),
+                photo=Photo("The Cinematheque inside 2025.jpg", "Canmenwalker", "CC BY 4.0"),
             ),
         ),
         mark="cinematheque-mark.png",
@@ -366,6 +367,7 @@ VENUES = [
                     "Sound": "7.1",
                 },
                 sources=("https://viff.org/rent-our-venue/",),
+                photo=Photo("VIFF Centre.jpg", "EHad2535", "CC BY-SA 4.0"),
             ),
             Room(
                 "viff-lochmaddy",

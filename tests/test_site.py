@@ -694,7 +694,8 @@ def test_theatre_page_frames_the_inside_photo_beside_the_specs(conn, photos):
     page = pages(conn, NOW)["theatres/rio/index.html"]
     assert 'class="room-photo"' in page and "static/rooms/rio-main.jpg" in page
     viff = pages(conn, NOW)["theatres/viff-centre/index.html"]
-    assert 'class="room-photo"' not in viff
+    assert "static/rooms/viff-main.jpg" in viff
+    assert "static/rooms/viff-lochmaddy.jpg" not in viff
 
 
 def test_theatre_page_has_the_date_picker(conn):
@@ -951,7 +952,7 @@ def test_every_photo_has_an_author_and_a_known_licence():
 
 
 def test_photos_show_only_with_their_credit(conn, photos):
-    (photos / "rooms" / "viff-main.jpg").write_bytes(b"jpg")
+    (photos / "rooms" / "viff-lochmaddy.jpg").write_bytes(b"jpg")
     save(conn, show("Musk", at(18, 12)))
     built = pages(conn, NOW)
 
@@ -960,7 +961,7 @@ def test_photos_show_only_with_their_credit(conn, photos):
     assert rio.count('class="photo-credit"') == 2
     assert "Canmenwalker</a>" in rio and "CC BY 4.0</a>, toned" in rio
     # A photo file with no credit in venues.py is never shown.
-    assert "static/rooms/viff-main.jpg" not in built["theatres/viff-centre/index.html"]
+    assert "static/rooms/viff-lochmaddy.jpg" not in built["theatres/viff-centre/index.html"]
     assert "Rio photo:" in built["theatres/index.html"]
 
 
@@ -1055,3 +1056,8 @@ def test_highly_rated_rail_has_the_id_the_rating_switch_looks_for(conn):
     save(conn, show("Jaws", at(19, 19), year=1975))
     db.save_film(conn, film("Jaws", 1975, 1, letterboxd_rating=4.0, letterboxd_count=900000))
     assert 'aria-labelledby="rail-highly-rated"' in pages(conn, NOW)["index.html"]
+
+
+def test_a_theatre_without_a_photo_gets_the_designed_card(conn):
+    page = pages(conn, NOW)["theatres/index.html"]
+    assert page.count("theatre-card-art no-photo") == 1  # only the Dunbar, for now
