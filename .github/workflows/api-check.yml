@@ -1,0 +1,20 @@
+name: API check
+
+# Run by hand to see how api.cineclock.ca answers from outside: DNS, TLS and
+# the sign-in service's reply.
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: DNS
+        run: |
+          dig +short NS cineclock.ca @1.1.1.1
+          echo "api A:"; dig +short A api.cineclock.ca @1.1.1.1
+          echo "api AAAA:"; dig +short AAAA api.cineclock.ca @1.1.1.1
+          echo "api via Google:"; dig +short A api.cineclock.ca @8.8.8.8
+          echo "authoritative:"; dig +short A api.cineclock.ca @alexis.ns.cloudflare.com
+      - name: Request
+        run: curl -sS -m 20 -v https://api.cineclock.ca/me 2>&1 | tail -25 || true
