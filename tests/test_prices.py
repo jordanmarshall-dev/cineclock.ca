@@ -113,3 +113,13 @@ def test_saved_prices_replace_the_copy_in_venues(conn):
     assert current["The Rio"] == newer
     assert current["VIFF Centre"] == BY_NAME["VIFF Centre"].prices
     assert current["The Dunbar"].origin  # third-party prices say where they're from
+
+
+def test_a_saved_read_without_ticket_prices_is_read_again(conn, fixture_text):
+    membership_only = prices.Prices(deals=(Price("Rio and Park membership", "$30 a year"),))
+    db.save_prices(conn, "The Park", prices.to_json(membership_only), NOW)
+    with pages_client({prices.RIO_URL: fixture_text("prices/rio.html")}) as client:
+        scrape.refresh_prices(conn, client, NOW + timedelta(days=1))
+    data, fetched = db.load_prices(conn)["The Park"]
+    assert fetched == NOW + timedelta(days=1)
+    assert prices.from_json(data).tickets

@@ -65,7 +65,10 @@ def refresh_prices(conn, client, now) -> None:
     """Re-read each theatre's price page once its saved prices are a month old."""
     stored = db.load_prices(conn)
     for venue in prices.SOURCES:
-        if venue in stored and now - stored[venue][1] < prices.REFRESH:
+        # A saved read with no ticket prices (an older parser's, or a half-read page) is
+        # retried every run rather than kept for a month.
+        fresh = venue in stored and now - stored[venue][1] < prices.REFRESH
+        if fresh and stored[venue][0].get("tickets"):
             print(f"{venue} prices: up to date")
             continue
         try:
