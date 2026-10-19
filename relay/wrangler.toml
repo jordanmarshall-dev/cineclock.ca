@@ -7,6 +7,8 @@ compatibility_date = "2026-10-01"
 
 # Accounts answer at api.cineclock.ca, on the site's own domain, so the sign-in
 # cookie counts as first-party. The old workers.dev address keeps working.
+# Each deploy (re)creates this custom domain and its DNS record; the first one
+# ran before the cineclock.ca zone was active, so it never got a DNS record.
 routes = [{ pattern = "api.cineclock.ca", custom_domain = true }]
 workers_dev = true
 
