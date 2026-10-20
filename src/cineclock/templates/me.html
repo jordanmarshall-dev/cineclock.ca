@@ -274,12 +274,12 @@
           value.user === "file" ? `Uploaded list, <b>${films}</b>`
           : value.error === "private" ? `<b>${value.user}</b>: this watchlist is private. Make it public on IMDb, then connect again.`
           : value.ready ? `Connected as <b>${value.user}</b>, ${films}`
-          : `Connected as <b>${value.user}</b>. Reading your watchlist; this takes up to 15 minutes the first time.`;
+          : `Connected as <b>${value.user}</b>. Reading your watchlist, usually within a couple of minutes.`;
         if (value.user !== "file" && !value.ready && !imdbTimer) {
           imdbTimer = setTimeout(() => {
             imdbTimer = null;
             checkImdb();
-          }, 60 * 1000);
+          }, 15 * 1000);
         }
       }
     }

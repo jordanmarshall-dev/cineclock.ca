@@ -52,6 +52,12 @@ async function githubToken(claims = {}) {
   return `${head}.${body}.${Buffer.from(signature).toString("base64url")}`;
 }
 
+const started = [];
+const fakeGithub = async (url, init) => {
+  started.push({ url, auth: init.headers.Authorization, body: init.body });
+  return new Response(null, { status: 204 });
+};
+
 async function call(env, method, path, { body, token, origin = "https://cineclock.ca", now = NOW } = {}) {
   const headers = { Origin: origin };
   if (token) headers.Authorization = `Bearer ${token}`;
@@ -60,7 +66,7 @@ async function call(env, method, path, { body, token, origin = "https://cinecloc
     headers,
     body: body === undefined ? undefined : JSON.stringify(body),
   });
-  const response = await handleImdb(request, env, { now, keys });
+  const response = await handleImdb(request, env, { now, keys, fetcher: fakeGithub });
   return { status: response.status, json: await response.json() };
 }
 
@@ -110,4 +116,24 @@ await call(env, "POST", "/imdb/connect", { body: { user: "ur12345678" } });
 assert.deepEqual((await call(env, "GET", "/imdb/wanted", { token })).json.users, ["ur12345678"]);
 
 assert.equal((await call(env, "GET", "/imdb/ur5555555")).status, 404);
+
+// Without a GitHub token, connecting just waits for the next scheduled run.
+assert.equal(started.length, 0);
+
+// With one, a new list starts the job straight away, at most once a minute.
+const live = { DB: fakeD1(), GITHUB_TOKEN: "ghp_test" };
+await call(live, "POST", "/imdb/connect", { body: { user: "ur1111111" } });
+await call(live, "POST", "/imdb/connect", { body: { user: "ur2222222" }, now: NOW + 30 * 1000 });
+assert.equal(started.length, 1);
+assert.match(started[0].url, /yogzoth\/cineclock\/actions\/workflows\/imdb-sync.yml\/dispatches$/);
+assert.equal(started[0].auth, "Bearer ghp_test");
+assert.deepEqual(JSON.parse(started[0].body), { ref: "main" });
+await call(live, "POST", "/imdb/connect", { body: { user: "ur2222222" }, now: NOW + 61 * 1000 });
+assert.equal(started.length, 2);
+
+// A list that's already been read doesn't start it.
+const liveToken = await githubToken({ exp: NOW / 1000 + 3600 });
+await call(live, "PUT", "/imdb/lists", { token: liveToken, body: { lists: [{ user: "ur1111111", ids: [] }] }, now: NOW + 2 * 60 * 1000 });
+await call(live, "POST", "/imdb/connect", { body: { user: "ur1111111" }, now: NOW + 5 * 60 * 1000 });
+assert.equal(started.length, 2);
 console.log("imdb tests passed");

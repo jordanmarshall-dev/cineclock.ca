@@ -9,6 +9,10 @@
 //   GET  /imdb/wanted              lists due a read      (GitHub job only)
 //   PUT  /imdb/lists    { lists }  the job's results     (GitHub job only)
 //
+// The job runs every 10 minutes. When someone connects a list that hasn't been
+// read yet, the Worker also starts it straight away (needs the GITHUB_TOKEN
+// secret: a token that can run this repo's workflows), at most once a minute.
+//
 // The job proves who it is with a GitHub OIDC token: a JWT GitHub signs for
 // one run of one repository, so no shared secret is needed.
 
@@ -27,13 +31,41 @@ const FORGET = 60 * 24 * HOUR;
 const MAX_LISTS = 2000;
 const MAX_TITLES = 10000;
 
-const SCHEMA = `CREATE TABLE IF NOT EXISTS imdb_lists (
-  user TEXT PRIMARY KEY,
-  ids TEXT,
-  error TEXT,
-  updated INTEGER,
-  requested INTEGER NOT NULL
-)`;
+const SCHEMA = [
+  `CREATE TABLE IF NOT EXISTS imdb_lists (
+    user TEXT PRIMARY KEY,
+    ids TEXT,
+    error TEXT,
+    updated INTEGER,
+    requested INTEGER NOT NULL
+  )`,
+  "CREATE TABLE IF NOT EXISTS imdb_runs (id INTEGER PRIMARY KEY CHECK (id = 1), started INTEGER NOT NULL)",
+];
+
+const WORKFLOW = `https://api.github.com/repos/${REPOSITORY}/actions/workflows/imdb-sync.yml/dispatches`;
+
+// Start the sync job now, unless it was started in the last minute.
+export async function startSync(env, now, fetcher = fetch) {
+  if (!env.GITHUB_TOKEN) return false;
+  const claimed = await env.DB.prepare(
+    `INSERT INTO imdb_runs (id, started) VALUES (1, ?)
+     ON CONFLICT(id) DO UPDATE SET started = excluded.started WHERE started < ?`,
+  )
+    .bind(now, now - 60 * 1000)
+    .run();
+  if (!claimed.meta?.changes && !claimed.changes) return false;
+  const response = await fetcher(WORKFLOW, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${env.GITHUB_TOKEN}`,
+      Accept: "application/vnd.github+json",
+      "User-Agent": "cineclock-relay",
+    },
+    body: JSON.stringify({ ref: "main" }),
+  });
+  if (!response.ok) console.log("imdb sync start:", response.status, await response.text());
+  return response.ok;
+}
 
 // "ur12345678", a profile id like "p.h2ouytvlcs...", or any IMDb link with one in it.
 export function imdbUser(text) {
@@ -93,7 +125,7 @@ export async function handleImdb(request, env, { now = Date.now(), fetcher = fet
   const origin = request.headers.get("Origin") || "";
   if (request.method === "OPTIONS") return preflight(origin);
   const db = env.DB;
-  await db.prepare(SCHEMA).run();
+  await db.batch(SCHEMA.map((sql) => db.prepare(sql)));
   const path = new URL(request.url).pathname.replace(/\/+$/, "");
 
   if (path === "/imdb/connect" && request.method === "POST") {
@@ -114,6 +146,7 @@ export async function handleImdb(request, env, { now = Date.now(), fetcher = fet
       .bind(user, now)
       .run();
     const row = await db.prepare("SELECT * FROM imdb_lists WHERE user = ?").bind(user).first();
+    if (!row.updated) await startSync(env, now, fetcher).catch((error) => console.log("imdb sync start:", error));
     return reply(shown(row), 200, origin);
   }
 

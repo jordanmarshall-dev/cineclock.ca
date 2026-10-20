@@ -86,7 +86,7 @@
   async function imdbFresh() {
     const value = imdbSaved();
     if (!value || value.user === "file") return value;
-    const wait = value.ready ? 3 * 3600 * 1000 : 60 * 1000;
+    const wait = value.ready ? 3 * 3600 * 1000 : 15 * 1000;
     if (Date.now() - (value.at || 0) < wait) return value;
     try {
       const fresh = await imdbCall("GET", `/imdb/${value.user}`);
