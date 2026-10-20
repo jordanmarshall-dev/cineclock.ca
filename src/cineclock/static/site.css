@@ -2195,3 +2195,14 @@ a:focus-visible,
   .spotlight-venues img { width: var(--w, 200px); }
   .spotlight-when { font-size: 0.9375rem; }
 }
+
+/* A connected watchlist: logo, who, one quiet line, and Disconnect. */
+.dash-connect .dash-service:has(.dash-service-row:not([hidden])) { align-items: center; padding: 0.875rem 1rem; }
+.dash-connect .dash-service:has(.dash-service-row:not([hidden])) .dash-service-body > b { display: none; }
+.dash-connect .dash-service-logo { padding: 0; background: none; width: 2.25rem; height: 2.25rem; }
+.dash-who-line { display: grid; min-width: 0; gap: 0.0625rem; }
+.dash-name { overflow: hidden; color: var(--white); font-size: 0.9375rem; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.dash-sub { color: var(--text); font-size: 0.8125rem; }
+.dash-service-row { flex-wrap: nowrap; }
+.dash-service-row .clear { flex: none; margin: 0; padding: 0.375rem 0.75rem; border: 1px solid var(--line); border-radius: 999px; color: var(--text); font-size: 0.8125rem; text-decoration: none; }
+.dash-service-row .clear:hover { border-color: var(--text); color: var(--bright); }

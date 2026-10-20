@@ -41,7 +41,7 @@
           <p class="filter-status" id="me-message" aria-live="polite"></p>
         </div>
         <div id="me-connected" class="dash-service-row" hidden>
-          <span class="meta">Connected as <b id="me-name"></b></span>
+          <span class="dash-who-line"><b class="dash-name" id="me-name"></b><span class="dash-sub">Watchlist and films seen</span></span>
           <button type="button" class="clear" id="me-disconnect">Disconnect</button>
         </div>
       </div>
@@ -68,7 +68,7 @@
           </details>
         </div>
         <div id="me-imdb-connected" class="dash-service-row" hidden>
-          <span class="meta" id="me-imdb-status"></span>
+          <span class="dash-who-line" id="me-imdb-status"></span>
           <button type="button" class="clear" id="me-imdb-disconnect">Disconnect</button>
         </div>
       </div>
@@ -270,11 +270,14 @@
       if (value) {
         const n = value.ids.length;
         const films = `${n} ${n === 1 ? "film" : "films"}`;
-        $("me-imdb-status").innerHTML =
-          value.user === "file" ? `Uploaded list, <b>${films}</b>`
-          : value.error === "private" ? `<b>${value.user}</b>: this watchlist is private. Make it public on IMDb, then connect again.`
-          : value.ready ? `Connected as <b>${value.name || value.user}</b>, ${films}`
-          : `Connected as <b>${value.name || value.user}</b>. Reading your watchlist, usually within a couple of minutes.`;
+        const [name, sub] =
+          value.user === "file" ? ["Uploaded list", `${films} on your watchlist`]
+          : value.error === "private" ? [value.name || value.user, "Watchlist is private. Make it public on IMDb, then reconnect."]
+          : value.ready ? [value.name || value.user, `${films} on your watchlist`]
+          : [value.name || "Connecting", "Reading your watchlist..."];
+        $("me-imdb-status").innerHTML = `<b class="dash-name"></b><span class="dash-sub"></span>`;
+        $("me-imdb-status").firstChild.textContent = name;
+        $("me-imdb-status").lastChild.textContent = sub;
         if (value.user !== "file" && !value.ready && !imdbTimer) {
           imdbTimer = setTimeout(() => {
             imdbTimer = null;
@@ -303,6 +306,7 @@
       const value = me.saved();
       $("me-connected").hidden = !value;
       $("me-connect").hidden = Boolean(value);
+      if (value) $("me-name").textContent = value.user;
       letterboxd = {};
       if (value) {
         try {
