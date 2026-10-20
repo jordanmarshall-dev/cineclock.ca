@@ -67,7 +67,11 @@ def request(
         url,
         data=data,
         method=method,
-        headers={"Content-Type": "application/json", **(headers or {})},
+        headers={
+            "Content-Type": "application/json",
+            "User-Agent": "cineclock-imdb-sync",
+            **(headers or {}),
+        },
     )
     with urllib.request.urlopen(req, timeout=30) as response:
         return json.load(response)
