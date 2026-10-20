@@ -72,7 +72,7 @@ const SCHEMA = [
 
 const schemaReady = new WeakMap();
 
-async function setup(db) {
+export async function setup(db) {
   // Tables are created the first time this Worker instance touches the database.
   if (!schemaReady.has(db)) {
     const ready = db.batch([...SCHEMA, ...ALERT_SCHEMA].map((sql) => db.prepare(sql))).catch((error) => {
@@ -96,7 +96,7 @@ export async function googleKeys(fetcher = fetch, now = Date.now()) {
   return keys;
 }
 
-function fromBase64url(text) {
+export function fromBase64url(text) {
   const base64 = text.replace(/-/g, "+").replace(/_/g, "/");
   const binary = atob(base64 + "=".repeat((4 - (base64.length % 4)) % 4));
   return Uint8Array.from(binary, (c) => c.charCodeAt(0));
@@ -106,7 +106,7 @@ function toBase64url(bytes) {
   return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
-const decodeJson = (part) => JSON.parse(new TextDecoder().decode(fromBase64url(part)));
+export const decodeJson = (part) => JSON.parse(new TextDecoder().decode(fromBase64url(part)));
 
 // Returns the token's claims if Google signed it for cineclock and it hasn't
 // expired; otherwise null.
@@ -166,7 +166,7 @@ function sessionCookie(id, maxAge) {
   return `${COOKIE}=${id}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`;
 }
 
-function reply(body, status, origin, extra = {}) {
+export function reply(body, status, origin, extra = {}) {
   const headers = { "Content-Type": "application/json", "Cache-Control": "no-store", Vary: "Origin", ...extra };
   if (SITE_ORIGINS.includes(origin)) {
     headers["Access-Control-Allow-Origin"] = origin;
@@ -175,7 +175,7 @@ function reply(body, status, origin, extra = {}) {
   return new Response(body === null ? null : JSON.stringify(body), { status, headers });
 }
 
-function preflight(origin) {
+export function preflight(origin) {
   return reply(null, 204, origin, {
     "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",

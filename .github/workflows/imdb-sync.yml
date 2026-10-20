@@ -1,0 +1,27 @@
+name: IMDb sync
+
+# Reads the IMDb watchlists people connected on cineclock and hands them to the
+# Worker. IMDb's API answers GitHub's servers but not Cloudflare's, so this runs
+# here. Each list is read at most every six hours; new ones on the next run.
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: imdb-sync
+
+jobs:
+  sync:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: PYTHONPATH=src python -m cineclock.imdb_sync

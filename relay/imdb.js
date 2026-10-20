@@ -1,0 +1,162 @@
+// IMDb watchlists by username (an id like ur12345678; IMDb has no other kind).
+//
+// IMDb's API turns away Cloudflare's servers but answers GitHub's, so the
+// reading happens in a GitHub Actions job (.github/workflows/imdb-sync.yml)
+// and the lists are kept here:
+//
+//   POST /imdb/connect  { user }   ask for a watchlist; returns what's known so far
+//   GET  /imdb/<user>              the watchlist as last read
+//   GET  /imdb/wanted              lists due a read      (GitHub job only)
+//   PUT  /imdb/lists    { lists }  the job's results     (GitHub job only)
+//
+// The job proves who it is with a GitHub OIDC token: a JWT GitHub signs for
+// one run of one repository, so no shared secret is needed.
+
+import { decodeJson, fromBase64url, preflight, reply, SITE_ORIGINS } from "./account.js";
+
+const GITHUB_ISSUER = "https://token.actions.githubusercontent.com";
+const GITHUB_KEYS_URL = `${GITHUB_ISSUER}/.well-known/jwks`;
+export const AUDIENCE = "cineclock-relay";
+export const REPOSITORY = "yogzoth/cineclock";
+
+const USER = /^ur\d{4,12}$/;
+const TITLE = /^tt\d{5,10}$/;
+const HOUR = 3600 * 1000;
+const REFRESH = 6 * HOUR;
+const FORGET = 60 * 24 * HOUR;
+const MAX_LISTS = 2000;
+const MAX_TITLES = 10000;
+
+const SCHEMA = `CREATE TABLE IF NOT EXISTS imdb_lists (
+  user TEXT PRIMARY KEY,
+  ids TEXT,
+  error TEXT,
+  updated INTEGER,
+  requested INTEGER NOT NULL
+)`;
+
+// "ur12345678", or any IMDb link with one in it.
+export function imdbUser(text) {
+  const match = String(text || "").match(/\bur\d{4,12}\b/);
+  return match ? match[0] : null;
+}
+
+let keyCache = { keys: null, until: 0 };
+
+async function githubKeys(fetcher, now) {
+  if (keyCache.keys && now < keyCache.until) return keyCache.keys;
+  const response = await fetcher(GITHUB_KEYS_URL);
+  if (!response.ok) throw new Error(`GitHub keys: ${response.status}`);
+  const { keys } = await response.json();
+  keyCache = { keys, until: now + HOUR };
+  return keys;
+}
+
+// True when the request carries a token GitHub signed for a run in this repo.
+export async function fromOurJob(request, keys, now = Date.now()) {
+  const token = (request.headers.get("Authorization") || "").replace(/^Bearer /, "");
+  const parts = token.split(".");
+  if (parts.length !== 3) return false;
+  let header, claims;
+  try {
+    header = decodeJson(parts[0]);
+    claims = decodeJson(parts[1]);
+  } catch {
+    return false;
+  }
+  const jwk = keys.find((k) => k.kid === header.kid);
+  if (header.alg !== "RS256" || !jwk) return false;
+  const key = await crypto.subtle.importKey("jwk", jwk, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, [
+    "verify",
+  ]);
+  const signed = new TextEncoder().encode(`${parts[0]}.${parts[1]}`);
+  if (!(await crypto.subtle.verify("RSASSA-PKCS1-v1_5", key, fromBase64url(parts[2]), signed))) return false;
+  return (
+    claims.iss === GITHUB_ISSUER &&
+    claims.aud === AUDIENCE &&
+    claims.repository === REPOSITORY &&
+    claims.exp * 1000 > now
+  );
+}
+
+function shown(row) {
+  return {
+    user: row.user,
+    ids: row.ids ? JSON.parse(row.ids) : [],
+    ready: Boolean(row.updated),
+    updated: row.updated ? new Date(row.updated).toISOString() : null,
+    error: row.error || null,
+  };
+}
+
+export async function handleImdb(request, env, { now = Date.now(), fetcher = fetch, keys = null } = {}) {
+  const origin = request.headers.get("Origin") || "";
+  if (request.method === "OPTIONS") return preflight(origin);
+  const db = env.DB;
+  await db.prepare(SCHEMA).run();
+  const path = new URL(request.url).pathname.replace(/\/+$/, "");
+
+  if (path === "/imdb/connect" && request.method === "POST") {
+    if (!SITE_ORIGINS.includes(origin)) return reply({ error: "forbidden" }, 403, origin);
+    const body = await request.json().catch(() => ({}));
+    const user = imdbUser(body?.user);
+    if (!user) return reply({ error: "no IMDb user id" }, 400, origin);
+    const known = await db.prepare("SELECT * FROM imdb_lists WHERE user = ?").bind(user).first();
+    if (!known) {
+      const { count } = await db.prepare("SELECT COUNT(*) AS count FROM imdb_lists").first();
+      if (count >= MAX_LISTS) return reply({ error: "full" }, 503, origin);
+    }
+    await db
+      .prepare(
+        `INSERT INTO imdb_lists (user, requested) VALUES (?, ?) ON CONFLICT(user) DO UPDATE SET
+           requested = excluded.requested, updated = CASE WHEN error IS NULL THEN updated END`,
+      )
+      .bind(user, now)
+      .run();
+    const row = await db.prepare("SELECT * FROM imdb_lists WHERE user = ?").bind(user).first();
+    return reply(shown(row), 200, origin);
+  }
+
+  if (path === "/imdb/wanted" || path === "/imdb/lists") {
+    if (!(await fromOurJob(request, keys || (await githubKeys(fetcher, now)), now))) {
+      return reply({ error: "forbidden" }, 403, origin);
+    }
+    if (request.method === "GET" && path === "/imdb/wanted") {
+      const rows = await db
+        .prepare(
+          `SELECT user FROM imdb_lists WHERE requested > ? AND (updated IS NULL OR updated < ?)
+           ORDER BY updated IS NOT NULL, updated LIMIT 100`,
+        )
+        .bind(now - FORGET, now - REFRESH)
+        .all();
+      return reply({ users: rows.results.map((r) => r.user) }, 200, origin);
+    }
+    if (request.method === "PUT" && path === "/imdb/lists") {
+      const body = await request.json().catch(() => ({}));
+      const lists = Array.isArray(body?.lists) ? body.lists : [];
+      const updates = [];
+      for (const list of lists) {
+        if (!USER.test(list?.user)) continue;
+        const ids = Array.isArray(list.ids) ? list.ids.filter((id) => TITLE.test(id)).slice(0, MAX_TITLES) : null;
+        updates.push(
+          db
+            .prepare("UPDATE imdb_lists SET ids = COALESCE(?, ids), error = ?, updated = ? WHERE user = ?")
+            .bind(ids ? JSON.stringify(ids) : null, ids ? null : String(list.error || "unreadable").slice(0, 40), now, list.user),
+        );
+      }
+      if (updates.length) await db.batch(updates);
+      return reply({ saved: updates.length }, 200, origin);
+    }
+  }
+
+  const one = path.match(/^\/imdb\/(ur\d{4,12})$/);
+  if (one && request.method === "GET") {
+    const row = await db.prepare("SELECT * FROM imdb_lists WHERE user = ?").bind(one[1]).first();
+    if (!row) return reply({ error: "not connected" }, 404, origin);
+    return reply(shown(row), 200, origin);
+  }
+
+  return reply({ error: "not found" }, 404, origin);
+}
+
+export const isImdbPath = (pathname) => /^\/imdb(\/|$)/.test(pathname);

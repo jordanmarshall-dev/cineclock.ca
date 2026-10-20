@@ -51,19 +51,20 @@
       <div class="dash-service-body">
         <b>IMDb</b>
         <div id="me-imdb-connect">
-          <div class="dash-service-row">
-            <label class="me-button" for="me-imdb-file">Upload watchlist</label>
-            <input type="file" id="me-imdb-file" accept=".csv,text/csv" class="visually-hidden">
-          </div>
+          <form id="me-imdb-form" class="me-form">
+            <label class="search"><input name="user" placeholder="Profile link or ur number" aria-label="IMDb profile link or user number" autocapitalize="none" spellcheck="false" required></label>
+            <button type="submit" class="me-button">Connect</button>
+          </form>
           <p class="filter-status" id="me-imdb-message" aria-live="polite"></p>
           <details class="dash-help">
-            <summary>How to get the file</summary>
+            <summary>Where do I find it?</summary>
             <ol>
-              <li>On imdb.com, open your <b>Watchlist</b>.</li>
-              <li>Tap the <b>Export</b> icon (the arrow at the top of the list).</li>
-              <li>Open <b>Your exports</b> from the message IMDb shows, and download the file.</li>
-              <li>Upload it here. Do it again whenever your list changes.</li>
+              <li>On IMDb, open your profile or your Watchlist.</li>
+              <li>Copy the address. It has a number starting with <b>ur</b>.</li>
+              <li>Make sure the watchlist is public (Watchlist, then the settings icon).</li>
             </ol>
+            <p>Or <label class="dash-link" for="me-imdb-file">upload a CSV export</label> instead.</p>
+            <input type="file" id="me-imdb-file" accept=".csv,text/csv" class="visually-hidden">
           </details>
         </div>
         <div id="me-imdb-connected" class="dash-service-row" hidden>
@@ -216,14 +217,33 @@
       $("dash-calendar-grid").innerHTML = `<div class="cal-row cal-head"><span class="cal-title"></span><span class="cal-track">${head}</span></div>${body}`;
     }
 
+    let imdbTimer = null;
     function drawImdb() {
       const value = me.imdbSaved();
       $("me-imdb-connect").hidden = Boolean(value);
       $("me-imdb-connected").hidden = !value;
       if (value) {
         const n = value.ids.length;
-        $("me-imdb-status").innerHTML = `<b>${n} ${n === 1 ? "film" : "films"}</b> on your watchlist`;
+        const films = `${n} ${n === 1 ? "film" : "films"}`;
+        $("me-imdb-status").innerHTML =
+          value.user === "file" ? `Uploaded list, <b>${films}</b>`
+          : value.error === "private" ? `<b>${value.user}</b>: this watchlist is private. Make it public on IMDb, then connect again.`
+          : value.ready ? `Connected as <b>${value.user}</b>, ${films}`
+          : `Connected as <b>${value.user}</b>. Reading your watchlist; this takes up to 15 minutes the first time.`;
+        if (value.user !== "file" && !value.ready && !imdbTimer) {
+          imdbTimer = setTimeout(() => {
+            imdbTimer = null;
+            checkImdb();
+          }, 60 * 1000);
+        }
       }
+    }
+
+    async function checkImdb() {
+      const before = me.imdbSaved();
+      const after = await me.imdbFresh();
+      if (after && (after.ready !== before?.ready || after.error !== before?.error)) await keepImdb(after);
+      else drawImdb();
     }
 
     // Signed in: the account keeps the list too, so alerts can use it.
@@ -355,6 +375,24 @@
         location.reload();
       } catch (e) {
         alert("That didn't work. Try again, or email yogzoth@gmail.com and I'll delete it for you.");
+      }
+    });
+
+    $("me-imdb-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const user = (e.target.user.value.match(/\bur\d{4,12}\b/) || [])[0];
+      const message = $("me-imdb-message");
+      if (!user) {
+        message.textContent = "That needs the number starting with ur from your IMDb profile or watchlist link.";
+        return;
+      }
+      message.textContent = "Connecting...";
+      try {
+        const list = await me.imdbConnect(user);
+        message.textContent = "";
+        await keepImdb(list);
+      } catch (err) {
+        message.textContent = "Couldn't connect just now. Try again in a minute.";
       }
     });
 

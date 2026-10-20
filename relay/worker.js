@@ -12,6 +12,7 @@
 // the rest), and the diary feed. Answers are cached for six hours.
 
 import { handleAccount, isAccountPath } from "./account.js";
+import { handleImdb, isImdbPath } from "./imdb.js";
 import { runAlerts } from "./alerts.js";
 
 const BASE = "https://letterboxd.com";
@@ -122,6 +123,12 @@ export default {
 
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    if (isImdbPath(url.pathname)) {
+      if (!env?.DB) return respond({ error: "accounts aren't set up" }, 503, "");
+      return handleImdb(request, env).catch((error) =>
+        respond({ error: "server error", detail: String(error?.message || error) }, 500, request.headers.get("Origin") || ""),
+      );
+    }
     if (isAccountPath(url.pathname)) {
       if (!env?.DB) return respond({ error: "accounts aren't set up" }, 503, "");
       return handleAccount(request, env);

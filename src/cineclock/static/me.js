@@ -39,7 +39,8 @@
     }
   }
 
-  // An uploaded IMDb watchlist: { user: "file", ids: [...], at: when }.
+  // A connected IMDb watchlist: { user: "ur12345678", ids, ready, error, at },
+  // or { user: "file", ids } for an uploaded export.
   function imdbSaved() {
     try {
       const value = JSON.parse(localStorage.getItem(IMDB) || "null");
@@ -56,6 +57,44 @@
       return true;
     } catch (e) {
       return false;
+    }
+  }
+
+  // The Worker keeps IMDb lists (relay/imdb.js); a GitHub job reads them from IMDb.
+  async function imdbCall(method, path, body) {
+    const hosts = [document.body.dataset.api, RELAY].filter(Boolean);
+    for (const [i, host] of hosts.entries()) {
+      try {
+        const response = await fetch(host + path, {
+          method,
+          headers: body ? { "Content-Type": "application/json" } : {},
+          body: body ? JSON.stringify(body) : undefined,
+        });
+        if (response.status === 404) throw new Error("missing");
+        if (!response.ok) throw new Error("relay");
+        const list = await response.json();
+        return { ...list, at: Date.now() };
+      } catch (error) {
+        if (error.message === "missing" || i === hosts.length - 1) throw error;
+      }
+    }
+  }
+
+  const imdbConnect = (user) => imdbCall("POST", "/imdb/connect", { user });
+
+  // Check again every few minutes until the first read, then every few hours.
+  async function imdbFresh() {
+    const value = imdbSaved();
+    if (!value?.user.startsWith("ur")) return value;
+    const wait = value.ready ? 3 * 3600 * 1000 : 60 * 1000;
+    if (Date.now() - (value.at || 0) < wait) return value;
+    try {
+      const fresh = await imdbCall("GET", `/imdb/${value.user}`);
+      imdbSave(fresh);
+      return fresh;
+    } catch (e) {
+      if (e.message === "missing") return imdbConnect(value.user).then((v) => (imdbSave(v), v), () => value);
+      return value;
     }
   }
 
@@ -201,6 +240,7 @@
   async function withSaves(films) {
     const account = window.cineclockAccount;
     if (!account) return films;
+    await imdbFresh();
     const savedFilms = new Set(account.savedList("film"));
     const imdb = new Set([...(account.current?.imdb || []), ...(imdbSaved()?.ids || [])]);
     if (!savedFilms.size && !imdb.size) return films;
@@ -279,7 +319,7 @@
     document.dispatchEvent(new CustomEvent("cineclock:personal", { detail: me }));
   }
 
-  window.cineclockMe = { saved, save, load, cards, mark, root, withSaves, getJSON, imdbSaved, imdbSave };
+  window.cineclockMe = { saved, save, load, cards, mark, root, withSaves, getJSON, imdbSaved, imdbSave, imdbConnect, imdbFresh };
   document.addEventListener("cineclock:account", () => start());
   start();
 })();
