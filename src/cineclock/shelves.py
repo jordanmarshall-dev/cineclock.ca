@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from markupsafe import Markup
 
 from cineclock.listings import RARE, FilmPage, compact, last_day, when
-from cineclock.models import VANCOUVER
+from cineclock.models import VANCOUVER, Screening
 from cineclock.tags import EVENTS, ON_FILM, is_event
 from cineclock.timefmt import stamp
 from cineclock.venues import Venue
@@ -63,38 +63,79 @@ class Slide:
     page: FilmPage
     label: str
     when: str
+    at: Screening | None = None
+    # A lead slide stands until its last showing that day starts.
+    until: datetime | None = None
+
+    @property
+    def showing(self) -> Screening:
+        return self.at or self.page.next_showing
 
     @property
     def stamped(self) -> Markup:
-        return stamp(self.when, self.page.next_showing.starts_at, "card")
+        return stamp(self.when, self.showing.starts_at, "card")
+
+    @property
+    def run(self) -> str:
+        """How long it's around: "One showing only", "Oct 20 to Nov 2"."""
+        days = sorted({s.local_start.date() for s in self.page.screenings})
+        if len(self.page.screenings) == 1:
+            return "One showing only"
+        if len(days) == 1:
+            return f"{len(self.page.screenings)} showings, one day only"
+        first, last = days[0], days[-1]
+        end = f"{last.day}" if last.month == first.month else f"{last:%b} {last.day}"
+        return f"Playing {first:%b} {first.day} to {end}"
+
+
+def standout(p: FilmPage) -> str | None:
+    tags = p.tags
+    return next(
+        (t for t in tags if t in EVENTS),
+        next((t for t in tags if t in ON_FILM), next((t for t in tags if t in RARE), None)),
+    )
+
+
+def leads(film_list: list[FilmPage], now: datetime, days: int = 3) -> list[Slide]:
+    """The hero's first slide, one candidate per day: the best-rated film with art
+    playing that day. The page shows today's until its last showing tonight has
+    started, then moves on to the next day's."""
+    today = now.astimezone(VANCOUVER).date()
+    out = []
+    for offset in range(days):
+        day = today + timedelta(days=offset)
+        playing = {
+            id(p): (
+                p,
+                [s for s in p.screenings if s.local_start.date() == day and s.starts_at > now],
+            )
+            for p in film_list
+            if p.film and p.film.backdrop_url
+        }
+        playing = {k: v for k, v in playing.items() if v[1]}
+        if not playing:
+            continue
+        page, shows = max(
+            playing.values(), key=lambda v: (v[0].film.letterboxd_rating or 0, -len(v[1]))
+        )
+        label = "Tonight" if offset == 0 else "Tomorrow" if offset == 1 else f"{day:%A}"
+        first = min(shows, key=lambda s: s.starts_at)
+        out.append(Slide(page, label, when(first, now), first, max(s.starts_at for s in shows)))
+    return out
 
 
 def highlights(film_list: list[FilmPage], now: datetime, count: int = 3) -> list[Slide]:
-    """The home page hero: tonight's pick, then the standout things coming up in the
-    next two weeks (events, film prints, one-offs), best rated first, spread across
-    the theatres so one busy venue doesn't fill it. Only films with a backdrop
-    image, so every slide has full art. The page shuffles them on each visit."""
-    first = spotlight(film_list, now)
-    if not first:
-        return []
+    """The rest of the hero: films with art coming up in the next three weeks,
+    spread across the theatres so one busy venue doesn't fill it, standouts
+    (events, film prints, one-offs) and the best rated first. The page shows a
+    random few on each visit."""
     today = now.astimezone(VANCOUVER).date()
-    soon = today + timedelta(days=14)
-
-    def standout(p: FilmPage) -> str | None:
-        tags = p.tags
-        return next(
-            (t for t in tags if t in EVENTS),
-            next((t for t in tags if t in ON_FILM), next((t for t in tags if t in RARE), None)),
-        )
-
+    soon = today + timedelta(days=21)
     rest = sorted(
         (
             p
             for p in film_list
-            if p is not first
-            and p.film
-            and p.film.backdrop_url
-            and p.next_showing.local_start.date() <= soon
+            if p.film and p.film.backdrop_url and p.next_showing.local_start.date() <= soon
         ),
         key=lambda p: (
             standout(p) is None,
@@ -102,9 +143,8 @@ def highlights(film_list: list[FilmPage], now: datetime, count: int = 3) -> list
             p.next_showing.starts_at,
         ),
     )
-    on_today = first.next_showing.local_start.date() == today
-    slides = [Slide(first, "Tonight" if on_today else "Up next", when(first.next_showing, now))]
-    shown = Counter(v.slug for v in first.venues)
+    slides: list[Slide] = []
+    shown: Counter = Counter()
     while rest and len(slides) < count:
         # The best pick from whichever theatre has had the fewest slides so far.
         p = min(rest, key=lambda p: min((shown[v.slug] for v in p.venues), default=0))

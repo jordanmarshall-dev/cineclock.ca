@@ -16,17 +16,24 @@
     <div class="hero-track">
       {% for sl in slides %}
       {% set p = sl.page %}
-      <a class="spotlight" data-film="{{ p.slug }}" href="{{ root }}films/{{ p.slug }}/" aria-roledescription="slide" aria-label="{{ loop.index }} of {{ slides | length }}: {{ p.title }}">
+      <a class="spotlight{% if sl.until %} is-lead{% endif %}" data-film="{{ p.slug }}"{% if sl.until %} data-until="{{ sl.until.isoformat() }}"{% endif %} href="{{ root }}films/{{ p.slug }}/" aria-roledescription="slide" aria-label="{{ p.title }}">
         <img class="spotlight-art" src="{{ p.film.backdrop_url }}" alt=""{% if not loop.first %} loading="lazy"{% endif %} onerror="this.hidden = true">
         <span class="spotlight-body">
-          <span class="eyebrow">{% if sl.label in TAG_ICONS %}{{ icon(TAG_ICONS[sl.label], "xs") }}{% endif %}{% if loop.first %}<span data-tonight="{{ p.next_showing.local_start.date().isoformat() }}">{{ sl.label }}</span>{% else %}{{ sl.label }}{% endif %}</span>
+          <span class="eyebrow">{% if sl.label in TAG_ICONS %}{{ icon(TAG_ICONS[sl.label], "xs") }}{% endif %}{{ sl.label }}</span>
           <span class="spotlight-title">{{ p.title }}{% if p.year %} <span class="year">{{ p.year }}</span>{% endif %}</span>
+          <span class="spotlight-when">
+            <span>{{ icon("calendar", "sm") }}<b>{{ sl.stamped }}</b></span>
+            <span>{{ icon("film", "sm") }}{{ sl.run }}</span>
+          </span>
           <span class="spotlight-meta">
-            {%- for v in p.venues %}{{ venue_badge(v, root) }}{% endfor -%}
-            <span>{{ icon("calendar", "sm") }}{{ sl.stamped }}</span>
             {%- if p.film.director %}<span>{{ icon("clapper", "sm") }}{{ p.film.director }}</span>{% endif -%}
             {{- card_rating(p.film, root) -}}
           </span>
+        </span>
+        <span class="spotlight-venues">
+          {%- for v in p.venues[:2] %}
+          {%- if v.full_logo and has_asset("logos/" ~ v.full_logo) %}{% set w, h = logo_size("logos/" ~ v.full_logo, 9000, 52) %}<img src="{{ root }}static/logos/{{ v.full_logo }}" alt="{{ v.name }}" width="{{ w }}" height="{{ h }}">{% else %}{{ venue_badge(v, root, scale=1.6) }}{% endif -%}
+          {%- endfor -%}
         </span>
       </a>
       {% endfor %}
@@ -34,7 +41,7 @@
     {% if slides | length > 1 %}
     <button type="button" class="hero-arrow prev" aria-label="Previous" hidden>{{ icon("chevron", "lg") }}</button>
     <button type="button" class="hero-arrow next" aria-label="Next" hidden>{{ icon("chevron", "lg") }}</button>
-    <div class="hero-dots" hidden>{% for sl in slides %}<button type="button" aria-label="Show {{ sl.page.title }}"></button>{% endfor %}</div>
+    <div class="hero-dots" hidden></div>
     {% endif %}
   </section>
   {% endif %}

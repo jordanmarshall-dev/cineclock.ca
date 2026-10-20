@@ -4,28 +4,41 @@
   const hero = document.querySelector(".hero");
   if (!hero) return;
   const track = hero.querySelector(".hero-track");
-  const SHOWN = 5;
+  const SHOWN = 3;
 
-  // The page lists up to eight highlights; each visit shows five, shuffled, so a
-  // refresh brings up different films and theatres.
-  const pool = [...track.children];
-  const dotPool = [...hero.querySelectorAll(".hero-dots button")];
-  const order = pool.map((_, i) => i);
-  for (let i = order.length - 1; i > 0; i--) {
+  // First comes the day's pick: tonight's until its last showing tonight has
+  // started, then tomorrow's. The other two are drawn at random from the films
+  // coming up, so each visit turns up something different.
+  const all = [...track.children];
+  const lead = all.find((el) => el.dataset.until && Date.parse(el.dataset.until) > Date.now());
+  const pool = all.filter((el) => !el.dataset.until && el.dataset.film !== lead?.dataset.film);
+  for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [order[i], order[j]] = [order[j], order[i]];
+    [pool[i], pool[j]] = [pool[j], pool[i]];
   }
-  order.slice(SHOWN).forEach((i) => {
-    pool[i].remove();
-    dotPool[i]?.remove();
+  const kept = [lead, ...pool].filter(Boolean).slice(0, SHOWN);
+  if (lead) {
+    const day = (t) => new Date(t).toLocaleDateString("en-CA", { timeZone: "America/Vancouver" });
+    const until = Date.parse(lead.dataset.until);
+    const label =
+      day(until) === day(Date.now()) ? "Tonight"
+      : day(until) === day(Date.now() + 864e5) ? "Tomorrow"
+      : new Date(until).toLocaleDateString("en-CA", { weekday: "long", timeZone: "America/Vancouver" });
+    const eyebrow = lead.querySelector(".eyebrow");
+    if (eyebrow) eyebrow.lastChild.textContent = label;
+  }
+  all.forEach((el) => el.remove());
+  kept.forEach((el, n) => {
+    el.setAttribute("aria-label", `${n + 1} of ${kept.length}: ${el.getAttribute("aria-label")}`);
+    track.append(el);
   });
-  const kept = order.slice(0, SHOWN);
-  kept.forEach((i, n) => {
-    track.append(pool[i]);
-    if (dotPool[i]) dotPool[i].parentNode.append(dotPool[i]);
-    pool[i].setAttribute("aria-label", pool[i].getAttribute("aria-label").replace(/^\d+ of \d+/, `${n + 1} of ${kept.length}`));
-  });
-  pool[kept[0]].querySelector("img")?.removeAttribute("loading");
+  kept[0]?.querySelector("img")?.removeAttribute("loading");
+  const dotRow = hero.querySelector(".hero-dots");
+  if (dotRow) {
+    dotRow.innerHTML = kept
+      .map((el) => `<button type="button" aria-label="Show ${el.querySelector(".spotlight-title")?.firstChild?.textContent.trim() || "film"}"></button>`)
+      .join("");
+  }
 
   const slides = [...track.children];
   if (slides.length < 2) return;

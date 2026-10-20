@@ -641,29 +641,56 @@ def test_spotlight_prefers_tonights_best_rated_film_with_art(conn):
     assert spotlight(list({id(p): p for p in page_of.values()}.values()), NOW).title == "Alien"
 
 
-def test_hero_has_three_highlights_all_with_art(conn):
-    from cineclock.shelves import highlights
+def test_hero_leads_with_tonights_pick_then_each_next_days(conn):
+    from cineclock.shelves import leads
 
     save(
         conn,
         show("Alien", at(18, 21)),
-        show("Vertigo", at(22, 19), note="35mm"),
-        show("Jaws", at(20, 19)),
-        show("Jaws", at(21, 19)),
-        show("No Art", at(19, 19), note="35mm"),
-        show("Far Off", NOW + timedelta(days=30)),
+        show("Vertigo", at(18, 22)),
+        show("Jaws", at(19, 19)),
+        show("Jaws", at(19, 21, 30)),
+        show("No Art", at(20, 19)),
     )
-    for i, title in enumerate(["Alien", "Vertigo", "Jaws", "Far Off"]):
-        db.save_film(conn, film(title, None, i, backdrop_url=f"https://b/{i}", letterboxd_rating=4))
+    for i, (title, score) in enumerate([("Alien", 4.3), ("Vertigo", 4.1), ("Jaws", 4)]):
+        db.save_film(
+            conn, film(title, None, i, backdrop_url=f"https://b/{i}", letterboxd_rating=score)
+        )
     page_of = film_pages(db.upcoming(conn, NOW), db.films_by_key(conn))
-    slides = highlights(list({id(p): p for p in page_of.values()}.values()), NOW)
-    assert [(s.page.title, s.label) for s in slides] == [
-        ("Alien", "Tonight"),
-        ("Vertigo", "35mm"),
-        ("Jaws", "Coming up"),
-    ]
+    found = leads(list({id(p): p for p in page_of.values()}.values()), NOW)
+    assert [(s.page.title, s.label) for s in found] == [("Alien", "Tonight"), ("Jaws", "Tomorrow")]
+    # Tomorrow's pick stands until its last showing that day starts.
+    assert found[1].until == at(19, 21, 30) and "7:00" in found[1].when
+
+
+def test_hero_slides_say_when_and_for_how_long(conn):
+    from cineclock.shelves import Slide
+
+    save(
+        conn,
+        show("Jaws", at(19, 19)),
+        show("Jaws", at(19, 21)),
+        show("Heat", at(20, 19)),
+        show("Heat", at(28, 19)),
+        show("Ran", at(30, 19)),
+        show("Ran", at(4, 19) + timedelta(days=31)),
+    )
+    page_of = film_pages(db.upcoming(conn, NOW), db.films_by_key(conn))
+    run = {p.title: Slide(p, "", "").run for p in page_of.values()}
+    assert run == {
+        "Jaws": "2 showings, one day only",
+        "Heat": "Playing Oct 20 to 28",
+        "Ran": "Playing Oct 30 to Nov 4",
+    }
+
+
+def test_home_lists_every_hero_candidate_for_the_page_to_pick(conn):
+    save(conn, show("Alien", at(18, 21)), show("Jaws", at(19, 19)))
+    for i, title in enumerate(["Alien", "Jaws"]):
+        db.save_film(conn, film(title, None, i, backdrop_url=f"https://b/{i}", letterboxd_rating=4))
     home = pages(conn, NOW)["index.html"]
-    assert home.count('class="spotlight"') == 3 and "hero.js" in home
+    assert home.count('class="spotlight is-lead"') == 2 and home.count('class="spotlight"') == 2
+    assert "hero.js" in home and 'data-until="2026-10-19' in home
 
 
 def test_a_note_every_showing_shares_moves_up_top(conn):
@@ -1137,7 +1164,7 @@ def test_hero_spreads_its_picks_across_the_theatres(conn):
         show("Heat", at(19, 20)),
         show("Ran", at(20, 19), venue="The Park"),
     )
-    for i, (title, score) in enumerate([("Alien", 4), ("Jaws", 4.5), ("Heat", 4.4), ("Ran", 3)]):
+    for i, (title, score) in enumerate([("Alien", 4.6), ("Jaws", 4.5), ("Heat", 4.4), ("Ran", 3)]):
         db.save_film(
             conn, film(title, None, i, backdrop_url=f"https://b/{i}", letterboxd_rating=score)
         )

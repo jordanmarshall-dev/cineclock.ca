@@ -26,7 +26,7 @@ from cineclock.listings import (
 )
 from cineclock.models import VANCOUVER
 from cineclock.render import env, score_text, score_value
-from cineclock.shelves import highlights, rails, theatre_rails
+from cineclock.shelves import highlights, leads, rails, theatre_rails
 from cineclock.tags import kind, sort_tags
 from cineclock.timefmt import clock, stamp
 from cineclock.venues import VENUES, order, room_label, shown_specs
@@ -139,7 +139,7 @@ def pages(conn: Connection, now: datetime) -> dict[str, str]:
             "index.html",
             "index.html",
             rails=rails(film_list, now, debuts),
-            slides=highlights(film_list, now, count=8),
+            slides=leads(film_list, now) + highlights(film_list, now, count=24),
         ),
         "showtimes/index.html": render(
             "showtimes.html",
