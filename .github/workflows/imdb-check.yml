@@ -22,3 +22,7 @@ jobs:
           note "direct" "$(curl -sS -m 20 -w ' HTTP %{http_code}' -X POST -H 'Content-Type: application/json' -H 'x-imdb-client-name: imdb-web-next' -H 'Referer: https://www.imdb.com/' -d "$q" https://api.graphql.imdb.com/ 2>&1)"
           note "worker" "$(curl -sS -m 30 -w ' HTTP %{http_code}' https://cineclock-relay.cineclock-relay.workers.dev/imdb/$USER_ID 2>&1 | cut -c1-400)"
           note "api" "$(curl -sS -m 30 -w ' HTTP %{http_code}' https://api.cineclock.ca/imdb/$USER_ID 2>&1 | cut -c1-400)"
+          note "browser preflight" "$(curl -sS -m 20 -o /dev/null -D - -X OPTIONS -H 'Origin: https://cineclock.ca' -H 'Access-Control-Request-Method: POST' -H 'Access-Control-Request-Headers: content-type,x-imdb-client-name' https://api.graphql.imdb.com/ 2>&1 | grep -i -E '^HTTP|access-control')"
+          note "browser post" "$(curl -sS -m 20 -o /dev/null -D - -X POST -H 'Origin: https://cineclock.ca' -H 'Content-Type: application/json' -d "$q" https://api.graphql.imdb.com/ 2>&1 | grep -i -E '^HTTP|access-control')"
+          items='{"query":"query ($id: ID!) { list(id: $id) { items(first: 5) { edges { node { listItem { ... on Title { id } } } } pageInfo { hasNextPage } } } }","variables":{"id":"ls4157365647"}}'
+          note "items" "$(curl -sS -m 20 -X POST -H 'Content-Type: application/json' -H 'x-imdb-client-name: imdb-web-next' -d "$items" https://api.graphql.imdb.com/ 2>&1 | cut -c1-500)"
