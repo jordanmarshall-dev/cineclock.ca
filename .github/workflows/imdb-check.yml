@@ -1,0 +1,24 @@
+name: IMDb check
+
+# Run by hand: can IMDb's watchlist API be read from GitHub, and through the
+# Worker? Results show as annotations on the run's page.
+on:
+  workflow_dispatch:
+    inputs:
+      user:
+        description: An IMDb user id with a public watchlist
+        default: ur210314200
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check
+        env:
+          USER_ID: ${{ inputs.user }}
+        run: |
+          note() { echo "::notice title=$1::$(echo "$2" | tr '\n' ' ' | cut -c1-900)"; }
+          q='{"query":"query ($user: ID!) { predefinedList(classType: WATCH_LIST, userId: $user) { id } }","variables":{"user":"'"$USER_ID"'"}}'
+          note "direct" "$(curl -sS -m 20 -w ' HTTP %{http_code}' -X POST -H 'Content-Type: application/json' -H 'x-imdb-client-name: imdb-web-next' -H 'Referer: https://www.imdb.com/' -d "$q" https://api.graphql.imdb.com/ 2>&1)"
+          note "worker" "$(curl -sS -m 30 -w ' HTTP %{http_code}' https://cineclock-relay.cineclock-relay.workers.dev/imdb/$USER_ID 2>&1 | cut -c1-400)"
+          note "api" "$(curl -sS -m 30 -w ' HTTP %{http_code}' https://api.cineclock.ca/imdb/$USER_ID 2>&1 | cut -c1-400)"
