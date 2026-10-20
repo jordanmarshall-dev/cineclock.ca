@@ -11,6 +11,7 @@ import json
 import os
 import sys
 import time
+import urllib.error
 import urllib.request
 from collections.abc import Callable
 
@@ -108,9 +109,13 @@ def main() -> int:
         time.sleep(1)
     if lists:
         request(f"{RELAY}/imdb/lists", {"lists": lists}, auth, method="PUT")
-    print(f"{len(users)} wanted, {sum('ids' in x for x in lists)} read")
+    print(f"::notice::{len(users)} wanted, {sum('ids' in x for x in lists)} read")
     return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except urllib.error.HTTPError as error:
+        print(f"::error::{error.url}: {error.code} {error.read().decode()[:300]}")
+        sys.exit(1)
