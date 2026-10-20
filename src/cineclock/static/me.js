@@ -81,15 +81,27 @@
   }
 
   const imdbConnect = (user) => imdbCall("POST", "/imdb/connect", { user });
+  const imdbSync = (user) => imdbCall("POST", "/imdb/sync", { user });
 
-  // Check again every few minutes until the first read, then every few hours.
+  // Check every 15 seconds while a read is on its way, otherwise every few hours.
+  // A list last read over half a day ago gets a fresh read asked for, once.
+  let askedFresh = false;
   async function imdbFresh() {
     const value = imdbSaved();
     if (!value || value.user === "file") return value;
-    const wait = value.ready ? 3 * 3600 * 1000 : 15 * 1000;
+    const wait = value.ready && !value.syncing ? 3 * 3600 * 1000 : 15 * 1000;
     if (Date.now() - (value.at || 0) < wait) return value;
     try {
+      const stale = value.updated && Date.now() - Date.parse(value.updated) > 12 * 3600 * 1000;
+      if (stale && !askedFresh) {
+        askedFresh = true;
+        await imdbSync(value.user);
+      }
       const fresh = await imdbCall("GET", `/imdb/${value.user}`);
+      // A sync is done once the list says it was read after it was asked for.
+      if (value.syncing && fresh.updated === value.updated && Date.now() - value.syncing < 3 * 60 * 1000) {
+        fresh.syncing = value.syncing;
+      }
       imdbSave(fresh);
       return fresh;
     } catch (e) {
@@ -130,15 +142,17 @@
     return films;
   }
 
-  async function load(value = saved()) {
+  async function load(value = saved(), { fresh = false } = {}) {
     if (!value) return null;
-    try {
-      const data = await getJSON(`me/${encodeURIComponent(value.user)}.json`);
-      return { user: value.user, films: data.films, updated: data.updated };
-    } catch (e) {
-      if (!RELAY) throw e;
+    if (!fresh) {
+      try {
+        const data = await getJSON(`me/${encodeURIComponent(value.user)}.json`);
+        return { user: value.user, films: data.films, updated: data.updated };
+      } catch (e) {
+        if (!RELAY) throw e;
+      }
     }
-    const response = await fetch(`${RELAY}/profile/${encodeURIComponent(value.user)}`);
+    const response = await fetch(`${RELAY}/profile/${encodeURIComponent(value.user)}${fresh ? "?fresh=1" : ""}`);
     if (response.status === 404) throw new Error("missing");
     if (!response.ok) throw new Error("relay");
     const profile = await response.json();
@@ -319,7 +333,7 @@
     document.dispatchEvent(new CustomEvent("cineclock:personal", { detail: me }));
   }
 
-  window.cineclockMe = { saved, save, load, cards, mark, root, withSaves, getJSON, imdbSaved, imdbSave, imdbConnect, imdbFresh };
+  window.cineclockMe = { saved, save, load, cards, mark, root, withSaves, getJSON, imdbSaved, imdbSave, imdbConnect, imdbSync, imdbFresh };
   document.addEventListener("cineclock:account", () => start());
   start();
 })();

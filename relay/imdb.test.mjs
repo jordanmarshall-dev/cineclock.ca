@@ -105,9 +105,20 @@ assert.deepEqual(r.json.ids, ["tt0073195"]);
 assert.equal(r.json.ready, true);
 assert.equal(r.json.name, "JordanM-078");
 
-// Fresh lists aren't wanted again until they're six hours old.
+// Fresh lists aren't wanted again until they're a day old, or someone asks.
 assert.deepEqual((await call(env, "GET", "/imdb/wanted", { token })).json.users, []);
-assert.deepEqual((await call(env, "GET", "/imdb/wanted", { token: await githubToken({ exp: NOW / 1000 + 8 * 3600 }), now: NOW + 7 * HOUR })).json.users, ["ur12345678"]);
+assert.deepEqual((await call(env, "GET", "/imdb/wanted", { token: await githubToken({ exp: NOW / 1000 + 26 * 3600 }), now: NOW + 25 * HOUR })).json.users, ["ur12345678"]);
+
+// Sync asks for a read now, but not again within two minutes of the last one.
+const synced = started.length;
+const later = await githubToken({ exp: NOW / 1000 + 3 * 3600 });
+r = await call(env, "POST", "/imdb/sync", { body: { user: "ur12345678" }, now: NOW + 60 * 1000 });
+assert.deepEqual((await call(env, "GET", "/imdb/wanted", { token })).json.users, []);
+r = await call(env, "POST", "/imdb/sync", { body: { user: "ur12345678" }, now: NOW + HOUR });
+assert.deepEqual((await call(env, "GET", "/imdb/wanted", { token: later, now: NOW + HOUR })).json.users, ["ur12345678"]);
+assert.equal(started.length, synced);  // no GitHub token on this env
+assert.equal((await call(env, "POST", "/imdb/sync", { body: { user: "ur9999999" } })).status, 404);
+await call(env, "PUT", "/imdb/lists", { token: later, body: { lists: [{ user: "ur12345678", ids: ["tt0073195"] }] }, now: NOW + HOUR });
 
 // A list that went private keeps its last ids and says why.
 await call(env, "PUT", "/imdb/lists", { token, body: { lists: [{ user: "ur12345678", error: "private" }] } });

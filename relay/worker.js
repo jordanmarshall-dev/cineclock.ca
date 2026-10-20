@@ -140,7 +140,8 @@ export default {
 
     const cache = typeof caches !== "undefined" ? caches.default : null;
     const key = new Request(`${url.origin}/profile/${user}`);
-    const hit = cache && (await cache.match(key));
+    // ?fresh skips the cache: the Sync button on the account page.
+    const hit = cache && !url.searchParams.has("fresh") && (await cache.match(key));
     if (hit) {
       const body = await hit.json();
       return respond(body, 200, origin);

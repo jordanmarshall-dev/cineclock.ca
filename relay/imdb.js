@@ -5,13 +5,16 @@
 // and the lists are kept here:
 //
 //   POST /imdb/connect  { user }   ask for a watchlist; returns what's known so far
+//   POST /imdb/sync     { user }   read it again now (the Sync button, or a stale visit)
 //   GET  /imdb/<user>              the watchlist as last read
 //   GET  /imdb/wanted              lists due a read      (GitHub job only)
 //   PUT  /imdb/lists    { lists }  the job's results     (GitHub job only)
 //
-// The job runs every 10 minutes. When someone connects a list that hasn't been
-// read yet, the Worker also starts it straight away (needs the GITHUB_TOKEN
-// secret: a token that can run this repo's workflows), at most once a minute.
+// Lists are read when asked for: on connect, on Sync, and when someone visits
+// with a copy more than half a day old. The Worker starts the job straight away
+// (needs the GITHUB_TOKEN secret: a token that can run this repo's workflows),
+// at most once a minute. A daily run catches lists nobody has looked at, so
+// email alerts stay current.
 //
 // The job proves who it is with a GitHub OIDC token: a JWT GitHub signs for
 // one run of one repository, so no shared secret is needed.
@@ -26,7 +29,8 @@ export const REPOSITORY = "yogzoth/cineclock";
 const USER = /^(ur\d{4,12}|p\.[a-z0-9]{8,40})$/;
 const TITLE = /^tt\d{5,10}$/;
 const HOUR = 3600 * 1000;
-const REFRESH = 6 * HOUR;
+const REFRESH = 24 * HOUR;
+const RESYNC = 2 * 60 * 1000;
 const FORGET = 60 * 24 * HOUR;
 const MAX_LISTS = 2000;
 const MAX_TITLES = 10000;
@@ -131,7 +135,9 @@ export async function handleImdb(request, env, { now = Date.now(), fetcher = fet
   if (!ready.has(db)) {
     await db.batch(SCHEMA.map((sql) => db.prepare(sql)));
     // Added after the table first shipped.
-    await db.prepare("ALTER TABLE imdb_lists ADD COLUMN name TEXT").run().catch(() => {});
+    for (const column of ["name TEXT", "asked INTEGER"]) {
+      await db.prepare(`ALTER TABLE imdb_lists ADD COLUMN ${column}`).run().catch(() => {});
+    }
     ready.add(db);
   }
   const path = new URL(request.url).pathname.replace(/\/+$/, "");
@@ -148,13 +154,27 @@ export async function handleImdb(request, env, { now = Date.now(), fetcher = fet
     }
     await db
       .prepare(
-        `INSERT INTO imdb_lists (user, requested) VALUES (?, ?) ON CONFLICT(user) DO UPDATE SET
-           requested = excluded.requested, updated = CASE WHEN error IS NULL THEN updated END`,
+        `INSERT INTO imdb_lists (user, requested, asked) VALUES (?, ?, ?) ON CONFLICT(user) DO UPDATE SET
+           requested = excluded.requested, asked = excluded.asked,
+           updated = CASE WHEN error IS NULL THEN updated END`,
       )
-      .bind(user, now)
+      .bind(user, now, now)
       .run();
     const row = await db.prepare("SELECT * FROM imdb_lists WHERE user = ?").bind(user).first();
     if (!row.updated) await startSync(env, now, fetcher).catch((error) => console.log("imdb sync start:", error));
+    return reply(shown(row), 200, origin);
+  }
+
+  if (path === "/imdb/sync" && request.method === "POST") {
+    if (!SITE_ORIGINS.includes(origin)) return reply({ error: "forbidden" }, 403, origin);
+    const body = await request.json().catch(() => ({}));
+    const user = imdbUser(body?.user);
+    const row = user && (await db.prepare("SELECT * FROM imdb_lists WHERE user = ?").bind(user).first());
+    if (!row) return reply({ error: "not connected" }, 404, origin);
+    if (!(row.updated && now - row.updated < RESYNC)) {
+      await db.prepare("UPDATE imdb_lists SET asked = ?, requested = ? WHERE user = ?").bind(now, now, user).run();
+      await startSync(env, now, fetcher).catch((error) => console.log("imdb sync start:", error));
+    }
     return reply(shown(row), 200, origin);
   }
 
@@ -166,7 +186,7 @@ export async function handleImdb(request, env, { now = Date.now(), fetcher = fet
       const rows = await db
         .prepare(
           `SELECT user FROM imdb_lists WHERE requested > ?
-             AND (updated IS NULL OR updated < ? OR (name IS NULL AND user LIKE 'p.%'))
+             AND (updated IS NULL OR updated < ? OR asked > updated OR (name IS NULL AND user LIKE 'p.%'))
            ORDER BY updated IS NOT NULL, updated LIMIT 100`,
         )
         .bind(now - FORGET, now - REFRESH)

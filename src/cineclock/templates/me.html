@@ -29,48 +29,49 @@
   </section>
 
   <section class="dash-connect" aria-label="Connect your watchlists">
-    <div class="panel dash-service">
-      <img class="dash-service-logo" src="{{ root }}static/logos/letterboxd.png" alt="">
-      <div class="dash-service-body">
-        <b>Letterboxd</b>
-        <div id="me-connect">
-          <form id="me-user-form" class="me-form">
-            <label class="search"><input name="user" placeholder="Your username" aria-label="Letterboxd username" autocomplete="username" autocapitalize="none" spellcheck="false" required></label>
-            <button type="submit" class="me-button">Connect</button>
-          </form>
-          <p class="filter-status" id="me-message" aria-live="polite"></p>
+    <div class="panel dash-service" id="lb-card">
+      <div class="dash-service-head">
+        <img class="dash-service-logo" src="{{ root }}static/logos/letterboxd.png" alt="">
+        <div class="dash-linked" id="me-connected" hidden>
+          <b class="dash-name" id="me-name"></b>
+          <span class="dash-state" id="me-lb-state">Connected</span>
         </div>
-        <div id="me-connected" class="dash-service-row" hidden>
-          <span class="dash-who-line"><b class="dash-name" id="me-name"></b><span class="dash-sub">Watchlist and films seen</span></span>
-          <button type="button" class="clear" id="me-disconnect">Disconnect</button>
+        <span class="dash-service-title" id="me-lb-title">Letterboxd</span>
+        <div class="dash-actions" id="me-lb-actions" hidden>
+          <button type="button" class="dash-icon-button" id="me-lb-sync" aria-label="Sync Letterboxd now" title="Sync now">{{ icon("sync", "md") }}</button>
+          <button type="button" class="dash-text-button" id="me-disconnect">Disconnect</button>
         </div>
       </div>
+      <div id="me-connect">
+        <form id="me-user-form" class="dash-form">
+          <input name="user" placeholder="Username" aria-label="Letterboxd username" autocomplete="off" autocapitalize="none" spellcheck="false" required>
+          <button type="submit" class="me-button">Connect</button>
+        </form>
+        <p class="dash-status" id="me-message" aria-live="polite"></p>
+        <p class="dash-hint">Your Letterboxd username, as in letterboxd.com/username.</p>
+      </div>
     </div>
-    <div class="panel dash-service">
-      <img class="dash-service-logo" src="{{ root }}static/logos/imdb.png" alt="">
-      <div class="dash-service-body">
-        <b>IMDb</b>
-        <div id="me-imdb-connect">
-          <form id="me-imdb-form" class="me-form">
-            <label class="search"><input name="user" placeholder="Profile link or ur number" aria-label="IMDb profile link or user number" autocapitalize="none" spellcheck="false" required></label>
-            <button type="submit" class="me-button">Connect</button>
-          </form>
-          <p class="filter-status" id="me-imdb-message" aria-live="polite"></p>
-          <details class="dash-help">
-            <summary>Where do I find it?</summary>
-            <ol>
-              <li>On IMDb, open your profile or your Watchlist.</li>
-              <li>Copy the address from the browser or the Share button.</li>
-              <li>Make sure the watchlist is public (Watchlist, then the settings icon).</li>
-            </ol>
-            <p>Or <label class="dash-link" for="me-imdb-file">upload a CSV export</label> instead.</p>
-            <input type="file" id="me-imdb-file" accept=".csv,text/csv" class="visually-hidden">
-          </details>
+    <div class="panel dash-service" id="imdb-card">
+      <div class="dash-service-head">
+        <img class="dash-service-logo" src="{{ root }}static/logos/imdb.png" alt="">
+        <div class="dash-linked" id="me-imdb-connected" hidden>
+          <b class="dash-name" id="me-imdb-name"></b>
+          <span class="dash-state" id="me-imdb-state">Connected</span>
         </div>
-        <div id="me-imdb-connected" class="dash-service-row" hidden>
-          <span class="dash-who-line" id="me-imdb-status"></span>
-          <button type="button" class="clear" id="me-imdb-disconnect">Disconnect</button>
+        <span class="dash-service-title" id="me-imdb-title">IMDb</span>
+        <div class="dash-actions" id="me-imdb-actions" hidden>
+          <button type="button" class="dash-icon-button" id="me-imdb-sync" aria-label="Sync IMDb now" title="Sync now">{{ icon("sync", "md") }}</button>
+          <button type="button" class="dash-text-button" id="me-imdb-disconnect">Disconnect</button>
         </div>
+      </div>
+      <div id="me-imdb-connect">
+        <form id="me-imdb-form" class="dash-form">
+          <input name="user" placeholder="Profile link" aria-label="IMDb profile link" autocomplete="off" autocapitalize="none" spellcheck="false" required>
+          <button type="submit" class="me-button">Connect</button>
+        </form>
+        <p class="dash-status" id="me-imdb-message" aria-live="polite"></p>
+        <p class="dash-hint">On IMDb, open your profile and copy its link. Or <label class="dash-link" for="me-imdb-file">upload a CSV</label>.</p>
+        <input type="file" id="me-imdb-file" accept=".csv,text/csv" class="visually-hidden">
       </div>
     </div>
   </section>
@@ -262,37 +263,57 @@
         : "";
     }
 
+    // One look for both cards: the form until connected, then the name, a quiet
+    // state line, Sync and Disconnect.
+    function linked(card, name, state, { canSync = true } = {}) {
+      const on = Boolean(name);
+      $(`${card}-card`).classList.toggle("is-linked", on);
+      for (const el of $(`${card}-card`).querySelectorAll(".dash-linked, .dash-actions")) el.hidden = !on;
+      $(`${card}-card`).querySelector(".dash-service-title").hidden = on;
+      $(card === "lb" ? "me-connect" : "me-imdb-connect").hidden = on;
+      $(`${card}-card`).querySelector(".dash-name").textContent = name || "";
+      const line = $(`${card}-card`).querySelector(".dash-state");
+      line.textContent = state;
+      line.classList.toggle("is-busy", /ing\b/.test(state));
+      line.classList.toggle("is-problem", /private|couldn/i.test(state));
+      $(`${card}-card`).querySelector(".dash-icon-button").hidden = !canSync;
+    }
+
     let imdbTimer = null;
     function drawImdb() {
       const value = me.imdbSaved();
-      $("me-imdb-connect").hidden = Boolean(value);
-      $("me-imdb-connected").hidden = !value;
-      if (value) {
-        const n = value.ids.length;
-        const films = `${n} ${n === 1 ? "film" : "films"}`;
-        const [name, sub] =
-          value.user === "file" ? ["Uploaded list", `${films} on your watchlist`]
-          : value.error === "private" ? [value.name || value.user, "Watchlist is private. Make it public on IMDb, then reconnect."]
-          : value.ready ? [value.name || value.user, `${films} on your watchlist`]
-          : [value.name || "Connecting", "Reading your watchlist..."];
-        $("me-imdb-status").innerHTML = `<b class="dash-name"></b><span class="dash-sub"></span>`;
-        $("me-imdb-status").firstChild.textContent = name;
-        $("me-imdb-status").lastChild.textContent = sub;
-        if (value.user !== "file" && !value.ready && !imdbTimer) {
-          imdbTimer = setTimeout(() => {
-            imdbTimer = null;
-            checkImdb();
-          }, 15 * 1000);
-        }
+      if (!value) return linked("imdb", null, "");
+      if (value.user === "file") return linked("imdb", "Uploaded list", "Connected", { canSync: false });
+      const name = value.name || (value.user.startsWith("ur") ? value.user : "Your IMDb");
+      const state =
+        value.error === "private" ? "Watchlist is private on IMDb"
+        : !value.ready ? "Connecting..."
+        : value.syncing ? "Syncing..."
+        : "Connected";
+      linked("imdb", name, state);
+      if ((!value.ready || value.syncing) && !imdbTimer) {
+        imdbTimer = setTimeout(() => {
+          imdbTimer = null;
+          checkImdb();
+        }, 15 * 1000);
       }
     }
 
     async function checkImdb() {
       const before = me.imdbSaved();
       const after = await me.imdbFresh();
-      if (after && (after.ready !== before?.ready || after.error !== before?.error)) await keepImdb(after);
-      else drawImdb();
+      if (after && (after.ready !== before?.ready || after.error !== before?.error || after.updated !== before?.updated)) {
+        await keepImdb(after);
+      } else drawImdb();
     }
+
+    $("me-imdb-sync").addEventListener("click", async () => {
+      const value = me.imdbSaved();
+      if (!value) return;
+      me.imdbSave({ ...value, syncing: Date.now(), at: 0 });
+      drawImdb();
+      await me.imdbSync(value.user).catch(() => {});
+    });
 
     // Signed in: the account keeps the list too, so alerts can use it.
     async function keepImdb(value) {
@@ -302,26 +323,29 @@
       await drawDashboard();
     }
 
-    async function refresh() {
+    async function refresh({ fresh = false } = {}) {
       const value = me.saved();
-      $("me-connected").hidden = !value;
-      $("me-connect").hidden = Boolean(value);
-      if (value) $("me-name").textContent = value.user;
+      linked("lb", value?.user, fresh ? "Syncing..." : "Connected");
       letterboxd = {};
       if (value) {
         try {
-          const data = await me.load(value);
-          $("me-name").textContent = data.user;
+          const data = await me.load(value, { fresh });
+          linked("lb", data.user, "Connected");
           letterboxd = data.films;
         } catch (e) {
-          me.save(null);
-          $("me-connected").hidden = true;
-          $("me-connect").hidden = false;
-          say("Couldn't load that profile. Try connecting again.");
+          if (fresh) {
+            linked("lb", value.user, "Couldn't sync just now");
+          } else {
+            me.save(null);
+            linked("lb", null, "");
+            say("Couldn't load that profile. Try connecting again.");
+          }
         }
       }
       await drawDashboard();
     }
+
+    $("me-lb-sync").addEventListener("click", () => refresh({ fresh: true }));
 
     // The signed-in parts: who you are, alerts, ratings, IMDb.
     async function drawAccount() {

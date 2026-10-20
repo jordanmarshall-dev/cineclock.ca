@@ -2,10 +2,11 @@ name: IMDb sync
 
 # Reads the IMDb watchlists people connected on cineclock and hands them to the
 # Worker. IMDb's API answers GitHub's servers but not Cloudflare's, so this runs
-# here. Each list is read at most every six hours; new ones on the next run.
+# here. The Worker starts it when someone connects, taps Sync, or visits with an
+# old copy; the daily run refreshes lists nobody has looked at, for alerts.
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "23 11 * * *"
   workflow_dispatch:
     inputs:
       check:
