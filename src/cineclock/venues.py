@@ -109,6 +109,9 @@ class Venue:
     full_logo: str | None = None
     # Some marks read small at the shared size (the Cinematheque's is plain text).
     mark_scale: float = 1.0
+    # Full logos share an area, but a solid one (VIFF's block letters) still looks
+    # bigger than an outlined one (the Rio's bulbs); this evens them out by eye.
+    logo_weight: float = 1.0
     # Which part of the theatre's photo to keep when it's cropped into the header.
     photo_focus: str = "center"
     # Where the sign is in the photo (x, y as fractions), for the Theatres page
@@ -404,6 +407,7 @@ VENUES = [
         ),
         mark="viff.svg",
         full_logo="viff.svg",
+        logo_weight=0.75,
         photo=Photo("Vancity Theatre.jpg", "Tom Niu", "CC BY-SA 3.0"),
         photo_focus="50% 28%",
         sign_at=(0.3, 0.32),
@@ -443,6 +447,7 @@ VENUES = [
         ),
         mark="dunbar-mark.png",
         full_logo="dunbar-full.png",
+        logo_weight=0.9,
         # The Dunbar when it opened in the 1930s. Downloadable images from the City
         # of Vancouver Archives are public domain or City copyright, free to reuse;
         # the credit shows when it was taken instead of a licence.

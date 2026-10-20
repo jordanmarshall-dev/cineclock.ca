@@ -145,3 +145,12 @@ def logo_size(name: str, area: float, min_height: float) -> tuple[int, int]:
 
 
 env.globals["logo_size"] = logo_size
+
+
+def full_logo_size(venue, area: float, min_height: float) -> tuple[int, int]:
+    """A theatre's full logo at a shared size, adjusted for how heavy it looks."""
+    weight = venue.logo_weight
+    return logo_size("logos/" + venue.full_logo, area * weight**2, min_height * weight)
+
+
+env.globals["full_logo_size"] = full_logo_size

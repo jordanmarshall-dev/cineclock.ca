@@ -105,7 +105,7 @@
   </section>
   {% endfor %}
 
-  <h2 class="me-settings-title">Settings</h2>
+  <h2 class="me-settings-title" id="me-settings-title" hidden>Settings</h2>
   <div class="dash-settings">
     <section class="panel settings-card" id="me-alerts" hidden aria-labelledby="me-alerts-title">
       <div class="settings-head">
@@ -352,7 +352,7 @@
       const signedIn = Boolean(account.current);
       $("me-signed-out").hidden = signedIn;
       $("me-signed-in").hidden = !signedIn;
-      for (const id of ["me-ratings", "me-delete-row", "me-alerts", "stat-alerts-tile"]) $(id).hidden = !signedIn;
+      for (const id of ["me-ratings", "me-delete-row", "me-alerts", "stat-alerts-tile", "me-settings-title"]) $(id).hidden = !signedIn;
       if (signedIn) {
         const email = account.current.email || "your Google account";
         $("me-email").textContent = email;

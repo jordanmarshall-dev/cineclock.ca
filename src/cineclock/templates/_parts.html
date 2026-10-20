@@ -30,7 +30,7 @@
    own page, sized to a matching area so wide and tall logos read alike. #}
 {% macro venue_label(v, root) -%}
 {%- if v.full_logo and has_asset("logos/" ~ v.full_logo) -%}
-{% set w, h = logo_size("logos/" ~ v.full_logo, 5200, 26) %}<img class="venue-heading-logo" src="{{ root }}static/logos/{{ v.full_logo }}" alt="{{ v.name }}" width="{{ w }}" height="{{ h }}">
+{% set w, h = full_logo_size(v, 3600, 22) %}<img class="venue-heading-logo" src="{{ root }}static/logos/{{ v.full_logo }}" alt="{{ v.name }}" width="{{ w }}" height="{{ h }}">
 {%- elif v.mark and has_asset("logos/" ~ v.mark) %}{{ venue_badge(v, root, scale=1.6) }}{% else %}<span>{{ v.name }}</span>{% endif -%}
 {%- endmacro %}
 
@@ -155,8 +155,8 @@
       {% if r.year %}<span class="year">{{ r.year }}</span>{% endif %}
     </p>
     {% if r.note and not (r.note | said_by_tags(r.tags)) %}<p class="meta">{{ r.note }}</p>{% elif r.page.film and r.page.film.director %}<p class="meta">{{ r.page.film.director }}</p>{% endif %}
-    {% set score = card_rating(r.page.film, root) %}{% if score | trim %}<p class="ratings">{{ score }}</p>{% endif %}
-    {{ tag_list(r.tags) }}
+    {% set score = card_rating(r.page.film, root) %}
+    <div class="row-signals">{% if score | trim %}<p class="ratings">{{ score }}</p>{% endif %}{{ tag_list(r.tags) }}</div>
     <p class="tags personal" hidden></p>
   </div>
   <div class="times">
@@ -228,18 +228,21 @@
 <li class="card" data-film="{{ p.slug }}" {{ attrs | safe }}>
   <a href="{{ root }}films/{{ p.slug }}/">
     {% set badge = p.tags | reject("in", RARE) | first %}
+    {% set venues = p.venues %}
     <span class="card-art">
       {{ poster(p.poster_url, label=p.title) }}
       {%- if badge %}<span class="card-badge" title="{{ badge }}">{{ icon(TAG_ICONS.get(badge, "screen"), "xs") }}{{ badge }}</span>{% endif -%}
     </span>
-    <span class="card-title" title="{{ p.title }}{% if p.year %} ({{ p.year }}){% endif %}">{{ p.title }}</span>
-    {# The score spot is never empty, so no card has a blank line. #}
-    {% set score = card_rating(p.film, root) | trim %}
-    <span class="card-sub"><span class="year">{{ p.year or "" }}</span>
-      {%- if score %}{{ score }}{% else %}<span class="card-tag card-unrated">Unrated</span>{% endif -%}
+    <span class="card-box">
+      <span class="card-title" title="{{ p.title }}{% if p.year %} ({{ p.year }}){% endif %}"><span class="card-name">{{ p.title }}</span>{% if p.year %}<span class="year">{{ p.year }}</span>{% endif %}</span>
+      <span class="card-next{% if rare %} rare{% endif %}"{% if rare %} title="{{ rare[0] }}"{% endif %}>{{ when }}</span>
+      <span class="card-sub">
+        <span class="card-where" title="{{ venues | map(attribute='name') | join(', ') }}">
+          {%- for v in venues %}<span class="where-{{ v.slug }}">{{ v.short }}</span>{% endfor -%}
+        </span>
+        {{- card_rating(p.film, root) | trim -}}
+      </span>
     </span>
-    <span class="card-next{% if rare %} rare{% endif %}"{% if rare %} title="{{ rare[0] }}"{% endif %}>{{ icon("star" if rare else "calendar", "xs") }}{{ when }}</span>
-    <span class="card-venues">{{ icon("pin", "xs") }}<span>{{ p.venues | map(attribute="short") | join(" · ") }}</span></span>
   </a>
 </li>
 {%- endmacro %}

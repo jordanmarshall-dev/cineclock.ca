@@ -332,14 +332,6 @@ a:focus-visible,
   letter-spacing: 0.02em;
 }
 
-.card-venues {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.25rem 0.75rem;
-  margin-top: 0.375rem;
-}
-
 /* Ratings */
 .ratings {
   display: flex;
@@ -735,15 +727,18 @@ a:focus-visible,
 
 .rows { margin: 0; padding: 0; list-style: none; }
 
+/* A time row: small poster, the film, and its booking buttons down the right
+   edge, where a thumb reaches them. */
 .row {
   display: grid;
-  grid-template-columns: 5.75rem 1fr;
-  gap: 0.875rem;
+  grid-template-columns: 4.5rem minmax(0, 1fr) auto;
+  column-gap: 0.875rem;
+  align-items: start;
   padding: 0.75rem 0;
 }
 
 .row + .row { border-top: 1px solid var(--panel-line); }
-.row .times { grid-column: 1 / -1; margin-top: 0.125rem; }
+.row .times { grid-column: 3; grid-row: 1; flex-direction: column; align-items: stretch; margin-top: 0; }
 
 .row-title {
   margin: 0;
@@ -966,7 +961,6 @@ a:focus-visible,
 .rail { margin-top: 1.5rem; }
 /* On a theatre's own page its logo on every poster would just repeat the header. */
 .theatre-rails { margin-top: 1rem; }
-.theatre-rails .card-venues { display: none; }
 
 .home-top + .rail,
 .quick-filters + .rail { margin-top: 0.75rem; }
@@ -1000,7 +994,8 @@ a:focus-visible,
 .rail-cards {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: 7.25rem;
+  /* Two and a bit cards on a phone, so it's clear the row scrolls. */
+  grid-auto-columns: 10.5rem;
   gap: 0.75rem;
   margin: 0 calc(var(--gutter) * -1);
   padding: 0.5rem var(--gutter) 0.25rem;
@@ -1048,20 +1043,6 @@ a:focus-visible,
 
 .card-badge .icon { flex: none; }
 
-/* Where it's playing, in the same quiet type as the date above it. Logos stay
-   for places with room for them (the hero, theatre pages, Showtimes). */
-.card .card-venues {
-  flex-wrap: nowrap;
-  gap: 0.25rem;
-  margin-top: 0.125rem;
-  overflow: hidden;
-  color: var(--text);
-  font-size: 0.6875rem;
-  line-height: 1.3;
-  white-space: nowrap;
-}
-.card .card-venues > span { overflow: hidden; text-overflow: ellipsis; }
-.card .card-venues .icon { flex: none; }
 
 .card-title {
   display: block;
@@ -1101,25 +1082,6 @@ a:focus-visible,
 .card-rating b { font-weight: 600; }
 .card-rating .source-logo { height: 0.6875rem; }
 
-.card-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.1875rem;
-  min-width: 0;
-  padding: 0 0.375rem;
-  overflow: hidden;
-  border-radius: 999px;
-  background: var(--accent-wash);
-  color: var(--accent-text);
-  font-size: 0.6875rem;
-  font-weight: 600;
-  line-height: 1.6;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.card-tag .icon { flex: none; }
-.card-unrated { background: var(--raised); color: var(--text); font-weight: 500; }
 
 .card-next {
   display: flex;
@@ -1157,8 +1119,9 @@ a:focus-visible,
 
 .film-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
-  gap: 1.25rem 0.75rem;
+  /* Two wide cards across a phone, more as the screen grows. */
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: 1rem 0.75rem;
   margin: 1.25rem 0 0;
   padding: 0;
   list-style: none;
@@ -1704,9 +1667,7 @@ a:focus-visible,
 
 @media (min-width: 40rem) {
   :root { --gutter: 1.5rem; }
-  .row { grid-template-columns: 7rem 1fr; gap: 1.25rem; }
-  .film-grid { grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); gap: 1.5rem 1rem; }
-  .rail-cards { grid-auto-columns: 8.5rem; gap: 1rem; }
+  .row { grid-template-columns: 7rem minmax(0, 1fr) auto; column-gap: 1.25rem; }
   .spotlight { height: 20rem; }
   .spotlight-body { right: 1.75rem; bottom: 1.5rem; left: 1.75rem; }
   .spotlight-title { font-size: 2.5rem; }
@@ -1731,8 +1692,6 @@ a:focus-visible,
 }
 
 @media (min-width: 64rem) {
-  .rail-cards { grid-auto-columns: 9.5rem; }
-  .film-grid { grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); }
   .spotlight { height: 24rem; }
   .theatre-cards { grid-template-columns: repeat(3, 1fr); }
   .day-bar { margin-right: 0; margin-left: 0; padding-right: 0; padding-left: 0; }
@@ -1752,7 +1711,7 @@ a:focus-visible,
   /* Wide screens: times sit beside the film instead of under its poster, and the
      date strip stays inside the page, fading out where it scrolls. */
   .row { grid-template-columns: 7rem minmax(0, 1fr) minmax(0, 24rem); align-items: start; gap: 1.25rem; }
-  .row .times { grid-column: 3; grid-row: 1; justify-content: flex-end; margin-top: 0; }
+  .row .times { flex-direction: row; justify-content: flex-end; }
   /* Film pages: each day's date on the left, its times beside it. */
   .showing { display: grid; grid-template-columns: 13rem minmax(0, 1fr); column-gap: 1rem; align-items: start; }
   .showing-when { grid-column: 1; grid-row: 1 / span 9; padding-top: 0.5rem; }
@@ -2107,8 +2066,8 @@ a:focus-visible,
 .me-danger .clear { margin: 0 0.25rem 0 0; padding-left: 0; }
 
 /* Watchlist connections, side by side on wider screens. */
-.dash-connect { display: grid; gap: 0.75rem; margin-top: 1.5rem; }
-@media (min-width: 48rem) { .dash-connect { grid-template-columns: 1fr 1fr; } }
+.dash-connect { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.75rem; margin-top: 1.5rem; }
+@media (min-width: 48rem) { .dash-connect { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .dash-help { margin-top: 0.5rem; color: var(--text); font-size: 0.8125rem; line-height: 1.5; }
 .dash-help summary { cursor: pointer; color: var(--bright); }
 .dash-help p { margin: 0.5rem 0 0; }
@@ -2200,6 +2159,7 @@ a:focus-visible,
 /* Letterboxd and IMDb: the same card, with a form until it's connected. */
 .dash-connect .dash-service {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.875rem;
   padding: 1rem;
   border: 1px solid var(--panel-line);
@@ -2266,3 +2226,56 @@ a:focus-visible,
 .dash-service:has(.dash-state.is-busy) .dash-icon-button svg { animation: dash-spin 0.9s linear infinite; }
 @keyframes dash-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .dash-service:has(.dash-state.is-busy) .dash-icon-button svg { animation: none; } }
+
+/* The card: the poster (with one badge when something's special), then three
+   fixed lines floating under it: title and year, when, then where (in the
+   theatre's colour) with the score. A long title shortens; its year stays. */
+.card > a { display: flex; flex-direction: column; height: 100%; }
+.card .poster { border-radius: 6px; }
+.card-box { display: grid; flex: 1; align-content: start; gap: 0.125rem; padding: 0.5rem 0.125rem 0; }
+.card-box .card-title { display: flex; align-items: baseline; gap: 0.3125rem; margin: 0 0 0.0625rem; }
+.card-box .card-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card-box .card-title .year { flex: none; color: var(--text); font-size: 0.8125rem; font-weight: 400; }
+.card-box .card-mark-inline { display: inline-flex; flex: none; align-self: center; }
+.card-box .card-mark-inline .icon { color: #6fd3a4; }
+.card-box .card-next { margin: 0; color: var(--text); font-size: 0.75rem; }
+.card-box .card-next.rare { color: var(--accent-text); }
+.card-box .card-sub { justify-content: space-between; gap: 0.5rem; min-height: 1.125rem; }
+.card-box .card-rating { flex: none; }
+.card-where {
+  display: flex;
+  gap: 0.375rem;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+.card-where > span { color: var(--white); }
+.card-where > span + span::before { content: "·"; margin-right: 0.375rem; color: var(--text); font-weight: 400; }
+
+/* A theatre named in small type, in its colour: on cards and in time rows.
+   Full logos are for headings with room for them. */
+.venue-name { color: var(--white); font-weight: 700; text-decoration: none; }
+a.venue-name:hover { text-decoration: underline; text-underline-offset: 3px; }
+.where-rio,
+.where-dunbar,
+.card-where > .where-rio,
+.card-where > .where-dunbar { color: #ff5a5f; }
+.where-park,
+.card-where > .where-park { color: #4fb3ff; }
+
+/* Film page: one block per theatre, under its logo. Each date sits on the
+   left with its booking buttons on the right, as in every time row. */
+.showing { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; }
+.showing .showing-when { margin: 0; padding: 0; }
+.showing .times { margin: 0 0 0 auto; justify-content: flex-end; }
+.showing .showing-note,
+.showing .tags { flex-basis: 100%; margin: 0; }
+.row-signals { display: flex; flex-wrap: wrap; align-items: center; gap: 0.375rem 0.625rem; margin-top: 0.25rem; }
+.row-signals:empty { display: none; }
+.row-signals .ratings,
+.row-signals .tags { margin: 0; }
+/* Signed out there are three counts; the last spans the row on phones. */
+@media (max-width: 47.99rem) { .dash-stats:has(#stat-alerts-tile[hidden]) .is-urgent { grid-column: span 2; } }

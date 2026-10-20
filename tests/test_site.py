@@ -445,7 +445,10 @@ def test_home_cards_show_year_score_next_showing_and_theatres(conn):
         '<span class="card-next"><time datetime="2026-10-18T19:00" data-fmt="card">'
         "Today, 7:00 pm</time></span>"
     ) in plain(home)
-    assert "<span>Rio · Cinematheque</span>" in home
+    assert (
+        '<span class="where-rio">Rio</span><span class="where-cinematheque">Cinematheque</span>'
+        in home
+    )
 
 
 def test_films_page_lists_each_film_once_with_dates(conn):
@@ -750,7 +753,7 @@ def test_film_page_groups_days_under_their_theatre(conn):
     assert page.count('class="venue-group panel"') == 1
 
 
-def test_film_page_starts_a_new_block_when_the_theatre_changes(conn):
+def test_film_page_shows_each_theatre_once(conn):
     save(
         conn,
         show("Jaws", at(19, 19)),
@@ -760,7 +763,8 @@ def test_film_page_starts_a_new_block_when_the_theatre_changes(conn):
     )
     page = pages(conn, NOW)["films/jaws/index.html"]
     blocks = page.split('class="venue-group panel"')[1:]
-    assert [b.count('class="showing"') for b in blocks] == [1, 1, 2]
+    assert [b.count('class="showing"') for b in blocks] == [3, 1]
+    assert "theatres/rio/" in blocks[0] and "theatres/park/" in blocks[1]
 
 
 def test_theatre_rails_always_fill_and_topics_need_enough_films(conn):
@@ -872,10 +876,11 @@ def test_a_bare_listing_gets_the_general_event_tag(conn):
     assert 'class="card-badge" title="Event">Event<' in page
 
 
-def test_a_film_with_no_score_and_no_tag_says_unrated(conn):
+def test_a_film_with_no_score_just_leaves_it_out(conn):
     save(conn, show("New Doc", at(19, 19), year=2026), show("New Doc", at(20, 19), year=2026))
-    page = plain(pages(conn, NOW)["films/index.html"])
-    assert '<span class="card-tag card-unrated">Unrated</span>' in page
+    card = plain(pages(conn, NOW)["films/index.html"]).split('<li class="card"', 1)[1]
+    assert '<span class="year">2026</span>' in card
+    assert "card-rating" not in card.split("</li>")[0] and "Unrated" not in card
 
 
 def test_the_event_tag_is_not_a_second_events_chip(conn):
@@ -917,16 +922,15 @@ def test_a_card_with_a_score_still_shows_its_badge(conn):
     page = plain(pages(conn, NOW)["films/index.html"])
     assert 'class="card-badge" title="35mm">35mm<' in page
     assert 'title="4.2 on Letterboxd"' in page
-    # Where it's playing is the card's last line, below the poster.
+    # When it's on, then where, in the box under the poster.
     card = page.split('<li class="card"', 1)[1]
-    assert card.index("card-next") < card.index("card-venues")
+    assert card.index("card-badge") < card.index("card-next") < card.index("card-where")
 
 
 def test_no_card_has_an_empty_score_spot(conn):
     save(conn, show("Five Films by Somebody", at(19, 19), note="Shorts"))
     page = plain(pages(conn, NOW)["films/index.html"])
     assert 'class="card-badge" title="Shorts">Shorts<' in page
-    assert '<span class="card-tag card-unrated">Unrated</span>' in page
 
 
 def test_theatre_pages_fold_away_prices_and_specs(conn):

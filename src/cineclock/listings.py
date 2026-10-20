@@ -213,14 +213,14 @@ class TheatreRun:
 
 
 def theatre_runs(days: list[Day]) -> list[TheatreRun]:
-    runs: list[TheatreRun] = []
+    """A film's showtimes by theatre: each theatre once, in order of its first
+    date, with every day it plays there."""
+    runs: dict[str, TheatreRun] = {}
     for day in days:
         for group in day.groups:
-            if runs and runs[-1].venue == group.venue:
-                runs[-1].days.append((day, group.rows))
-            else:
-                runs.append(TheatreRun(group.venue, [(day, group.rows)]))
-    return runs
+            run = runs.setdefault(group.venue.slug, TheatreRun(group.venue, []))
+            run.days.append((day, group.rows))
+    return list(runs.values())
 
 
 def film_pages(screenings: list[Screening], films: dict[str, Film]) -> dict[int, FilmPage]:

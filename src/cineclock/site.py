@@ -166,7 +166,12 @@ def pages(conn: Connection, now: datetime) -> dict[str, str]:
         path = f"films/{page.slug}/index.html"
         page_days = group_days(page.screenings, page_of, films, now)
         out[path] = render(
-            "film.html", path, page=page, film=page.film, runs=theatre_runs(page_days)
+            "film.html",
+            path,
+            page=page,
+            film=page.film,
+            days=page_days,
+            runs=theatre_runs(page_days),
         )
 
     out["theatres/index.html"] = render("theatres.html", "theatres/index.html", current="theatres")

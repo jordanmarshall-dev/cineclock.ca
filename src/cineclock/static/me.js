@@ -199,7 +199,7 @@
       const item = el.closest("[data-item]") || el;
       // Start from the page's own tags and marks, so an unsaved film loses its mark.
       if (item.dataset.tags !== undefined) item.dataset.baseTags ??= item.dataset.tags;
-      el.querySelector(".card-mark")?.remove();
+      el.querySelectorAll(".card-mark, .card-mark-inline").forEach((m) => m.remove());
       if (!status) {
         if (item.dataset.baseTags !== undefined) item.dataset.tags = item.dataset.baseTags;
         const slot = el.querySelector(".personal");
@@ -218,6 +218,15 @@
           .map(([name, text]) => `<span class="tag tag-personal">${icon(name)}${text}</span>`)
           .join("");
         slot.hidden = false;
+      }
+      // On a card, a small mark before the title; elsewhere, on the poster.
+      const title = el.querySelector(".card-box .card-title");
+      if (title) {
+        title.insertAdjacentHTML(
+          "afterbegin",
+          `<span class="card-mark-inline" title="${status.w ? "On your watchlist" : "Seen"}">${icon(status.w ? "bookmark" : "eye", 12)}</span>`
+        );
+        continue;
       }
       const art = el.querySelector(".card-art");
       if (art && !art.querySelector(".card-mark")) {

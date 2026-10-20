@@ -15,7 +15,7 @@
 <div class="wrap">
   <div class="theatre-head{% if has_photo %} over-hero{% endif %}">
     {% if venue.full_logo and has_asset("logos/" ~ venue.full_logo) %}
-      {% set w, h = logo_size("logos/" ~ venue.full_logo, 22000, 64) %}
+      {% set w, h = full_logo_size(venue, 22000, 64) %}
       <img class="theatre-full-logo" src="{{ root }}static/logos/{{ venue.full_logo }}" alt="{{ venue.name }}" width="{{ w }}" height="{{ h }}" style="--w: {{ w }}px; --h: {{ h }}px">
       <h1 class="visually-hidden">{{ venue.name }}</h1>
     {% else %}
