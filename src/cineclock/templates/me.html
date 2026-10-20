@@ -83,8 +83,12 @@
   </ul>
 
   <section class="panel dash-calendar" id="dash-calendar" hidden aria-labelledby="dash-calendar-title">
-    <h2 class="me-heading" id="dash-calendar-title">{{ icon("calendar", "md") }}When your saved films play</h2>
+    <div class="cal-top">
+      <h2 class="me-heading" id="dash-calendar-title">{{ icon("calendar", "md") }}Your next two weeks</h2>
+      <div class="cal-chips" id="dash-calendar-filters" aria-label="Show films from"></div>
+    </div>
     <div class="cal" id="dash-calendar-grid"></div>
+    <p class="dash-empty" id="dash-calendar-none" hidden>Nothing from these lists plays in the next two weeks.</p>
   </section>
 
   {% for id, heading, ico, empty in [
@@ -154,7 +158,13 @@
       const imdb = new Set([...(account.current?.imdb || []), ...(me.imdbSaved()?.ids || [])]);
       const week = new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10);
       const rows = { ending: [], saved: [], watchlist: [], seen: [] };
+      const calendar = [];
       for (const film of index) {
+        const from = [];
+        if (saved.has(film.slug)) from.push("saved");
+        if (letterboxd[film.slug]?.w) from.push("letterboxd");
+        if (film.imdb && imdb.has(film.imdb)) from.push("imdb");
+        if (from.length) calendar.push({ film, from });
         const lb = letterboxd[film.slug] || {};
         const onList = Boolean(lb.w) || Boolean(film.imdb && imdb.has(film.imdb));
         if (saved.has(film.slug)) rows.saved.push(film);
@@ -179,24 +189,56 @@
       window.cineclockWhen?.();
       me.mark({ ...letterboxd, ...Object.fromEntries([...saved].map((slug) => [slug, { ...letterboxd[slug], w: 1 }])) });
 
-      drawCalendar(rows.saved);
+      calendarFilms = calendar;
+      drawCalendar();
     }
 
-    // Two weeks from today, a row per saved film: a bar from its first to last
-    // showing in that time, with a dot on each day it plays.
+    // Two weeks from today, a row per film you saved or have on a watchlist: a bar
+    // from its first to last showing in that time, a dot on each day it plays, and
+    // marks for where it came from. The chips above hide a source.
     const DAYS = 14;
+    const SOURCES = {
+      saved: ["Saved", '<svg class="icon" viewBox="0 0 24 24" width="12" height="12" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3.5h11a1 1 0 0 1 1 1v16l-6.5-4.5-6.5 4.5v-16a1 1 0 0 1 1-1z"/></svg>'],
+      letterboxd: ["Letterboxd", `<img src="${me.root}static/logos/letterboxd.png" alt="">`],
+      imdb: ["IMDb", `<img src="${me.root}static/logos/imdb.png" alt="">`],
+    };
+    const HIDDEN = "cineclock.calendar.hidden";
+    let calendarFilms = [];
+    let hidden = new Set();
+    try {
+      hidden = new Set(JSON.parse(localStorage.getItem(HIDDEN) || "[]"));
+    } catch (e) {}
+
+    $("dash-calendar-filters").addEventListener("click", (e) => {
+      const chip = e.target.closest("[data-source]");
+      if (!chip) return;
+      const source = chip.dataset.source;
+      hidden.has(source) ? hidden.delete(source) : hidden.add(source);
+      try {
+        localStorage.setItem(HIDDEN, JSON.stringify([...hidden]));
+      } catch (err) {}
+      drawCalendar();
+    });
+
     const isoDay = (date) => date.toLocaleDateString("en-CA", { timeZone: "America/Vancouver" });
-    function drawCalendar(films) {
+    function drawCalendar() {
+      const present = Object.keys(SOURCES).filter((s) => calendarFilms.some((c) => c.from.includes(s)));
+      $("dash-calendar-filters").innerHTML = present.length > 1
+        ? present
+            .map((s) => `<button type="button" class="cal-chip" data-source="${s}" aria-pressed="${!hidden.has(s)}">${SOURCES[s][1]}${SOURCES[s][0]}</button>`)
+            .join("")
+        : "";
+      const films = calendarFilms.filter((c) => c.from.some((s) => !hidden.has(s) || present.length < 2));
       const days = [];
       const start = new Date();
       for (let i = 0; i < DAYS; i++) days.push(new Date(start.getTime() + i * 864e5));
       const iso = days.map(isoDay);
       const rows = films
-        .map((film) => ({ film, on: iso.map((day) => film.days?.includes(day)) }))
+        .map(({ film, from }) => ({ film, from, on: iso.map((day) => film.days?.includes(day)) }))
         .filter((row) => row.on.some(Boolean))
         .sort((a, b) => a.on.indexOf(true) - b.on.indexOf(true));
-      $("dash-calendar").hidden = !rows.length;
-      if (!rows.length) return;
+      $("dash-calendar").hidden = !calendarFilms.length;
+      $("dash-calendar-none").hidden = rows.length > 0;
       const head = days
         .map((day, i) => {
           const weekday = day.toLocaleDateString("en-CA", { weekday: "narrow", timeZone: "America/Vancouver" });
@@ -205,16 +247,19 @@
         })
         .join("");
       const body = rows
-        .map(({ film, on }) => {
+        .map(({ film, from, on }) => {
           const first = on.indexOf(true);
           const last = on.lastIndexOf(true);
           const cells = on
             .map((yes, i) => `<span class="cal-cell${i >= first && i <= last ? " in" : ""}${i === first ? " first" : ""}${i === last ? " last" : ""}${yes ? " on" : ""}"></span>`)
             .join("");
-          return `<a class="cal-row" href="${me.root}films/${film.slug}/"><span class="cal-title">${film.title}</span><span class="cal-track">${cells}</span></a>`;
+          const marks = from.map((s) => `<span class="cal-from" title="${SOURCES[s][0]}">${SOURCES[s][1]}</span>`).join("");
+          return `<a class="cal-row" href="${me.root}films/${film.slug}/"><span class="cal-title"><span class="cal-name">${film.title}</span>${marks}</span><span class="cal-track">${cells}</span></a>`;
         })
         .join("");
-      $("dash-calendar-grid").innerHTML = `<div class="cal-row cal-head"><span class="cal-title"></span><span class="cal-track">${head}</span></div>${body}`;
+      $("dash-calendar-grid").innerHTML = rows.length
+        ? `<div class="cal-row cal-head"><span class="cal-title"></span><span class="cal-track">${head}</span></div>${body}`
+        : "";
     }
 
     let imdbTimer = null;

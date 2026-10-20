@@ -2141,3 +2141,30 @@ a:focus-visible,
 }
 .dash-connect .me-form { margin-top: 0; }
 .dash-help ol { margin: 0.5rem 0 0; padding-left: 1.25rem; display: grid; gap: 0.25rem; }
+
+.cal-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem; }
+.cal-top .me-heading { margin: 0; }
+.cal-chips { display: flex; flex-wrap: wrap; gap: 0.375rem; }
+.cal-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 2rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.cal-chip img { height: 0.625rem; }
+.cal-chip[aria-pressed="false"] { opacity: 0.45; text-decoration: line-through; }
+.cal-chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-wash); color: var(--white); }
+.cal-title { display: flex; align-items: center; gap: 0.375rem; min-width: 0; }
+.cal-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cal-from { display: inline-flex; flex: none; align-items: center; color: var(--accent-text); }
+.cal-from img { height: 0.625rem; }
+#dash-calendar-none { margin-top: 0.75rem; }
