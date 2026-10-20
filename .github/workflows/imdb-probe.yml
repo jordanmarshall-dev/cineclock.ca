@@ -10,6 +10,5 @@ jobs:
       - run: |
           ask() { curl -sS -m 20 -X POST -H 'Content-Type: application/json' -H 'x-imdb-client-name: imdb-web-next' -d "$1" https://api.graphql.imdb.com/ | cut -c1-700; }
           note() { echo "::notice title=$1::$(echo "$2" | tr '\n' ' ')"; }
-          note types "$(ask '{"query":"{ a: __type(name: \"UserProfile\") { fields { name } } b: __type(name: \"User\") { fields { name } } }"}')"
-          note profile "$(ask '{"query":"{ userProfile(input: { profileId: \"p.h2ouytvlcsyuesmhpcj673m3gq\" }) { userId username { text } } }"}')"
-          note user "$(ask '{"query":"{ user(id: \"ur210314200\") { nickName } }"}')"
+          note byuser "$(ask '{"query":"{ userProfile(input: { userId: \"ur206781881\" }) { userId profileId username { text } } }"}')"
+          note byname "$(ask '{"query":"{ userProfile(input: { username: \"JordanM-078\" }) { userId } }"}')"
