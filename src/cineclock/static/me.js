@@ -10,6 +10,7 @@
 (() => {
   const root = document.body.dataset.root || "";
   const KEY = "cineclock.letterboxd";
+  const IMDB = "cineclock.imdb";
   const RELAY = document.body.dataset.relay || "";
 
   const ICONS = {
@@ -32,6 +33,26 @@
     try {
       if (value) localStorage.setItem(KEY, JSON.stringify(value));
       else localStorage.removeItem(KEY);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // An uploaded IMDb watchlist: { user: "file", ids: [...], at: when }.
+  function imdbSaved() {
+    try {
+      const value = JSON.parse(localStorage.getItem(IMDB) || "null");
+      return value && value.user ? value : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function imdbSave(value) {
+    try {
+      if (value) localStorage.setItem(IMDB, JSON.stringify(value));
+      else localStorage.removeItem(IMDB);
       return true;
     } catch (e) {
       return false;
@@ -181,7 +202,7 @@
     const account = window.cineclockAccount;
     if (!account) return films;
     const savedFilms = new Set(account.savedList("film"));
-    const imdb = new Set(account.current?.imdb || []);
+    const imdb = new Set([...(account.current?.imdb || []), ...(imdbSaved()?.ids || [])]);
     if (!savedFilms.size && !imdb.size) return films;
     const out = { ...films };
     for (const film of await getJSON("films.json")) {
@@ -258,7 +279,7 @@
     document.dispatchEvent(new CustomEvent("cineclock:personal", { detail: me }));
   }
 
-  window.cineclockMe = { saved, save, load, cards, mark, root, withSaves, getJSON };
+  window.cineclockMe = { saved, save, load, cards, mark, root, withSaves, getJSON, imdbSaved, imdbSave };
   document.addEventListener("cineclock:account", () => start());
   start();
 })();

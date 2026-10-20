@@ -11,6 +11,8 @@ from collections import defaultdict
 from datetime import datetime
 from sqlite3 import Connection
 
+from markupsafe import escape
+
 from cineclock import db, personal, prices, profiles
 from cineclock.films import match_key
 from cineclock.listings import (
@@ -42,6 +44,7 @@ def shelf_index(film_list: list[FilmPage], now: datetime) -> list[dict]:
     index = [
         {
             "slug": page.slug,
+            "title": str(escape(page.title)),
             "lb": personal.letterboxd_slug(page.film.letterboxd_url) if page.film else None,
         }
         for page in film_list
@@ -62,7 +65,9 @@ def shelf_index(film_list: list[FilmPage], now: datetime) -> list[dict]:
             }
         if page.film and page.film.letterboxd_count:
             entry["lb_count"] = page.film.letterboxd_count
-        entry["last"] = max(s.local_start for s in page.screenings).date().isoformat()
+        days = sorted({s.local_start.date().isoformat() for s in page.screenings})
+        entry["days"] = days
+        entry["last"] = days[-1]
     return index
 
 

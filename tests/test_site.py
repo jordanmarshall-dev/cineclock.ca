@@ -1058,7 +1058,7 @@ def test_account_page_offers_google_sign_in(conn):
     page = pages(conn, NOW)["me/index.html"]
     assert "accounts.google.com/gsi/client" in page
     assert "358607256767-mkorjtl09q7ii10nuhfo1fesjfcvgnnv.apps.googleusercontent.com" in page
-    assert '"viff-centre"' in page  # saved theatres are named from the venue list
+    assert "dash-calendar" in page and "me-imdb-file" in page
 
 
 def test_highly_rated_rail_has_the_id_the_rating_switch_looks_for(conn):
@@ -1153,3 +1153,11 @@ def test_films_json_knows_each_films_last_day(conn):
     save(conn, show("Jaws", at(19, 19)), show("Jaws", at(24, 21)))
     [entry] = json.loads(pages(conn, NOW)["films.json"])
     assert entry["last"] == "2026-10-24"
+
+
+def test_films_json_lists_each_day_a_film_plays(conn):
+    import json
+
+    save(conn, show("Jaws", at(19, 19)), show("Jaws", at(19, 21)), show("Jaws", at(22, 19)))
+    [entry] = json.loads(pages(conn, NOW)["films.json"])
+    assert entry["days"] == ["2026-10-19", "2026-10-22"]

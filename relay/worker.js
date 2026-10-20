@@ -11,7 +11,6 @@
 // page of the watchlist, the first page of watched films (Letterboxd blocks
 // the rest), and the diary feed. Answers are cached for six hours.
 
-import { readWatchlist } from "./imdb.js";
 import { handleAccount, isAccountPath } from "./account.js";
 import { runAlerts } from "./alerts.js";
 
@@ -128,16 +127,6 @@ export default {
       return handleAccount(request, env);
     }
     const origin = request.headers.get("Origin") || "";
-    const imdb = url.pathname.match(/^\/imdb\/(ur\d{4,12})\/?$/);
-    if (request.method === "GET" && imdb) {
-      try {
-        const list = await readWatchlist(imdb[1]);
-        if (!list) return respond({ error: "no public watchlist" }, 404, origin);
-        return respond(list, 200, origin);
-      } catch (error) {
-        return respond({ error: "IMDb didn't answer", detail: String(error.message || error) }, 502, origin);
-      }
-    }
     const match = url.pathname.match(/^\/profile\/([A-Za-z0-9_]{1,30})\/?$/);
     if (request.method !== "GET" || !match) return respond({ error: "not found" }, 404, origin);
     const user = match[1].toLowerCase();

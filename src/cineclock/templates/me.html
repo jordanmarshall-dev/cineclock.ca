@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_parts.html" import icon, source_mark, venue_badge %}
+{% from "_parts.html" import icon, source_mark %}
 
 {% block title %}Your cineclock{% endblock %}
 {% block description %}Your saved films and theatres, and which films from your Letterboxd or IMDb watchlist are playing in Vancouver.{% endblock %}
@@ -28,6 +28,52 @@
     <p class="signin-note">Browsing never needs an account. Google shares only your email address with cineclock. <a href="{{ root }}privacy/">Privacy</a></p>
   </section>
 
+  <section class="dash-connect" aria-label="Connect your watchlists">
+    <div class="panel dash-service">
+      <img class="dash-service-logo" src="{{ root }}static/logos/letterboxd.png" alt="">
+      <div class="dash-service-body">
+        <b>Letterboxd</b>
+        <div id="me-connect">
+          <form id="me-user-form" class="me-form">
+            <label class="search"><input name="user" placeholder="Your username" aria-label="Letterboxd username" autocomplete="username" autocapitalize="none" spellcheck="false" required></label>
+            <button type="submit" class="me-button">Connect</button>
+          </form>
+          <p class="filter-status" id="me-message" aria-live="polite"></p>
+        </div>
+        <div id="me-connected" class="dash-service-row" hidden>
+          <span class="meta">Connected as <b id="me-name"></b></span>
+          <button type="button" class="clear" id="me-disconnect">Disconnect</button>
+        </div>
+      </div>
+    </div>
+    <div class="panel dash-service">
+      <img class="dash-service-logo" src="{{ root }}static/logos/imdb.png" alt="">
+      <div class="dash-service-body">
+        <b>IMDb</b>
+        <div id="me-imdb-connect">
+          <div class="dash-service-row">
+            <label class="me-button" for="me-imdb-file">Upload watchlist</label>
+            <input type="file" id="me-imdb-file" accept=".csv,text/csv" class="visually-hidden">
+          </div>
+          <p class="filter-status" id="me-imdb-message" aria-live="polite"></p>
+          <details class="dash-help">
+            <summary>How to get the file</summary>
+            <ol>
+              <li>On imdb.com, open your <b>Watchlist</b>.</li>
+              <li>Tap the <b>Export</b> icon (the arrow at the top of the list).</li>
+              <li>Open <b>Your exports</b> from the message IMDb shows, and download the file.</li>
+              <li>Upload it here. Do it again whenever your list changes.</li>
+            </ol>
+          </details>
+        </div>
+        <div id="me-imdb-connected" class="dash-service-row" hidden>
+          <span class="meta" id="me-imdb-status"></span>
+          <button type="button" class="clear" id="me-imdb-disconnect">Disconnect</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <ul class="dash-stats" aria-label="At a glance">
     <li><a href="#dash-saved"><b id="stat-saved">0</b><span>Saved films playing</span></a></li>
     <li><a href="#dash-watchlist"><b id="stat-watchlist">0</b><span>From your watchlist</span></a></li>
@@ -35,10 +81,15 @@
     <li id="stat-alerts-tile" hidden><a href="#me-alerts"><b id="stat-alerts">Off</b><span>Email alerts</span></a></li>
   </ul>
 
+  <section class="panel dash-calendar" id="dash-calendar" hidden aria-labelledby="dash-calendar-title">
+    <h2 class="me-heading" id="dash-calendar-title">{{ icon("calendar", "md") }}When your saved films play</h2>
+    <div class="cal" id="dash-calendar-grid"></div>
+  </section>
+
   {% for id, heading, ico, empty in [
     ("ending", "Last chance this week", "clock", "Nothing you saved or want to see ends in the next seven days."),
     ("saved", "Saved, playing now", "bookmark", "Tap Save on any film and it shows up here."),
-    ("watchlist", "From your watchlist", "film", "Connect Letterboxd or upload your IMDb watchlist below to see what's playing from it."),
+    ("watchlist", "From your watchlist", "film", "Connect Letterboxd or IMDb above to see what's playing from your watchlist."),
     ("seen", "Seen it, playing again", "eye", ""),
   ] %}
   <section class="dash-rail" id="dash-{{ id }}"{% if id in ("ending", "seen") %} hidden{% endif %} aria-labelledby="dash-{{ id }}-title">
@@ -48,52 +99,8 @@
   </section>
   {% endfor %}
 
-  <section class="dash-rail" aria-labelledby="dash-theatres-title">
-    <h2 class="me-heading" id="dash-theatres-title">{{ icon("pin", "md") }}Your theatres</h2>
-    <ul class="dash-theatres">
-      {% for v in venues %}
-      <li data-theatre="{{ v.slug }}" hidden><a href="{{ root }}theatres/{{ v.slug }}/">{{ venue_badge(v, root, scale=1.4) }}</a></li>
-      {% endfor %}
-    </ul>
-    <p class="dash-empty" id="dash-theatres-empty">Tap Save on a theatre's page to pin it here.</p>
-  </section>
-
   <h2 class="me-settings-title">Settings</h2>
   <div class="dash-settings">
-    <section class="panel settings-card" aria-labelledby="me-connect-title">
-      <h3 id="me-connect-title">Watchlists</h3>
-      <p class="settings-note">Films on these lists are marked across the site and fill your watchlist row.</p>
-      <div class="dash-service">
-        <img class="dash-service-logo" src="{{ root }}static/logos/letterboxd.png" alt="">
-        <div class="dash-service-body">
-          <b>Letterboxd</b>
-          <div id="me-connect">
-            <form id="me-user-form" class="me-form">
-              <label class="search"><input name="user" placeholder="Your username" aria-label="Letterboxd username" autocomplete="username" autocapitalize="none" spellcheck="false" required></label>
-              <button type="submit" class="me-button">Connect</button>
-            </form>
-            <p class="filter-status" id="me-message" aria-live="polite"></p>
-          </div>
-          <div id="me-connected" class="dash-service-row" hidden>
-            <span class="meta">Connected as <b id="me-name"></b></span>
-            <button type="button" class="clear" id="me-disconnect">Disconnect</button>
-          </div>
-        </div>
-      </div>
-      <div class="dash-service" id="me-imdb" hidden>
-        <img class="dash-service-logo" src="{{ root }}static/logos/imdb.png" alt="">
-        <div class="dash-service-body">
-          <b>IMDb</b>
-          <p class="meta">Export your watchlist as a CSV on IMDb, then choose the file. Upload again when it changes.</p>
-          <div class="dash-service-row">
-            <label class="me-button me-button-quiet" for="me-imdb-file">Choose file</label>
-            <input type="file" id="me-imdb-file" accept=".csv,text/csv" class="visually-hidden">
-            <p class="filter-status" id="me-imdb-message" aria-live="polite"></p>
-          </div>
-        </div>
-      </div>
-    </section>
-
     <section class="panel settings-card" id="me-alerts" hidden aria-labelledby="me-alerts-title">
       <div class="settings-head">
         <div>
@@ -137,14 +144,13 @@
     const account = window.cineclockAccount;
     const $ = (id) => document.getElementById(id);
     const say = (text) => ($("me-message").textContent = text);
-    const filmCount = (n) => `${n} ${n === 1 ? "film" : "films"} from your IMDb watchlist.`;
     let letterboxd = {};
 
     // Every row on the dashboard comes from films.json, so the cards match the site.
     async function drawDashboard() {
       const index = await me.getJSON("films.json");
       const saved = new Set(account.savedList("film"));
-      const imdb = new Set(account.current?.imdb || []);
+      const imdb = new Set([...(account.current?.imdb || []), ...(me.imdbSaved()?.ids || [])]);
       const week = new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10);
       const rows = { ending: [], saved: [], watchlist: [], seen: [] };
       for (const film of index) {
@@ -172,9 +178,60 @@
       window.cineclockWhen?.();
       me.mark({ ...letterboxd, ...Object.fromEntries([...saved].map((slug) => [slug, { ...letterboxd[slug], w: 1 }])) });
 
-      const theatres = account.savedList("theatre");
-      for (const li of document.querySelectorAll("[data-theatre]")) li.hidden = !theatres.includes(li.dataset.theatre);
-      $("dash-theatres-empty").hidden = theatres.some((slug) => document.querySelector(`[data-theatre="${slug}"]`));
+      drawCalendar(rows.saved);
+    }
+
+    // Two weeks from today, a row per saved film: a bar from its first to last
+    // showing in that time, with a dot on each day it plays.
+    const DAYS = 14;
+    const isoDay = (date) => date.toLocaleDateString("en-CA", { timeZone: "America/Vancouver" });
+    function drawCalendar(films) {
+      const days = [];
+      const start = new Date();
+      for (let i = 0; i < DAYS; i++) days.push(new Date(start.getTime() + i * 864e5));
+      const iso = days.map(isoDay);
+      const rows = films
+        .map((film) => ({ film, on: iso.map((day) => film.days?.includes(day)) }))
+        .filter((row) => row.on.some(Boolean))
+        .sort((a, b) => a.on.indexOf(true) - b.on.indexOf(true));
+      $("dash-calendar").hidden = !rows.length;
+      if (!rows.length) return;
+      const head = days
+        .map((day, i) => {
+          const weekday = day.toLocaleDateString("en-CA", { weekday: "narrow", timeZone: "America/Vancouver" });
+          const weekend = [0, 6].includes(new Date(iso[i] + "T12:00").getDay());
+          return `<span class="cal-day${weekend ? " is-weekend" : ""}${i === 0 ? " is-today" : ""}"><i>${weekday}</i>${Number(iso[i].slice(8))}</span>`;
+        })
+        .join("");
+      const body = rows
+        .map(({ film, on }) => {
+          const first = on.indexOf(true);
+          const last = on.lastIndexOf(true);
+          const cells = on
+            .map((yes, i) => `<span class="cal-cell${i >= first && i <= last ? " in" : ""}${i === first ? " first" : ""}${i === last ? " last" : ""}${yes ? " on" : ""}"></span>`)
+            .join("");
+          return `<a class="cal-row" href="${me.root}films/${film.slug}/"><span class="cal-title">${film.title}</span><span class="cal-track">${cells}</span></a>`;
+        })
+        .join("");
+      $("dash-calendar-grid").innerHTML = `<div class="cal-row cal-head"><span class="cal-title"></span><span class="cal-track">${head}</span></div>${body}`;
+    }
+
+    function drawImdb() {
+      const value = me.imdbSaved();
+      $("me-imdb-connect").hidden = Boolean(value);
+      $("me-imdb-connected").hidden = !value;
+      if (value) {
+        const n = value.ids.length;
+        $("me-imdb-status").innerHTML = `<b>${n} ${n === 1 ? "film" : "films"}</b> on your watchlist`;
+      }
+    }
+
+    // Signed in: the account keeps the list too, so alerts can use it.
+    async function keepImdb(value) {
+      me.imdbSave(value);
+      if (account.current) await account.setImdb(value ? value.ids : []).catch(() => {});
+      drawImdb();
+      await drawDashboard();
     }
 
     async function refresh() {
@@ -202,7 +259,7 @@
       const signedIn = Boolean(account.current);
       $("me-signed-out").hidden = signedIn;
       $("me-signed-in").hidden = !signedIn;
-      for (const id of ["me-ratings", "me-imdb", "me-delete-row", "me-alerts", "stat-alerts-tile"]) $(id).hidden = !signedIn;
+      for (const id of ["me-ratings", "me-delete-row", "me-alerts", "stat-alerts-tile"]) $(id).hidden = !signedIn;
       if (signedIn) {
         const email = account.current.email || "your Google account";
         $("me-email").textContent = email;
@@ -211,8 +268,9 @@
         drawAlerts();
         const radio = document.querySelector(`input[name=rating_source][value=${account.source()}]`);
         if (radio) radio.checked = true;
-        const count = account.current.imdb.length;
-        if (count && !$("me-imdb-message").textContent) $("me-imdb-message").textContent = filmCount(count);
+        // A list uploaded or linked on another device.
+        if (!me.imdbSaved() && account.current.imdb.length) me.imdbSave({ user: "file", ids: account.current.imdb, at: Date.now() });
+        drawImdb();
       }
       await drawDashboard();
     }
@@ -304,19 +362,16 @@
       const file = e.target.files[0];
       if (!file) return;
       const ids = account.imdbIds(await file.text());
+      e.target.value = "";
       if (!ids.length) {
         $("me-imdb-message").textContent = "That file has no IMDb films in it. It should be the CSV export of your watchlist.";
         return;
       }
-      $("me-imdb-message").textContent = "Uploading...";
-      try {
-        await account.setImdb(ids);
-        $("me-imdb-message").textContent = filmCount(ids.length);
-      } catch (err) {
-        $("me-imdb-message").textContent = "That didn't upload. Try again in a minute.";
-      }
-      e.target.value = "";
+      $("me-imdb-message").textContent = "";
+      await keepImdb({ user: "file", ids, at: Date.now() });
     });
+
+    $("me-imdb-disconnect").addEventListener("click", () => keepImdb(null));
 
     $("me-user-form").addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -349,6 +404,7 @@
       drawAccount();
       googleButton();
     });
+    drawImdb();
     drawAccount();
     refresh();
   })();

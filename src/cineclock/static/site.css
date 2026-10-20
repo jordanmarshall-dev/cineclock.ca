@@ -402,7 +402,7 @@ a:focus-visible,
 .time .icon { color: var(--accent-text); }
 
 /* The only chance to see it: the booking button itself stands out. */
-.time-rare { border-color: var(--accent); background: var(--accent-wash); }
+.time-rare { border-color: var(--accent); background: rgba(136, 48, 223, 0.45); }
 /* No tickets online (sold out, standby): still a link to the theatre's page, but quieter. */
 .time-closed { border-style: dashed; color: var(--text); }
 .time-text { display: flex; flex-direction: column; }
@@ -558,7 +558,7 @@ a:focus-visible,
 .chip-logo img { opacity: 0.6; transition: opacity 120ms; }
 .chip-logo[aria-pressed="true"] img,
 .chip-logo:hover img { opacity: 1; }
-.chip-logo[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-wash); }
+.chip-logo[aria-pressed="true"] { border-color: var(--accent); background: rgba(136, 48, 223, 0.45); }
 
 .clear {
   padding: 0.375rem 0.5rem;
@@ -1845,7 +1845,7 @@ a:focus-visible,
   cursor: pointer;
 }
 .source-picker input { position: absolute; opacity: 0; pointer-events: none; }
-.source-picker label:has(input:checked) { border-color: var(--accent); background: var(--accent-wash); }
+.source-picker label:has(input:checked) { border-color: var(--accent); background: rgba(136, 48, 223, 0.45); }
 .source-picker label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
 .source-picker .source-logo { height: 0.75rem; }
 .me-theatres { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0; padding: 0; list-style: none; }
@@ -2103,3 +2103,41 @@ a:focus-visible,
 .me-page > .signin-card { margin-top: 1.5rem; }
 .dash-theatres a { padding: 0 1rem; }
 .me-danger .clear { margin: 0 0.25rem 0 0; padding-left: 0; }
+
+/* Watchlist connections, side by side on wider screens. */
+.dash-connect { display: grid; gap: 0.75rem; margin-top: 1.5rem; }
+@media (min-width: 48rem) { .dash-connect { grid-template-columns: 1fr 1fr; } }
+.dash-connect .dash-service { padding: 1rem 1.125rem; border: 1px solid var(--panel-line); border-radius: var(--radius); background: var(--panel); }
+.dash-help { margin-top: 0.5rem; color: var(--text); font-size: 0.8125rem; line-height: 1.5; }
+.dash-help summary { cursor: pointer; color: var(--bright); }
+.dash-help p { margin: 0.5rem 0 0; }
+.dash-help b { color: var(--bright); }
+.dash-link { color: var(--accent-text); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.dash-connect .filter-status:empty { display: none; }
+.dash-settings > :first-child { grid-row: auto; }
+
+/* The two-week calendar of saved films. */
+.dash-calendar { margin-top: 1.5rem; padding: 1.125rem; border: 1px solid var(--panel-line); border-radius: var(--radius); background: var(--panel); }
+.cal { display: grid; gap: 0.25rem; margin-top: 0.75rem; }
+.cal-row { display: grid; grid-template-columns: 1fr; gap: 0.25rem; padding: 0.375rem 0; color: var(--bright); text-decoration: none; }
+.cal-row + .cal-row { border-top: 1px solid var(--panel-line); }
+.cal-row:not(.cal-head):hover .cal-title { color: var(--white); text-decoration: underline; text-underline-offset: 2px; }
+.cal-head { padding-top: 0; }
+.cal-head .cal-title { display: none; }
+.cal-title { overflow: hidden; font-size: 0.875rem; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.cal-track { display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); align-items: center; }
+.cal-day { display: grid; justify-items: center; color: var(--text); font-size: 0.75rem; font-variant-numeric: tabular-nums; }
+.cal-day i { font-size: 0.625rem; font-style: normal; text-transform: uppercase; opacity: 0.7; }
+.cal-day.is-weekend { color: var(--bright); }
+.cal-day.is-today { color: var(--accent-text); font-weight: 700; }
+.cal-cell { position: relative; height: 1rem; }
+.cal-cell.in::before { content: ""; position: absolute; top: 50%; left: 0; right: 0; height: 0.25rem; transform: translateY(-50%); background: rgba(136, 48, 223, 0.45); }
+.cal-cell.first::before { left: 50%; }
+.cal-cell.last::before { right: 50%; }
+.cal-cell.on::after { content: ""; position: absolute; top: 50%; left: 50%; width: 0.625rem; height: 0.625rem; border-radius: 50%; transform: translate(-50%, -50%); background: var(--accent); box-shadow: 0 0 0 2px var(--panel); }
+@media (min-width: 48rem) {
+  .cal-row { grid-template-columns: 11rem 1fr; align-items: center; gap: 1rem; }
+  .cal-head .cal-title { display: block; }
+}
+.dash-connect .me-form { margin-top: 0; }
+.dash-help ol { margin: 0.5rem 0 0; padding-left: 1.25rem; display: grid; gap: 0.25rem; }
