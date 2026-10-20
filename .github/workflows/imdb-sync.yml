@@ -7,6 +7,10 @@ on:
   schedule:
     - cron: "*/10 * * * *"
   workflow_dispatch:
+    inputs:
+      check:
+        description: Only read this user's watchlist and report it (an ur number)
+        default: ""
 
 permissions:
   contents: read
@@ -24,4 +28,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: PYTHONPATH=src python -m cineclock.imdb_sync
+      - run: PYTHONPATH=src python -m cineclock.imdb_sync ${CHECK:+--check "$CHECK"}
+        env:
+          CHECK: ${{ inputs.check }}

@@ -3,6 +3,7 @@ Worker (relay/imdb.js). Run by the IMDb sync workflow, since IMDb's API answers
 GitHub's servers but not Cloudflare's.
 
     python -m cineclock.imdb_sync
+    python -m cineclock.imdb_sync --check ur12345678   (read one list, change nothing)
 
 The Worker knows the job by a GitHub OIDC token, so there's no secret to keep.
 """
@@ -100,6 +101,10 @@ def github_token() -> str:
 
 
 def main() -> int:
+    if len(sys.argv) > 2 and sys.argv[1] == "--check":
+        ids = watchlist_ids(ask_imdb, sys.argv[2])
+        print(f"::notice::{sys.argv[2]}: {len(ids)} titles, first {ids[:3]}")
+        return 0
     auth = {"Authorization": "Bearer " + github_token()}
     users = request(f"{RELAY}/imdb/wanted", headers=auth)["users"]
     lists = []
