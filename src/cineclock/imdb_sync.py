@@ -21,7 +21,7 @@ IMDB_API = "https://api.graphql.imdb.com/"
 PAGE = 250
 MAX_PAGES = 8
 
-PROFILE = "query ($p: ID!) { userProfile(input: { profileId: $p }) { userId } }"
+PROFILE = "query ($p: ID!) { userProfile(input: { profileId: $p }) { userId username { text } } }"
 LIST = "query ($user: ID!) { predefinedList(classType: WATCH_LIST, userId: $user) { id } }"
 ITEMS = """query ($id: ID!, $first: Int!, $after: ID) {
   list(id: $id) {
@@ -39,14 +39,21 @@ class Unreadable(Exception):
     pass
 
 
-def watchlist_ids(ask: Ask, user: str) -> list[str]:
-    """Every title id on a public watchlist, in IMDb's order. Newer profile
-    links carry a profile id (p.abc123...) instead of the ur number, so those
-    are looked up first."""
+def read_list(ask: Ask, user: str) -> dict:
+    """A public watchlist: { ids, name }. Newer profile links carry a profile
+    id (p.abc123...) instead of the ur number; those are looked up first, which
+    also gives the IMDb username. IMDb can't look people up by username itself."""
+    name = None
     if user.startswith("p."):
-        user = (ask(PROFILE, {"p": user}).get("userProfile") or {}).get("userId")
+        profile = ask(PROFILE, {"p": user}).get("userProfile") or {}
+        user, name = profile.get("userId"), (profile.get("username") or {}).get("text")
         if not user:
             raise Unreadable("no such profile")
+    return {"ids": watchlist_ids(ask, user), "name": name}
+
+
+def watchlist_ids(ask: Ask, user: str) -> list[str]:
+    """Every title id on a public watchlist, in IMDb's order."""
     found = ask(LIST, {"user": user}).get("predefinedList")
     if not found:
         raise Unreadable("private")
@@ -109,15 +116,16 @@ def github_token() -> str:
 
 def main() -> int:
     if len(sys.argv) > 2 and sys.argv[1] == "--check":
-        ids = watchlist_ids(ask_imdb, sys.argv[2])
-        print(f"::notice::{sys.argv[2]}: {len(ids)} titles, first {ids[:3]}")
+        found = read_list(ask_imdb, sys.argv[2])
+        ids = found["ids"]
+        print(f"::notice::{sys.argv[2]} ({found['name']}): {len(ids)} titles, first {ids[:3]}")
         return 0
     auth = {"Authorization": "Bearer " + github_token()}
     users = request(f"{RELAY}/imdb/wanted", headers=auth)["users"]
     lists = []
     for user in users:
         try:
-            lists.append({"user": user, "ids": watchlist_ids(ask_imdb, user)})
+            lists.append({"user": user, **read_list(ask_imdb, user)})
         except Unreadable as error:
             lists.append({"user": user, "error": str(error)})
         except OSError as error:

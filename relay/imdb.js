@@ -118,14 +118,22 @@ function shown(row) {
     ready: Boolean(row.updated),
     updated: row.updated ? new Date(row.updated).toISOString() : null,
     error: row.error || null,
+    name: row.name || null,
   };
 }
+
+const ready = new WeakSet();
 
 export async function handleImdb(request, env, { now = Date.now(), fetcher = fetch, keys = null } = {}) {
   const origin = request.headers.get("Origin") || "";
   if (request.method === "OPTIONS") return preflight(origin);
   const db = env.DB;
-  await db.batch(SCHEMA.map((sql) => db.prepare(sql)));
+  if (!ready.has(db)) {
+    await db.batch(SCHEMA.map((sql) => db.prepare(sql)));
+    // Added after the table first shipped.
+    await db.prepare("ALTER TABLE imdb_lists ADD COLUMN name TEXT").run().catch(() => {});
+    ready.add(db);
+  }
   const path = new URL(request.url).pathname.replace(/\/+$/, "");
 
   if (path === "/imdb/connect" && request.method === "POST") {
@@ -157,7 +165,8 @@ export async function handleImdb(request, env, { now = Date.now(), fetcher = fet
     if (request.method === "GET" && path === "/imdb/wanted") {
       const rows = await db
         .prepare(
-          `SELECT user FROM imdb_lists WHERE requested > ? AND (updated IS NULL OR updated < ?)
+          `SELECT user FROM imdb_lists WHERE requested > ?
+             AND (updated IS NULL OR updated < ? OR (name IS NULL AND user LIKE 'p.%'))
            ORDER BY updated IS NOT NULL, updated LIMIT 100`,
         )
         .bind(now - FORGET, now - REFRESH)
@@ -173,8 +182,14 @@ export async function handleImdb(request, env, { now = Date.now(), fetcher = fet
         const ids = Array.isArray(list.ids) ? list.ids.filter((id) => TITLE.test(id)).slice(0, MAX_TITLES) : null;
         updates.push(
           db
-            .prepare("UPDATE imdb_lists SET ids = COALESCE(?, ids), error = ?, updated = ? WHERE user = ?")
-            .bind(ids ? JSON.stringify(ids) : null, ids ? null : String(list.error || "unreadable").slice(0, 40), now, list.user),
+            .prepare("UPDATE imdb_lists SET ids = COALESCE(?, ids), error = ?, updated = ?, name = COALESCE(?, name) WHERE user = ?")
+            .bind(
+              ids ? JSON.stringify(ids) : null,
+              ids ? null : String(list.error || "unreadable").slice(0, 40),
+              now,
+              typeof list.name === "string" ? list.name.slice(0, 60) : null,
+              list.user,
+            ),
         );
       }
       if (updates.length) await db.batch(updates);

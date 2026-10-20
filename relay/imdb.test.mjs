@@ -81,7 +81,7 @@ const env = { DB: fakeD1() };
 // Connecting starts a pending list.
 let r = await call(env, "POST", "/imdb/connect", { body: { user: "https://www.imdb.com/user/ur12345678/" } });
 assert.equal(r.status, 200);
-assert.deepEqual(r.json, { user: "ur12345678", ids: [], ready: false, updated: null, error: null });
+assert.deepEqual(r.json, { user: "ur12345678", ids: [], ready: false, updated: null, error: null, name: null });
 assert.equal((await call(env, "POST", "/imdb/connect", { body: { user: "nope" } })).status, 400);
 assert.equal((await call(env, "POST", "/imdb/connect", { body: { user: "ur1234" }, origin: "https://evil.example" })).status, 403);
 
@@ -95,11 +95,15 @@ r = await call(env, "GET", "/imdb/wanted", { token });
 assert.deepEqual(r.json.users, ["ur12345678"]);
 
 // The job's results show up for the browser, junk ids dropped.
-r = await call(env, "PUT", "/imdb/lists", { token, body: { lists: [{ user: "ur12345678", ids: ["tt0073195", "nope"] }] } });
+r = await call(env, "PUT", "/imdb/lists", {
+  token,
+  body: { lists: [{ user: "ur12345678", ids: ["tt0073195", "nope"], name: "JordanM-078" }] },
+});
 assert.equal(r.json.saved, 1);
 r = await call(env, "GET", "/imdb/ur12345678");
 assert.deepEqual(r.json.ids, ["tt0073195"]);
 assert.equal(r.json.ready, true);
+assert.equal(r.json.name, "JordanM-078");
 
 // Fresh lists aren't wanted again until they're six hours old.
 assert.deepEqual((await call(env, "GET", "/imdb/wanted", { token })).json.users, []);

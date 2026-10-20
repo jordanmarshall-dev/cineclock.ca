@@ -39,15 +39,16 @@ def test_a_private_watchlist_says_so():
         watchlist_ids(ask, "ur1")
 
 
-def test_a_profile_link_is_looked_up_first():
-    from cineclock.imdb_sync import PROFILE
+def test_a_profile_link_is_looked_up_first_and_gives_the_username():
+    from cineclock.imdb_sync import PROFILE, read_list
 
     ask, calls = fake_imdb([["tt0073195"]])
 
     def with_profile(query, variables):
         if query == PROFILE:
-            return {"userProfile": {"userId": "ur42"}}
+            return {"userProfile": {"userId": "ur42", "username": {"text": "JordanM-078"}}}
         return ask(query, variables)
 
-    assert watchlist_ids(with_profile, "p.h2ouytvlcsyuesmhpcj673m3gq") == ["tt0073195"]
+    found = read_list(with_profile, "p.h2ouytvlcsyuesmhpcj673m3gq")
+    assert found == {"ids": ["tt0073195"], "name": "JordanM-078"}
     assert calls[0] == {"user": "ur42"}
