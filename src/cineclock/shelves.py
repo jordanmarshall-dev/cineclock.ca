@@ -96,31 +96,25 @@ def standout(p: FilmPage) -> str | None:
     )
 
 
-def leads(film_list: list[FilmPage], now: datetime, days: int = 3) -> list[Slide]:
-    """The hero's first slide, one candidate per day: the best-rated film with art
-    playing that day. The page shows today's until its last showing tonight has
-    started, then moves on to the next day's."""
+def leads(film_list: list[FilmPage], now: datetime, days: int = 3, per_day: int = 8) -> list[Slide]:
+    """Candidates for the hero's first slide: the films with art playing each of
+    the next few days, best rated first. The page picks one at random from the
+    earliest day that still has a showing to come, so tonight's films take turns
+    until the last one starts, then tomorrow's do."""
     today = now.astimezone(VANCOUVER).date()
     out = []
     for offset in range(days):
         day = today + timedelta(days=offset)
-        playing = {
-            id(p): (
-                p,
-                [s for s in p.screenings if s.local_start.date() == day and s.starts_at > now],
-            )
-            for p in film_list
-            if p.film and p.film.backdrop_url
-        }
-        playing = {k: v for k, v in playing.items() if v[1]}
-        if not playing:
-            continue
-        page, shows = max(
-            playing.values(), key=lambda v: (v[0].film.letterboxd_rating or 0, -len(v[1]))
-        )
         label = "Tonight" if offset == 0 else "Tomorrow" if offset == 1 else f"{day:%A}"
-        first = min(shows, key=lambda s: s.starts_at)
-        out.append(Slide(page, label, when(first, now), first, max(s.starts_at for s in shows)))
+        playing = []
+        for p in film_list:
+            shows = [s for s in p.screenings if s.local_start.date() == day and s.starts_at > now]
+            if shows and p.film and p.film.backdrop_url:
+                playing.append((p, shows))
+        playing.sort(key=lambda v: -(v[0].film.letterboxd_rating or 0))
+        for page, shows in playing[:per_day]:
+            first = min(shows, key=lambda s: s.starts_at)
+            out.append(Slide(page, label, when(first, now), first, max(s.starts_at for s in shows)))
     return out
 
 

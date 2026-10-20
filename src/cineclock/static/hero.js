@@ -6,11 +6,16 @@
   const track = hero.querySelector(".hero-track");
   const SHOWN = 3;
 
-  // First comes the day's pick: tonight's until its last showing tonight has
-  // started, then tomorrow's. The other two are drawn at random from the films
-  // coming up, so each visit turns up something different.
+  // First comes one of tonight's films, picked at random from those with a
+  // showing still to come; once tonight's are over, one of tomorrow's. The other
+  // two are drawn at random from the films coming up, so each visit turns up
+  // something different.
   const all = [...track.children];
-  const lead = all.find((el) => el.dataset.until && Date.parse(el.dataset.until) > Date.now());
+  const day = (t) => new Date(t).toLocaleDateString("en-CA", { timeZone: "America/Vancouver" });
+  const live = all.filter((el) => el.dataset.until && Date.parse(el.dataset.until) > Date.now());
+  const soonest = live.length ? day(Math.min(...live.map((el) => Date.parse(el.dataset.until)))) : null;
+  const choices = live.filter((el) => day(Date.parse(el.dataset.until)) === soonest);
+  const lead = choices[Math.floor(Math.random() * choices.length)];
   const pool = all.filter((el) => !el.dataset.until && el.dataset.film !== lead?.dataset.film);
   for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -18,7 +23,6 @@
   }
   const kept = [lead, ...pool].filter(Boolean).slice(0, SHOWN);
   if (lead) {
-    const day = (t) => new Date(t).toLocaleDateString("en-CA", { timeZone: "America/Vancouver" });
     const until = Date.parse(lead.dataset.until);
     const label =
       day(until) === day(Date.now()) ? "Tonight"

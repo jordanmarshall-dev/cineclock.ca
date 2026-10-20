@@ -658,9 +658,13 @@ def test_hero_leads_with_tonights_pick_then_each_next_days(conn):
         )
     page_of = film_pages(db.upcoming(conn, NOW), db.films_by_key(conn))
     found = leads(list({id(p): p for p in page_of.values()}.values()), NOW)
-    assert [(s.page.title, s.label) for s in found] == [("Alien", "Tonight"), ("Jaws", "Tomorrow")]
-    # Tomorrow's pick stands until its last showing that day starts.
-    assert found[1].until == at(19, 21, 30) and "7:00" in found[1].when
+    assert [(s.page.title, s.label) for s in found] == [
+        ("Alien", "Tonight"),
+        ("Vertigo", "Tonight"),
+        ("Jaws", "Tomorrow"),
+    ]
+    # A pick stands until its last showing that day starts.
+    assert found[2].until == at(19, 21, 30) and "7:00" in found[2].when
 
 
 def test_hero_slides_say_when_and_for_how_long(conn):
