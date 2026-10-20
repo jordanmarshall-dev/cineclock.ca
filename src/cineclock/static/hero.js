@@ -4,6 +4,29 @@
   const hero = document.querySelector(".hero");
   if (!hero) return;
   const track = hero.querySelector(".hero-track");
+  const SHOWN = 5;
+
+  // The page lists up to eight highlights; each visit shows five, shuffled, so a
+  // refresh brings up different films and theatres.
+  const pool = [...track.children];
+  const dotPool = [...hero.querySelectorAll(".hero-dots button")];
+  const order = pool.map((_, i) => i);
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  order.slice(SHOWN).forEach((i) => {
+    pool[i].remove();
+    dotPool[i]?.remove();
+  });
+  const kept = order.slice(0, SHOWN);
+  kept.forEach((i, n) => {
+    track.append(pool[i]);
+    if (dotPool[i]) dotPool[i].parentNode.append(dotPool[i]);
+    pool[i].setAttribute("aria-label", pool[i].getAttribute("aria-label").replace(/^\d+ of \d+/, `${n + 1} of ${kept.length}`));
+  });
+  pool[kept[0]].querySelector("img")?.removeAttribute("loading");
+
   const slides = [...track.children];
   if (slides.length < 2) return;
 

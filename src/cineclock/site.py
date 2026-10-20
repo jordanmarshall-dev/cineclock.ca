@@ -62,6 +62,7 @@ def shelf_index(film_list: list[FilmPage], now: datetime) -> list[dict]:
             }
         if page.film and page.film.letterboxd_count:
             entry["lb_count"] = page.film.letterboxd_count
+        entry["last"] = max(s.local_start for s in page.screenings).date().isoformat()
     return index
 
 
@@ -133,7 +134,7 @@ def pages(conn: Connection, now: datetime) -> dict[str, str]:
             "index.html",
             "index.html",
             rails=rails(film_list, now, debuts),
-            slides=highlights(film_list, now),
+            slides=highlights(film_list, now, count=8),
         ),
         "showtimes/index.html": render(
             "showtimes.html",

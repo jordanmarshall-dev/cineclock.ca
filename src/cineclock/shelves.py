@@ -3,6 +3,7 @@ top of each theatre page. Each picks and orders films for one idea (on today,
 leaving soon, on film, just added...) from the FilmPages in listings.py.
 """
 
+from collections import Counter
 from dataclasses import dataclass, replace
 from datetime import datetime, timedelta
 
@@ -70,8 +71,9 @@ class Slide:
 
 def highlights(film_list: list[FilmPage], now: datetime, count: int = 3) -> list[Slide]:
     """The home page hero: tonight's pick, then the standout things coming up in the
-    next two weeks (events, film prints, one-offs), best rated first. Only films
-    with a backdrop image, so every slide has full art."""
+    next two weeks (events, film prints, one-offs), best rated first, spread across
+    the theatres so one busy venue doesn't fill it. Only films with a backdrop
+    image, so every slide has full art. The page shuffles them on each visit."""
     first = spotlight(film_list, now)
     if not first:
         return []
@@ -102,7 +104,12 @@ def highlights(film_list: list[FilmPage], now: datetime, count: int = 3) -> list
     )
     on_today = first.next_showing.local_start.date() == today
     slides = [Slide(first, "Tonight" if on_today else "Up next", when(first.next_showing, now))]
-    for p in rest[: count - 1]:
+    shown = Counter(v.slug for v in first.venues)
+    while rest and len(slides) < count:
+        # The best pick from whichever theatre has had the fewest slides so far.
+        p = min(rest, key=lambda p: min((shown[v.slug] for v in p.venues), default=0))
+        rest.remove(p)
+        shown.update(v.slug for v in p.venues)
         slides.append(Slide(p, standout(p) or "Coming up", when(p.next_showing, now)))
     return slides
 

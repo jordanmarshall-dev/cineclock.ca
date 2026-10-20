@@ -1,119 +1,130 @@
 {% extends "base.html" %}
-{% from "_parts.html" import icon, source_mark %}
+{% from "_parts.html" import icon, source_mark, venue_badge %}
 
 {% block title %}Your cineclock{% endblock %}
 {% block description %}Your saved films and theatres, and which films from your Letterboxd or IMDb watchlist are playing in Vancouver.{% endblock %}
 
 {% block main %}
 <div class="wrap me-page">
-  <h1 class="page-title">Your cineclock</h1>
-
-  <section class="me-section" id="me-account" aria-label="Account">
-    <div id="me-signed-out" class="panel signin-card">
-      <h2 class="signin-title">Sign in to cineclock</h2>
-      <ul class="signin-perks">
-        <li>{{ icon("bookmark", "sm") }}<span>Your saved films and theatres on every device</span></li>
-        <li>{{ icon("calendar", "sm") }}<span>An email before a saved film's last showing</span></li>
-        <li>{{ icon("star", "sm") }}<span>Scores from Letterboxd, IMDb, Rotten Tomatoes or Metacritic</span></li>
-        <li>{{ icon("film", "sm") }}<span>Your Letterboxd and IMDb watchlists, marked across the site</span></li>
-      </ul>
-      <div class="signin-button" id="me-google"></div>
-      <p class="signin-error" id="me-account-message" role="status" aria-live="polite"></p>
-      <p class="signin-note">Browsing never needs an account. Google shares only your email address with cineclock. <a href="{{ root }}privacy/">Privacy</a></p>
-    </div>
-    <div id="me-signed-in" class="panel account-card" hidden>
-      <span class="account-initial account-initial-lg" id="me-initial" aria-hidden="true"></span>
-      <p class="account-card-who"><span class="meta">Signed in as</span><b id="me-email"></b></p>
+  <div class="dash-head">
+    <h1 class="page-title">Your cineclock</h1>
+    <div class="dash-who" id="me-signed-in" hidden>
+      <span class="account-initial" id="me-initial" aria-hidden="true"></span>
+      <span class="dash-email" id="me-email"></span>
       <button type="button" class="clear" id="me-signout">Sign out</button>
     </div>
+  </div>
+
+  <section class="panel signin-card" id="me-signed-out" aria-label="Sign in">
+    <h2 class="signin-title">Sign in to cineclock</h2>
+    <ul class="signin-perks">
+      <li>{{ icon("bookmark", "sm") }}<span>Your saved films and theatres on every device</span></li>
+      <li>{{ icon("calendar", "sm") }}<span>An email before a saved film's last showing</span></li>
+      <li>{{ icon("star", "sm") }}<span>Scores from Letterboxd, IMDb, Rotten Tomatoes or Metacritic</span></li>
+      <li>{{ icon("film", "sm") }}<span>Your Letterboxd and IMDb watchlists, marked across the site</span></li>
+    </ul>
+    <div class="signin-button" id="me-google"></div>
+    <p class="signin-error" id="me-account-message" role="status" aria-live="polite"></p>
+    <p class="signin-note">Browsing never needs an account. Google shares only your email address with cineclock. <a href="{{ root }}privacy/">Privacy</a></p>
   </section>
 
-  <section class="me-section" aria-labelledby="me-saved-title">
-    <h2 id="me-saved-title" class="me-heading">{{ icon("bookmark", "md") }}Saved films playing now</h2>
-    <ul class="film-grid" id="me-saved"></ul>
-    <p class="meta" id="me-saved-empty">Tap Save on any film's page and it shows up here.</p>
-    <h2 class="me-heading me-subhead">{{ icon("pin", "md") }}Saved theatres</h2>
-    <ul class="me-theatres" id="me-theatres"></ul>
-    <p class="meta" id="me-theatres-empty">Tap Save on a theatre's page to keep it here.</p>
+  <ul class="dash-stats" aria-label="At a glance">
+    <li><a href="#dash-saved"><b id="stat-saved">0</b><span>Saved films playing</span></a></li>
+    <li><a href="#dash-watchlist"><b id="stat-watchlist">0</b><span>From your watchlist</span></a></li>
+    <li class="is-urgent"><a href="#dash-ending"><b id="stat-ending">0</b><span>Ending this week</span></a></li>
+    <li id="stat-alerts-tile" hidden><a href="#me-alerts"><b id="stat-alerts">Off</b><span>Email alerts</span></a></li>
+  </ul>
+
+  {% for id, heading, ico, empty in [
+    ("ending", "Last chance this week", "clock", "Nothing you saved or want to see ends in the next seven days."),
+    ("saved", "Saved, playing now", "bookmark", "Tap Save on any film and it shows up here."),
+    ("watchlist", "From your watchlist", "film", "Connect Letterboxd or upload your IMDb watchlist below to see what's playing from it."),
+    ("seen", "Seen it, playing again", "eye", ""),
+  ] %}
+  <section class="dash-rail" id="dash-{{ id }}"{% if id in ("ending", "seen") %} hidden{% endif %} aria-labelledby="dash-{{ id }}-title">
+    <h2 class="me-heading" id="dash-{{ id }}-title">{{ icon(ico, "md") }}{{ heading }}<span class="dash-count" id="dash-{{ id }}-count"></span></h2>
+    <ul class="rail-cards" id="dash-{{ id }}-list"></ul>
+    {% if empty %}<p class="dash-empty" id="dash-{{ id }}-empty">{{ empty }}</p>{% endif %}
   </section>
+  {% endfor %}
 
-  <h2 class="me-settings-title" id="me-settings-title" hidden>Settings</h2>
-
-  <section class="panel settings-card" id="me-alerts" hidden aria-labelledby="me-alerts-title">
-    <div class="settings-head">
-      <div>
-        <h3 id="me-alerts-title">Email alerts</h3>
-        <p class="settings-note">About films you saved. At most one email a day, in the morning, to <b id="me-alerts-email"></b>.</p>
-      </div>
-      <label class="switch"><input type="checkbox" role="switch" id="me-alerts-on" aria-labelledby="me-alerts-title"><span aria-hidden="true"></span></label>
-    </div>
-    <fieldset class="settings-options" id="me-alerts-options">
-      <legend class="visually-hidden">Send an email when</legend>
-      <label class="check"><input type="checkbox" name="last"><span><b>Last chance</b>The day before a saved film's final showing</span></label>
-      <label class="check"><input type="checkbox" name="added"><span><b>New screenings</b>When a saved film gets new dates, even if it wasn't playing when you saved it</span></label>
-      <label class="check"><input type="checkbox" name="imdb"><span><b>Include my IMDb watchlist</b>Films on it count as saved</span></label>
-    </fieldset>
-    <div class="settings-foot">
-      <button type="button" class="me-button me-button-quiet" id="me-alerts-test">Send me a test</button>
-      <p class="filter-status" id="me-alerts-message" role="status" aria-live="polite"></p>
-    </div>
-  </section>
-
-  <section class="panel settings-card" id="me-ratings" hidden aria-labelledby="me-ratings-title">
-    <h3 id="me-ratings-title">Ratings</h3>
-    <p class="settings-note">Which score cards show, and what Highly rated is ranked by.</p>
-    <fieldset class="source-picker">
-      <legend class="visually-hidden">Rating source</legend>
-      {% for source, name in [("letterboxd", "Letterboxd"), ("imdb", "IMDb"), ("rt", "Rotten Tomatoes"), ("metacritic", "Metacritic")] %}
-      <label><input type="radio" name="rating_source" value="{{ source }}">{{ source_mark(source, root) }}<span>{{ name }}</span></label>
+  <section class="dash-rail" aria-labelledby="dash-theatres-title">
+    <h2 class="me-heading" id="dash-theatres-title">{{ icon("pin", "md") }}Your theatres</h2>
+    <ul class="dash-theatres">
+      {% for v in venues %}
+      <li data-theatre="{{ v.slug }}" hidden><a href="{{ root }}theatres/{{ v.slug }}/">{{ venue_badge(v, root, scale=1.4) }}</a></li>
       {% endfor %}
-    </fieldset>
+    </ul>
+    <p class="dash-empty" id="dash-theatres-empty">Tap Save on a theatre's page to pin it here.</p>
   </section>
 
-  <section class="panel settings-card" aria-labelledby="me-lb-title">
-    <h3 id="me-lb-title">Letterboxd</h3>
-    <div id="me-connect">
-      <p class="settings-note">Enter your Letterboxd username to see which films on your watchlist are playing, and which ones you've already seen.</p>
-      <form id="me-user-form" class="me-form">
-        <label class="search"><img class="source-logo" src="{{ root }}static/logos/letterboxd.png" alt=""><input name="user" placeholder="Letterboxd username" aria-label="Letterboxd username" autocomplete="username" autocapitalize="none" spellcheck="false" required></label>
-        <button type="submit" class="me-button">Connect</button>
-      </form>
-      <p class="filter-status" id="me-message" aria-live="polite"></p>
-    </div>
-    <div id="me-connected" hidden>
-      <div class="me-bar">
-        <p class="me-status"><img class="source-logo" src="{{ root }}static/logos/letterboxd.png" alt=""><span>Connected as <b id="me-name"></b></span></p>
-        <button type="button" class="clear" id="me-disconnect">Disconnect</button>
+  <h2 class="me-settings-title">Settings</h2>
+  <div class="dash-settings">
+    <section class="panel settings-card" aria-labelledby="me-connect-title">
+      <h3 id="me-connect-title">Watchlists</h3>
+      <p class="settings-note">Films on these lists are marked across the site and fill your watchlist row.</p>
+      <div class="dash-service">
+        <img class="dash-service-logo" src="{{ root }}static/logos/letterboxd.png" alt="">
+        <div class="dash-service-body">
+          <b>Letterboxd</b>
+          <div id="me-connect">
+            <form id="me-user-form" class="me-form">
+              <label class="search"><input name="user" placeholder="Your username" aria-label="Letterboxd username" autocomplete="username" autocapitalize="none" spellcheck="false" required></label>
+              <button type="submit" class="me-button">Connect</button>
+            </form>
+            <p class="filter-status" id="me-message" aria-live="polite"></p>
+          </div>
+          <div id="me-connected" class="dash-service-row" hidden>
+            <span class="meta">Connected as <b id="me-name"></b></span>
+            <button type="button" class="clear" id="me-disconnect">Disconnect</button>
+          </div>
+        </div>
       </div>
-    </div>
-  </section>
+      <div class="dash-service" id="me-imdb" hidden>
+        <img class="dash-service-logo" src="{{ root }}static/logos/imdb.png" alt="">
+        <div class="dash-service-body">
+          <b>IMDb</b>
+          <p class="meta">Export your watchlist as a CSV on IMDb, then choose the file. Upload again when it changes.</p>
+          <div class="dash-service-row">
+            <label class="me-button me-button-quiet" for="me-imdb-file">Choose file</label>
+            <input type="file" id="me-imdb-file" accept=".csv,text/csv" class="visually-hidden">
+            <p class="filter-status" id="me-imdb-message" aria-live="polite"></p>
+          </div>
+        </div>
+      </div>
+    </section>
 
-  <section class="panel settings-card" id="me-imdb" hidden aria-labelledby="me-imdb-title">
-    <h3 id="me-imdb-title">IMDb watchlist</h3>
-    <p class="settings-note">On IMDb, open your watchlist and export it as a CSV file, then choose that file here. Upload again whenever your list changes.</p>
-    <label class="me-button me-button-quiet" for="me-imdb-file">Choose IMDb file</label>
-    <input type="file" id="me-imdb-file" accept=".csv,text/csv" class="visually-hidden">
-    <p class="filter-status" id="me-imdb-message" aria-live="polite"></p>
-  </section>
+    <section class="panel settings-card" id="me-alerts" hidden aria-labelledby="me-alerts-title">
+      <div class="settings-head">
+        <div>
+          <h3 id="me-alerts-title">Email alerts</h3>
+          <p class="settings-note">About films you saved. At most one a day, in the morning, to <b id="me-alerts-email"></b>.</p>
+        </div>
+        <label class="switch"><input type="checkbox" role="switch" id="me-alerts-on" aria-labelledby="me-alerts-title"><span aria-hidden="true"></span></label>
+      </div>
+      <fieldset class="settings-options" id="me-alerts-options">
+        <legend class="visually-hidden">Send an email when</legend>
+        <label class="check"><input type="checkbox" name="last"><span><b>Last chance</b>The day before a saved film's final showing</span></label>
+        <label class="check"><input type="checkbox" name="added"><span><b>New screenings</b>When a saved film gets new dates</span></label>
+        <label class="check"><input type="checkbox" name="imdb"><span><b>Include my IMDb watchlist</b>Films on it count as saved</span></label>
+      </fieldset>
+      <div class="settings-foot">
+        <button type="button" class="me-button me-button-quiet" id="me-alerts-test">Send me a test</button>
+        <p class="filter-status" id="me-alerts-message" role="status" aria-live="polite"></p>
+      </div>
+    </section>
 
-  <section class="me-section" id="me-lb-lists" hidden>
-    <div class="rail">
-      <div class="rail-head">
-        <h2><a href="{{ root }}films/?tag=watchlist">{{ icon("bookmark", "md") }}On your watchlist, playing now</a></h2>
-        <a class="see-all" href="{{ root }}films/?tag=watchlist" aria-label="See your watchlist films with filters">{{ icon("chevron", "lg") }}</a>
-      </div>
-      <ul class="film-grid" id="me-watchlist"></ul>
-      <p class="meta" id="me-watchlist-empty" hidden>Nothing from your watchlist is playing right now. New screenings show up here as theatres add them.</p>
-    </div>
-    <div class="rail">
-      <div class="rail-head">
-        <h2><a href="{{ root }}films/?tag=seen">{{ icon("eye", "md") }}Seen it, playing again</a></h2>
-        <a class="see-all" href="{{ root }}films/?tag=seen" aria-label="See films you've seen with filters">{{ icon("chevron", "lg") }}</a>
-      </div>
-      <ul class="film-grid" id="me-seen"></ul>
-      <p class="meta" id="me-seen-empty" hidden>None of the films you've logged are playing right now.</p>
-    </div>
-  </section>
+    <section class="panel settings-card" id="me-ratings" hidden aria-labelledby="me-ratings-title">
+      <h3 id="me-ratings-title">Ratings</h3>
+      <p class="settings-note">The score on every card, and what Highly rated ranks by.</p>
+      <fieldset class="source-picker">
+        <legend class="visually-hidden">Rating source</legend>
+        {% for source, name in [("letterboxd", "Letterboxd"), ("imdb", "IMDb"), ("rt", "Rotten Tomatoes"), ("metacritic", "Metacritic")] %}
+        <label><input type="radio" name="rating_source" value="{{ source }}">{{ source_mark(source, root) }}<span>{{ name }}</span></label>
+        {% endfor %}
+      </fieldset>
+    </section>
+  </div>
 
   <p class="me-danger" id="me-delete-row" hidden><button type="button" class="clear" id="me-delete">Delete my account</button> removes your account and everything saved in it, right away.</p>
 </div>
@@ -127,44 +138,71 @@
     const $ = (id) => document.getElementById(id);
     const say = (text) => ($("me-message").textContent = text);
     const filmCount = (n) => `${n} ${n === 1 ? "film" : "films"} from your IMDb watchlist.`;
-    const venues = {{ venues | map(attribute="slug") | list | tojson }};
-    const venueNames = {{ venues | map(attribute="name") | list | tojson }};
+    let letterboxd = {};
 
-    async function fill(films, id, test) {
-      const list = await me.cards(films, test);
-      $(id).innerHTML = list;
+    // Every row on the dashboard comes from films.json, so the cards match the site.
+    async function drawDashboard() {
+      const index = await me.getJSON("films.json");
+      const saved = new Set(account.savedList("film"));
+      const imdb = new Set(account.current?.imdb || []);
+      const week = new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10);
+      const rows = { ending: [], saved: [], watchlist: [], seen: [] };
+      for (const film of index) {
+        const lb = letterboxd[film.slug] || {};
+        const onList = Boolean(lb.w) || Boolean(film.imdb && imdb.has(film.imdb));
+        if (saved.has(film.slug)) rows.saved.push(film);
+        if (onList) rows.watchlist.push(film);
+        if (lb.s && !onList && !saved.has(film.slug)) rows.seen.push(film);
+        if ((saved.has(film.slug) || onList) && film.last <= week) rows.ending.push(film);
+      }
+      rows.ending.sort((a, b) => a.last.localeCompare(b.last));
+      for (const [id, films] of Object.entries(rows)) {
+        $(`dash-${id}-list`).innerHTML = films.map((f) => f.card.replaceAll("@root@", me.root)).join("");
+        $(`dash-${id}-list`).hidden = !films.length;
+        $(`dash-${id}-count`).textContent = films.length || "";
+        const empty = $(`dash-${id}-empty`);
+        if (empty) empty.hidden = films.length > 0;
+      }
+      $("dash-ending").hidden = !rows.ending.length;
+      $("dash-seen").hidden = !rows.seen.length;
+      $("stat-saved").textContent = rows.saved.length;
+      $("stat-watchlist").textContent = rows.watchlist.length;
+      $("stat-ending").textContent = rows.ending.length;
+      $("stat-ending").closest("li").classList.toggle("is-quiet", !rows.ending.length);
       window.cineclockWhen?.();
-      $(id).hidden = !list;
-      $(`${id}-empty`).hidden = Boolean(list);
+      me.mark({ ...letterboxd, ...Object.fromEntries([...saved].map((slug) => [slug, { ...letterboxd[slug], w: 1 }])) });
+
+      const theatres = account.savedList("theatre");
+      for (const li of document.querySelectorAll("[data-theatre]")) li.hidden = !theatres.includes(li.dataset.theatre);
+      $("dash-theatres-empty").hidden = theatres.some((slug) => document.querySelector(`[data-theatre="${slug}"]`));
     }
 
     async function refresh() {
       const value = me.saved();
       $("me-connected").hidden = !value;
       $("me-connect").hidden = Boolean(value);
-      $("me-lb-lists").hidden = !value;
-      if (!value) return;
-      try {
-        const data = await me.load(value);
-        $("me-name").textContent = data.user;
-        await fill(data.films, "me-watchlist", (f) => f.w);
-        await fill(data.films, "me-seen", (f) => f.s && !f.w);
-        me.mark(data.films);
-      } catch (e) {
-        me.save(null);
-        $("me-connected").hidden = true;
-        $("me-connect").hidden = false;
-        $("me-lb-lists").hidden = true;
-        say("Couldn't load that profile. Try connecting again.");
+      letterboxd = {};
+      if (value) {
+        try {
+          const data = await me.load(value);
+          $("me-name").textContent = data.user;
+          letterboxd = data.films;
+        } catch (e) {
+          me.save(null);
+          $("me-connected").hidden = true;
+          $("me-connect").hidden = false;
+          say("Couldn't load that profile. Try connecting again.");
+        }
       }
+      await drawDashboard();
     }
 
-    // Saved films playing now, saved theatres, and the signed-in parts.
+    // The signed-in parts: who you are, alerts, ratings, IMDb.
     async function drawAccount() {
       const signedIn = Boolean(account.current);
       $("me-signed-out").hidden = signedIn;
       $("me-signed-in").hidden = !signedIn;
-      for (const id of ["me-ratings", "me-imdb", "me-delete-row", "me-alerts", "me-settings-title"]) $(id).hidden = !signedIn;
+      for (const id of ["me-ratings", "me-imdb", "me-delete-row", "me-alerts", "stat-alerts-tile"]) $(id).hidden = !signedIn;
       if (signedIn) {
         const email = account.current.email || "your Google account";
         $("me-email").textContent = email;
@@ -176,13 +214,7 @@
         const count = account.current.imdb.length;
         if (count && !$("me-imdb-message").textContent) $("me-imdb-message").textContent = filmCount(count);
       }
-      const saved = Object.fromEntries(account.savedList("film").map((slug) => [slug, { w: 1 }]));
-      await fill(saved, "me-saved", () => true);
-      const theatres = account.savedList("theatre").filter((slug) => venues.includes(slug));
-      $("me-theatres").innerHTML = theatres
-        .map((slug) => `<li><a href="${me.root}theatres/${slug}/">${venueNames[venues.indexOf(slug)]}</a></li>`)
-        .join("");
-      $("me-theatres-empty").hidden = theatres.length > 0;
+      await drawDashboard();
     }
 
     // Email alerts: the switch, the three choices, and the test button.
@@ -197,6 +229,7 @@
       }
       $("me-alerts-options").classList.toggle("is-off", !alerts.enabled);
       $("me-alerts-test").hidden = !alerts.enabled;
+      $("stat-alerts").textContent = alerts.enabled ? "On" : "Off";
       if (alerts.enabled && account.current.email_ready === false && !$("me-alerts-message").textContent) {
         $("me-alerts-message").textContent = "Alerts are saved. Emails start going out once sending is switched on.";
       }

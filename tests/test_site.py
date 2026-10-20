@@ -1125,3 +1125,31 @@ def test_card_crop_keeps_the_photo_covering_the_card():
         ]
         floor = (1 - venue.sign_zoom) * 100
         assert floor <= x <= 0 and floor <= y <= 0, venue.slug
+
+
+def test_hero_spreads_its_picks_across_the_theatres(conn):
+    from cineclock.shelves import highlights
+
+    save(
+        conn,
+        show("Alien", at(18, 21)),
+        show("Jaws", at(19, 19)),
+        show("Heat", at(19, 20)),
+        show("Ran", at(20, 19), venue="The Park"),
+    )
+    for i, (title, score) in enumerate([("Alien", 4), ("Jaws", 4.5), ("Heat", 4.4), ("Ran", 3)]):
+        db.save_film(
+            conn, film(title, None, i, backdrop_url=f"https://b/{i}", letterboxd_rating=score)
+        )
+    page_of = film_pages(db.upcoming(conn, NOW), db.films_by_key(conn))
+    slides = highlights(list({id(p): p for p in page_of.values()}.values()), NOW, count=3)
+    # Ran is rated lowest but it's the Park's only film, so it beats a third Rio film.
+    assert [s.page.title for s in slides] == ["Alien", "Ran", "Jaws"]
+
+
+def test_films_json_knows_each_films_last_day(conn):
+    import json
+
+    save(conn, show("Jaws", at(19, 19)), show("Jaws", at(24, 21)))
+    [entry] = json.loads(pages(conn, NOW)["films.json"])
+    assert entry["last"] == "2026-10-24"
