@@ -2279,3 +2279,11 @@ a.venue-name:hover { text-decoration: underline; text-underline-offset: 3px; }
 .row-signals .tags { margin: 0; }
 /* Signed out there are three counts; the last spans the row on phones. */
 @media (max-width: 47.99rem) { .dash-stats:has(#stat-alerts-tile[hidden]) .is-urgent { grid-column: span 2; } }
+
+/* Theatre page: a Showtimes row beside Tickets and Tech specs that jumps down
+   past the rails. Same look as the folds, with its chevron pointing down. */
+.fold-jump { display: flex; align-items: center; gap: 0.625rem; padding: 0.875rem 1rem; color: var(--white); font-weight: 600; text-decoration: none; }
+.fold-jump > .icon:first-child { color: var(--accent-text); }
+.fold-jump > .icon:last-child { color: var(--text); transform: rotate(90deg); }
+.fold-jump:hover { border-color: var(--line); }
+#showtimes { scroll-margin-top: 4.5rem; }

@@ -1196,3 +1196,10 @@ def test_films_json_lists_each_day_a_film_plays(conn):
     save(conn, show("Jaws", at(19, 19)), show("Jaws", at(19, 21)), show("Jaws", at(22, 19)))
     [entry] = json.loads(pages(conn, NOW)["films.json"])
     assert entry["days"] == ["2026-10-19", "2026-10-22"]
+
+
+def test_theatre_page_jumps_to_its_showtimes(conn):
+    save(conn, show("Jaws", at(19, 19)))
+    page = pages(conn, NOW)["theatres/rio/index.html"]
+    assert 'class="fold fold-jump" href="#showtimes"' in page
+    assert 'id="showtimes"' in page and 'data-fmt="short">Tomorrow<' in page

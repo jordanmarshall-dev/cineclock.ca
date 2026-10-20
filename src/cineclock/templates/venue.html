@@ -37,8 +37,11 @@
     {% if venue.website %}<li><a href="{{ venue.website }}">{{ icon("external") }}Website</a></li>{% endif %}
   </ul>
 
-  {# Tickets and the rooms' specs fold away, so the films are a short scroll down. #}
+  {# Tickets and the rooms' specs fold away, so the films are a short scroll down;
+     Showtimes jumps straight past the rails to the day-by-day list. #}
   <div class="folds">
+  <a class="fold fold-jump" href="#showtimes">{{ icon("calendar", "lg") }}<span class="fold-title">Showtimes</span>
+    <span class="fold-hint">{% if days %}Next: {{ days[0].short | stamp(days[0].date, "short") }}{% else %}Nothing listed{% endif %}</span>{{ icon("chevron", "md") }}</a>
   {% set pr = prices.get(venue.name) %}
   {% if pr and (pr.tickets or pr.deals) %}
   <details class="fold">
@@ -92,7 +95,7 @@
 
   {% if rails %}<div class="theatre-rails">{% for r in rails %}{{ rail(r, root) }}{% endfor %}</div>{% endif %}
 
-  <h2 class="section-heading">Showtimes</h2>
+  <h2 class="section-heading" id="showtimes">Showtimes</h2>
   {{ date_tools(days, months) }}
   {% if days %}
     {{ day_sections(days, root, show_venues=False) }}
