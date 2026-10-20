@@ -445,7 +445,7 @@ def test_home_cards_show_year_score_next_showing_and_theatres(conn):
         '<span class="card-next"><time datetime="2026-10-18T19:00" data-fmt="card">'
         "Today, 7:00 pm</time></span>"
     ) in plain(home)
-    assert 'title="The Rio"' in home and 'title="The Cinematheque"' in home
+    assert "<span>Rio · Cinematheque</span>" in home
 
 
 def test_films_page_lists_each_film_once_with_dates(conn):
@@ -488,7 +488,7 @@ def test_badge_falls_back_to_initials_without_a_logo(conn, monkeypatch, tmp_path
         shutil.copy(path, tmp_path / path.name)
     monkeypatch.setattr(render, "STATIC", tmp_path)
     save(conn, show("Musk", at(18, 12)))
-    page = pages(conn, NOW)["index.html"]
+    page = pages(conn, NOW)["films/index.html"]
     assert '<span class="monogram" role="img" aria-label="The Rio">R</span>' in page
 
 
