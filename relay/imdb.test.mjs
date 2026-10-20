@@ -68,6 +68,7 @@ async function call(env, method, path, { body, token, origin = "https://cinecloc
 assert.equal(imdbUser("https://www.imdb.com/user/ur12345678/watchlist/?ref_=nv"), "ur12345678");
 assert.equal(imdbUser("m.imdb.com/user/ur999999/"), "ur999999");
 assert.equal(imdbUser("yogzoth"), null);
+assert.equal(imdbUser("https://www.imdb.com/user/p.h2ouytvlcsyuesmhpcj673m3gq?ref_=wl_usr_ov"), "p.h2ouytvlcsyuesmhpcj673m3gq");
 
 const env = { DB: fakeD1() };
 

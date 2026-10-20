@@ -60,7 +60,7 @@
             <summary>Where do I find it?</summary>
             <ol>
               <li>On IMDb, open your profile or your Watchlist.</li>
-              <li>Copy the address. It has a number starting with <b>ur</b>.</li>
+              <li>Copy the address from the browser or the Share button.</li>
               <li>Make sure the watchlist is public (Watchlist, then the settings icon).</li>
             </ol>
             <p>Or <label class="dash-link" for="me-imdb-file">upload a CSV export</label> instead.</p>
@@ -425,10 +425,10 @@
 
     $("me-imdb-form").addEventListener("submit", async (e) => {
       e.preventDefault();
-      const user = (e.target.user.value.match(/\bur\d{4,12}\b/) || [])[0];
+      const user = (e.target.user.value.match(/\b(ur\d{4,12}|p\.[a-z0-9]{8,40})\b/i) || [])[0]?.toLowerCase();
       const message = $("me-imdb-message");
       if (!user) {
-        message.textContent = "That needs the number starting with ur from your IMDb profile or watchlist link.";
+        message.textContent = "Paste the link to your IMDb profile or watchlist.";
         return;
       }
       message.textContent = "Connecting...";

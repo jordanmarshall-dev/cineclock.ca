@@ -37,3 +37,17 @@ def test_a_private_watchlist_says_so():
     ask, _ = fake_imdb([], list_id=None)
     with pytest.raises(Unreadable, match="private"):
         watchlist_ids(ask, "ur1")
+
+
+def test_a_profile_link_is_looked_up_first():
+    from cineclock.imdb_sync import PROFILE
+
+    ask, calls = fake_imdb([["tt0073195"]])
+
+    def with_profile(query, variables):
+        if query == PROFILE:
+            return {"userProfile": {"userId": "ur42"}}
+        return ask(query, variables)
+
+    assert watchlist_ids(with_profile, "p.h2ouytvlcsyuesmhpcj673m3gq") == ["tt0073195"]
+    assert calls[0] == {"user": "ur42"}

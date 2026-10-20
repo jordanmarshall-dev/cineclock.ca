@@ -19,7 +19,7 @@ const GITHUB_KEYS_URL = `${GITHUB_ISSUER}/.well-known/jwks`;
 export const AUDIENCE = "cineclock-relay";
 export const REPOSITORY = "yogzoth/cineclock";
 
-const USER = /^ur\d{4,12}$/;
+const USER = /^(ur\d{4,12}|p\.[a-z0-9]{8,40})$/;
 const TITLE = /^tt\d{5,10}$/;
 const HOUR = 3600 * 1000;
 const REFRESH = 6 * HOUR;
@@ -35,10 +35,10 @@ const SCHEMA = `CREATE TABLE IF NOT EXISTS imdb_lists (
   requested INTEGER NOT NULL
 )`;
 
-// "ur12345678", or any IMDb link with one in it.
+// "ur12345678", a profile id like "p.h2ouytvlcs...", or any IMDb link with one in it.
 export function imdbUser(text) {
-  const match = String(text || "").match(/\bur\d{4,12}\b/);
-  return match ? match[0] : null;
+  const match = String(text || "").match(/\b(ur\d{4,12}|p\.[a-z0-9]{8,40})\b/i);
+  return match ? match[0].toLowerCase() : null;
 }
 
 let keyCache = { keys: null, until: 0 };
@@ -149,7 +149,7 @@ export async function handleImdb(request, env, { now = Date.now(), fetcher = fet
     }
   }
 
-  const one = path.match(/^\/imdb\/(ur\d{4,12})$/);
+  const one = path.match(/^\/imdb\/(ur\d{4,12}|p\.[a-z0-9]{8,40})$/);
   if (one && request.method === "GET") {
     const row = await db.prepare("SELECT * FROM imdb_lists WHERE user = ?").bind(one[1]).first();
     if (!row) return reply({ error: "not connected" }, 404, origin);

@@ -21,6 +21,7 @@ IMDB_API = "https://api.graphql.imdb.com/"
 PAGE = 250
 MAX_PAGES = 8
 
+PROFILE = "query ($p: ID!) { userProfile(input: { profileId: $p }) { userId } }"
 LIST = "query ($user: ID!) { predefinedList(classType: WATCH_LIST, userId: $user) { id } }"
 ITEMS = """query ($id: ID!, $first: Int!, $after: ID) {
   list(id: $id) {
@@ -39,7 +40,13 @@ class Unreadable(Exception):
 
 
 def watchlist_ids(ask: Ask, user: str) -> list[str]:
-    """Every title id on a public watchlist, in IMDb's order."""
+    """Every title id on a public watchlist, in IMDb's order. Newer profile
+    links carry a profile id (p.abc123...) instead of the ur number, so those
+    are looked up first."""
+    if user.startswith("p."):
+        user = (ask(PROFILE, {"p": user}).get("userProfile") or {}).get("userId")
+        if not user:
+            raise Unreadable("no such profile")
     found = ask(LIST, {"user": user}).get("predefinedList")
     if not found:
         raise Unreadable("private")

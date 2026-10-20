@@ -32,7 +32,7 @@
         </span>
         <span class="spotlight-venues">
           {%- for v in p.venues[:2] %}
-          {%- if v.full_logo and has_asset("logos/" ~ v.full_logo) %}{% set w, h = logo_size("logos/" ~ v.full_logo, 9000, 52) %}<img src="{{ root }}static/logos/{{ v.full_logo }}" alt="{{ v.name }}" width="{{ w }}" height="{{ h }}">{% else %}{{ venue_badge(v, root, scale=1.6) }}{% endif -%}
+          {%- if v.full_logo and has_asset("logos/" ~ v.full_logo) %}{% set w, h = logo_size("logos/" ~ v.full_logo, 13000, 40) %}<img src="{{ root }}static/logos/{{ v.full_logo }}" alt="{{ v.name }}" width="{{ w }}" height="{{ h }}" style="--w: {{ w }}px">{% else %}{{ venue_badge(v, root, scale=1.6) }}{% endif -%}
           {%- endfor -%}
         </span>
       </a>
