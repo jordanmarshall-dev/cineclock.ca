@@ -725,8 +725,7 @@ def test_theatre_page_frames_the_inside_photo_beside_the_specs(conn, photos):
     page = pages(conn, NOW)["theatres/rio/index.html"]
     assert 'class="room-photo"' in page and "static/rooms/rio-main.jpg" in page
     viff = pages(conn, NOW)["theatres/viff-centre/index.html"]
-    assert "static/rooms/viff-main.jpg" in viff
-    assert "static/rooms/viff-lochmaddy.jpg" not in viff
+    assert "static/rooms/viff-main.jpg" in viff and "static/rooms/viff-lochmaddy.jpg" in viff
 
 
 def test_theatre_page_has_the_date_picker(conn):
@@ -982,6 +981,8 @@ def test_every_photo_has_an_author_and_a_known_licence():
 
     photos = [v.photo for v in VENUES] + [r.photo for v in VENUES for r in v.rooms]
     for photo in filter(None, photos):
+        if photo.placeholder:
+            continue
         assert photo.author and photo.licence
         if photo.source_url:
             # An archive photo: its credit links to the archive's own record.
@@ -992,7 +993,6 @@ def test_every_photo_has_an_author_and_a_known_licence():
 
 
 def test_photos_show_only_with_their_credit(conn, photos):
-    (photos / "rooms" / "viff-lochmaddy.jpg").write_bytes(b"jpg")
     save(conn, show("Musk", at(18, 12)))
     built = pages(conn, NOW)
 
@@ -1000,8 +1000,8 @@ def test_photos_show_only_with_their_credit(conn, photos):
     assert 'class="theatre-hero"' in rio and "static/rooms/rio-main.jpg" in rio
     assert rio.count('class="photo-credit"') == 2
     assert "Canmenwalker</a>" in rio and "CC BY 4.0</a>, toned" in rio
-    # A photo file with no credit in venues.py is never shown.
-    assert "static/rooms/viff-lochmaddy.jpg" not in built["theatres/viff-centre/index.html"]
+    # A stand-in photo says so instead of naming anyone.
+    assert "Placeholder photo, source to be confirmed" in built["theatres/viff-centre/index.html"]
     assert "Rio photo:" in built["theatres/index.html"]
 
 

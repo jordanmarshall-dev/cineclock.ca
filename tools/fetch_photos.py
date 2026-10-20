@@ -35,8 +35,8 @@ def main() -> int:
     failed = 0
     with httpx.Client(headers=HEADERS, follow_redirects=True, timeout=60) as client:
         for photo, dest in targets():
-            if photo.source_url:
-                continue  # an archive photo, committed by hand
+            if photo.source_url or photo.placeholder:
+                continue  # committed by hand
             url = "https://commons.wikimedia.org/wiki/Special:FilePath/" + quote(photo.file)
             response = client.get(url, params={"width": 1600})
             if response.status_code != 200:

@@ -45,6 +45,11 @@ class Photo:
     # committed already graded, since tools/fetch_photos.py only reads Commons.
     source_url: str | None = None
 
+    # Stand-in photos of unknown source, shown until a free or permitted one is found.
+    @property
+    def placeholder(self) -> bool:
+        return self.licence == "placeholder"
+
     @property
     def page_url(self) -> str:
         if self.source_url:
@@ -394,6 +399,7 @@ VENUES = [
                     "Sound": "Surround",
                 },
                 sources=("https://viff.org/rent-our-venue/lochmaddy-studio-theatre/",),
+                photo=Photo("Lochmaddy Studio Theatre", "", "placeholder"),
             ),
         ),
         mark="viff.svg",
@@ -432,6 +438,7 @@ VENUES = [
                     "https://www.biv.com/news/entertainment-media-sports/"
                     "vancouver-single-screen-cinema-has-force-8245070",
                 ),
+                photo=Photo("Dunbar auditorium", "", "placeholder"),
             ),
         ),
         mark="dunbar-mark.png",
