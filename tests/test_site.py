@@ -1110,3 +1110,18 @@ def test_home_invites_visitors_to_sign_in_for_their_watchlist(conn):
 def test_pages_move_http_and_github_io_visits_to_the_real_address(conn):
     page = pages(conn, NOW)["index.html"]
     assert 'location.replace("https://cineclock.ca"' in page
+
+
+def test_card_crop_keeps_the_photo_covering_the_card():
+    from cineclock.render import card_crop
+    from cineclock.venues import VENUES
+
+    for venue in VENUES:
+        style = card_crop(venue)
+        if not venue.sign_at:
+            continue
+        x, y = [
+            float(n) for n in style.split("translate(")[1].split(")")[0].replace("%", "").split(",")
+        ]
+        floor = (1 - venue.sign_zoom) * 100
+        assert floor <= x <= 0 and floor <= y <= 0, venue.slug

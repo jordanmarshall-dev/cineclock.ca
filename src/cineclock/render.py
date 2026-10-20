@@ -46,7 +46,27 @@ def score_text(film, source: str) -> str:
 
 
 env.filters["score_text"] = score_text
+
+
 # A steady colour for each title, for posters that haven't been found yet.
+def card_crop(venue) -> str:
+    """Zoom a theatre card's photo so its sign sits right of the logo (at 72%
+    across, 40% down), never leaving a gap at an edge."""
+    if not venue.sign_at:
+        return f"object-position: {venue.photo_focus}"
+    x, y = venue.sign_at
+    z = venue.sign_zoom
+
+    def shift(at: float, target: float) -> float:
+        return round(max(1 - z, min(0.0, target - z * at)) * 100, 1)
+
+    return (
+        f"object-position: {x * 100:.0f}% {y * 100:.0f}%; transform-origin: 0 0; "
+        f"transform: translate({shift(x, 0.72)}%, {shift(y, 0.4)}%) scale({z})"
+    )
+
+
+env.filters["card_crop"] = card_crop
 env.filters["hue"] = lambda text: zlib.crc32(str(text).encode()) % 360
 env.filters["stamp"] = stamp
 env.filters["tagslug"] = slug

@@ -1380,13 +1380,15 @@ a:focus-visible,
 .theatre-card-art {
   position: relative;
   display: block;
-  height: 9rem;
+  height: 11rem;
+  overflow: hidden;
   background: var(--raised);
 }
 
 .theatre-card-art img:first-child:not(.theatre-card-logo) {
   width: 100%;
   height: 100%;
+  display: block;
   object-fit: cover;
   opacity: 0.8;
 }
@@ -1735,10 +1737,12 @@ a:focus-visible,
 
   /* The theatre photo fills the right side and fades left into the page, so
      tall signs stay whole instead of being cropped to a strip. */
-  .theatre-hero { background: var(--bg); }
+  /* Kept to the page's width, so the photo lines up with the content on any
+     window size instead of running off to the screen's edge. */
+  .theatre-hero { max-width: calc(64rem + var(--gutter) * 2); margin: 0 auto; background: var(--bg); }
   .theatre-hero img { display: block; width: 62%; margin-left: auto; }
   .theatre-hero::after {
-    background: linear-gradient(to right, var(--bg) 38%, rgba(20, 24, 28, 0) 60%),
+    background: linear-gradient(to right, var(--bg) 38%, rgba(20, 24, 28, 0) 60%, rgba(20, 24, 28, 0) 92%, var(--bg)),
       linear-gradient(to bottom, rgba(20, 24, 28, 0) 55%, var(--bg));
   }
   .theatre-head.over-hero { margin-top: -15rem; }

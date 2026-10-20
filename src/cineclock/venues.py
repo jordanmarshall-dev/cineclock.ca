@@ -106,6 +106,10 @@ class Venue:
     mark_scale: float = 1.0
     # Which part of the theatre's photo to keep when it's cropped into the header.
     photo_focus: str = "center"
+    # Where the sign is in the photo (x, y as fractions), for the Theatres page
+    # cards: the photo is zoomed so the sign lands right of the logo laid over it.
+    sign_at: tuple[float, float] | None = None
+    sign_zoom: float = 1.6
     photo: Photo | None = None
     # The Rio and the Park make their own posters, which beat generic ones.
     own_posters: bool = False
@@ -267,7 +271,8 @@ VENUES = [
         full_logo="rio-full.png",
         own_posters=True,
         photo=Photo("RIO Theatre 2026.jpg", "Canmenwalker", "CC BY 4.0"),
-        photo_focus="center 55%",
+        photo_focus="62% 38%",
+        sign_at=(0.52, 0.34),
         about=(
             "Built in 1938 and restored with a digital projector, surround sound and a large "
             "stage, so nights here swing between repertory screenings, burlesque and comedy.",
@@ -304,7 +309,9 @@ VENUES = [
         full_logo="park-full.png",
         own_posters=True,
         photo=Photo("The Park Theatre in Vancouver 202510.jpg", "Canmenwalker", "CC BY 4.0"),
-        photo_focus="center 62%",
+        photo_focus="50% 40%",
+        sign_at=(0.5, 0.45),
+        sign_zoom=1.8,
         about=(
             "Opened in August 1941. A 2005 renovation brought new seats, the larger screen "
             "and Dolby Digital sound.",
@@ -342,7 +349,9 @@ VENUES = [
         mark_scale=1.3,
         full_logo="cinematheque-full.png",
         photo=Photo("The Cinematheque Marquee 2020.jpg", "EmptySockets", "CC BY-SA 4.0"),
-        photo_focus="center 25%",
+        photo_focus="35% 52%",
+        sign_at=(0.58, 0.6),
+        sign_zoom=1.3,
         about=(
             "A non-profit film society and educational institution, supported by the Canada "
             "Council, the BC Arts Council, the City of Vancouver, donors and volunteers.",
@@ -390,7 +399,9 @@ VENUES = [
         mark="viff.svg",
         full_logo="viff.svg",
         photo=Photo("Vancity Theatre.jpg", "Tom Niu", "CC BY-SA 3.0"),
-        photo_focus="center 40%",
+        photo_focus="50% 28%",
+        sign_at=(0.3, 0.32),
+        sign_zoom=2.0,
         about=(
             "Home of the Vancouver International Film Festival, programming new releases, "
             "restorations and series all year.",
@@ -434,7 +445,9 @@ VENUES = [
             "about 1935",
             source_url="https://searcharchives.vancouver.ca/new-dunbar-theatre-at-4555-dunbar-street",
         ),
-        photo_focus="center 35%",
+        photo_focus="55% 30%",
+        sign_at=(0.42, 0.28),
+        sign_zoom=1.3,
         about=(
             "Built in 1935 and one of the last neighbourhood movie houses in Vancouver.",
             "Run independently by Ken Charko since 1998, with a focus on first-run films.",
