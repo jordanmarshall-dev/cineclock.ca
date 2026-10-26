@@ -1,0 +1,102 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    # Every 4 hours, off the hour so it doesn't queue behind everyone else's jobs.
+    - cron: "17 */4 * * *"
+  workflow_dispatch:
+    inputs:
+      retag:
+        description: "Have the AI read every upcoming listing again"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e ".[dev]"
+      - run: pytest
+
+      # Keep the database between runs so past screenings stay as history.
+      - uses: actions/cache/restore@v6
+        id: db
+        with:
+          path: cineclock.db
+          key: db-${{ github.run_id }}
+          restore-keys: db-
+      # No cache (GitHub drops one unused for a week): start from the weekly copy.
+      - name: Restore the database from the weekly backup
+        if: steps.db.outputs.cache-matched-key == ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          run=$(gh run list -R "$GITHUB_REPOSITORY" -w weekly.yml -s success -L 1 --json databaseId -q '.[0].databaseId')
+          if [ -n "$run" ] && gh run download "$run" -R "$GITHUB_REPOSITORY" -n cineclock-db; then
+            echo "::warning::Database restored from the weekly backup (run $run)"
+          else
+            echo "::warning::No database cache or backup; starting fresh"
+          fi
+      - run: python -m cineclock.scrape
+        env:
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+          OMDB_API_KEY: ${{ secrets.OMDB_API_KEY }}
+      # New listings get one cheap AI read for tags the patterns miss (ai.py).
+      - run: python -m cineclock.ai ${{ inputs.retag && '--redo' || '' }}
+        env:
+          # Not a secret: it only names the Cloudflare account; the token is the key.
+          CLOUDFLARE_ACCOUNT_ID: 12da3cbd667bac7ac6ff1816640d4fcc
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      # Banner and blurb for each festival page, from the theatre's page for it.
+      - run: python -m cineclock.festivals
+      - uses: actions/cache/save@v6
+        with:
+          path: cineclock.db
+          key: db-${{ github.run_id }}
+
+      - run: python -m cineclock.build
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
+
+  # A theatre whose scraper keeps failing still shows its last listings, so the
+  # site looks fine. Failing here makes GitHub email Jordan.
+  health:
+    needs: deploy
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check every theatre is updating
+        run: |
+          stale=$(curl -sf https://cineclock.ca/stats.json | jq -r '.stale | join(", ")')
+          if [ -n "$stale" ]; then
+            echo "::error::No fresh listings from: $stale (3+ failed scrapes in a row)"
+            exit 1
+          fi
+          echo "Every theatre updated."

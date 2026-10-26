@@ -1,0 +1,25 @@
+# Cloudflare Worker settings for the Letterboxd relay and cineclock accounts.
+# Cloudflare deploys it from this folder of the repo (Workers & Pages, Import a
+# repository, root directory "relay"), and again on every push that changes it.
+name = "cineclock-relay"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+
+# Accounts answer at api.cineclock.ca, on the site's own domain, so the sign-in
+# cookie counts as first-party. The old workers.dev address keeps working.
+# Each deploy (re)creates this custom domain and its DNS record; the first one
+# ran before the cineclock.ca zone was active, so it never got a DNS record.
+routes = [{ pattern = "api.cineclock.ca", custom_domain = true }]
+workers_dev = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "cineclock"
+database_id = "11e99609-9a00-47eb-b7d2-2d7124b5b92e"
+
+# Email alerts: hourly from 9 to 4 Vancouver time (UTC-7 all year), each run
+# checking a handful of users who haven't been checked yet today.
+# Site rebuilds: every 4 hours, plus 12:20 am Vancouver so a new day starts
+# fresh (worker.js BUILD_CRONS; GitHub's schedule is the backup).
+[triggers]
+crons = ["5 16-23 * * *", "40 */4 * * *", "20 7 * * *"]

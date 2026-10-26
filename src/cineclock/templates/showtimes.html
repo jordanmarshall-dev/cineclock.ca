@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "_parts.html" import day_sections, date_tools, filter_bar, icon, page_header %}
+
+{% block title %}Showtimes in Vancouver{% endblock %}
+
+{% block main %}
+<div class="wrap">
+  <h1 class="page-title page-title-art">{{ page_header("showtimes", "Showtimes", root) }}</h1>
+  {{ filter_bar(venues, filter_tags, genres, root) }}
+  {{ date_tools(days, months, root) }}
+  {% if days %}
+    {{ day_sections(days, root) }}
+  {% else %}
+    <p class="empty">No showtimes saved yet.</p>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}<script src="{{ root }}static/filters.js?v={{ asset_version('filters.js') }}"></script>{% endblock %}

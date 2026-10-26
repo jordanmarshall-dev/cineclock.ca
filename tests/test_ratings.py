@@ -1,0 +1,90 @@
+import httpx
+import pytest
+
+from cineclock.enrich import letterboxd, omdb
+
+
+def test_letterboxd_page(fixture_text):
+    found = letterboxd.parse_film_page(fixture_text("enrich/letterboxd_the_thing.html"))
+    assert found == letterboxd.LetterboxdFilm(
+        "https://letterboxd.com/film/the-thing/", 4.35, 1476132
+    )
+
+
+def test_letterboxd_structured_data_that_is_not_json():
+    page = '<script type="application/ld+json">/* <![CDATA[ */ {broken /* ]]> */</script>'
+    assert letterboxd.parse_film_page(page).rating_count is None
+
+
+def test_letterboxd_page_without_rating():
+    # Films with too few ratings have no average yet.
+    page = '<meta property="og:url" content="https://letterboxd.com/film/obscure/">'
+    assert letterboxd.parse_film_page(page) == letterboxd.LetterboxdFilm(
+        "https://letterboxd.com/film/obscure/"
+    )
+
+
+def test_letterboxd_lookup_follows_the_redirect(fixture_text):
+    def handler(request):
+        if request.url.path == "/tmdb/1091/":
+            return httpx.Response(
+                302, headers={"Location": "https://letterboxd.com/film/the-thing/"}
+            )
+        return httpx.Response(200, text=fixture_text("enrich/letterboxd_the_thing.html"))
+
+    with httpx.Client(transport=httpx.MockTransport(handler), follow_redirects=True) as client:
+        found = letterboxd.lookup(client, 1091)
+    assert (found.url, found.rating, found.rating_count) == (
+        "https://letterboxd.com/film/the-thing/",
+        4.35,
+        1476132,
+    )
+
+
+def test_letterboxd_blocked_raises():
+    def handler(request):
+        return httpx.Response(403)
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        with pytest.raises(httpx.HTTPStatusError):
+            letterboxd.lookup(client, 1091)
+
+
+def test_omdb(fixture_json):
+    assert omdb.parse(fixture_json("enrich/omdb_tt0084787.json")) == omdb.Scores(8.2, 85, 57)
+
+
+@pytest.mark.parametrize(
+    "data, expected",
+    [
+        ({"Response": "False", "Error": "Incorrect IMDb ID."}, omdb.Scores()),
+        ({"Response": "True", "imdbRating": "N/A", "Ratings": []}, omdb.Scores()),
+        ({"Response": "True", "imdbRating": "6.1"}, omdb.Scores(imdb=6.1)),
+        (
+            {"Response": "True", "Ratings": [{"Source": "Metacritic", "Value": "N/A"}]},
+            omdb.Scores(),
+        ),
+        (
+            {
+                "Response": "True",
+                "imdbRating": "N/A",
+                "Ratings": [{"Source": "Rotten Tomatoes", "Value": "100%"}],
+            },
+            omdb.Scores(rt=100),
+        ),
+    ],
+)
+def test_omdb_partial(data, expected):
+    assert omdb.parse(data) == expected
+
+
+def test_omdb_lookup_sends_id_and_key(fixture_json):
+    seen = {}
+
+    def handler(request):
+        seen.update(request.url.params)
+        return httpx.Response(200, json=fixture_json("enrich/omdb_tt0084787.json"))
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        assert omdb.lookup(client, "key", "tt0084787") == omdb.Scores(8.2, 85, 57)
+    assert seen == {"i": "tt0084787", "apikey": "key"}

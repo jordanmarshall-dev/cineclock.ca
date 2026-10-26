@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+# Read-only: nothing here writes to the repo.
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e ".[dev]"
+      - run: ruff check .
+      - run: ruff format --check .
+      - run: pytest
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+      - run: node relay/test.mjs
+      - run: node relay/account.test.mjs
+      - run: node relay/alerts.test.mjs
+      - run: node relay/imdb.test.mjs
+      - run: node tests/when.test.mjs

@@ -1,0 +1,2518 @@
+/* cineclock styles
+
+   1. Fonts and tokens
+   2. Base and layout (header, footer, page titles)
+   3. Shared pieces (panels, icons, posters, pills, ratings, booking buttons)
+   4. Filters and the date picker
+   5. Day listings (Showtimes and theatre pages)
+   6. Home
+   7. Films list
+   8. Film page
+   9. Theatres list and theatre page
+   10. Wider screens
+*/
+
+/* 1. Fonts and tokens */
+
+@font-face {
+  font-family: "Instrument Sans";
+  src: url("fonts/instrument-sans.woff2") format("woff2");
+  font-weight: 400 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Source Serif 4";
+  src: url("fonts/source-serif-4.woff2") format("woff2");
+  font-weight: 500 700;
+  font-display: swap;
+}
+
+:root {
+  --bg: #14181c;
+  --raised: #1c2228;
+  --line: #2c3440;
+  --text: #9ab;
+  --bright: #dde5ed;
+  --white: #fff;
+  /* The logo's purple. Small text on the dark background uses a lighter tint. */
+  --accent: #8739ff;
+  --accent-text: #b996ff;
+  --accent-wash: rgba(135, 57, 255, 0.18);
+  --accent-fill: rgba(135, 57, 255, 0.45);
+  /* Yours (watchlists, saved) is green; needs attention is amber. */
+  --mine: #6fd3a4;
+  --mine-line: #2f8f63;
+  --warn: #f2b45c;
+  /* Cards and panels share one surface, so every module looks related. */
+  --panel: #191e24;
+  --panel-line: #252c35;
+  --radius: 12px;
+  --sans: "Instrument Sans", system-ui, sans-serif;
+  --serif: "Source Serif 4", Georgia, serif;
+  --gutter: 1rem;
+  --header-h: 3.5rem;
+}
+
+/* 2. Base and layout */
+
+* { box-sizing: border-box; }
+
+[hidden] { display: none !important; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 400 0.9375rem/1.5 var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; }
+
+a:focus-visible,
+.room-swipe:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.wrap {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  border-bottom: 1px solid var(--line);
+  background: rgba(20, 24, 28, 0.9);
+  backdrop-filter: blur(12px);
+}
+
+.site-header .wrap {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  min-height: var(--header-h);
+}
+
+.wordmark { display: block; line-height: 0; }
+/* The file has no padding around the letters, so this keeps them the size they were. */
+.wordmark img { width: auto; height: 1.25rem; }
+
+.site-nav {
+  display: flex;
+  gap: 1.125rem;
+  margin-left: auto;
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
+.site-nav a {
+  padding: 0.25rem 0;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.site-nav a:hover,
+.site-nav a[aria-current="page"] { color: var(--white); }
+.site-nav a[aria-current="page"] { box-shadow: inset 0 -2px 0 var(--accent); }
+
+.page-title {
+  margin: 2rem 0 0;
+  font: 700 2rem/1.1 var(--serif);
+  color: var(--white);
+}
+
+.page-intro { margin: 0.375rem 0 0; }
+
+.section-heading {
+  margin: 2.25rem 0 0;
+  font: 700 1.125rem/1.3 var(--sans);
+  color: var(--white);
+}
+
+.meta {
+  margin: 0.125rem 0 0;
+  font-size: 0.8125rem;
+}
+
+.year { font-weight: 400; color: var(--text); }
+
+.empty {
+  margin: 2rem 0;
+  padding: 1.25rem;
+  border: 1px dashed var(--line);
+  border-radius: 4px;
+}
+
+.empty code { color: var(--bright); }
+
+/* Small linked buttons: address, website, About page links. */
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 4px;
+  background: var(--raised);
+  color: var(--bright);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.links a:hover { background: var(--line); }
+
+.about {
+  max-width: 38rem;
+  color: var(--bright);
+}
+
+.about p { margin: 1rem 0 0; }
+.about h2 { margin: 2rem 0 0; font-size: 1.125rem; }
+.about ul { margin: 0.75rem 0 0; padding-left: 1.25rem; }
+.about li + li { margin-top: 0.25rem; }
+.about a { text-decoration: underline; text-underline-offset: 2px; }
+.about-page .about p:first-child { margin-top: 1.25rem; }
+.about-links .source-logo { height: 0.75rem; }
+
+.site-footer {
+  margin-top: 4rem;
+  padding: 2.5rem 0 3rem;
+  border-top: 1px solid var(--line);
+  background: var(--panel);
+  font-size: 0.8125rem;
+}
+.footer-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem 1.5rem; }
+.footer-brand { grid-column: 1 / -1; max-width: 22rem; }
+.footer-brand p { margin: 0.75rem 0 0; color: var(--text); }
+.footer-wordmark img { display: block; width: 8.5rem; height: auto; }
+.footer-updated { display: flex; align-items: center; gap: 0.375rem; }
+.footer-updated .icon { color: var(--accent-text); }
+.footer-col { display: grid; align-content: start; gap: 0.5rem; }
+.footer-col h2 { margin: 0 0 0.25rem; color: var(--text); font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.footer-col a { color: var(--bright); text-decoration: none; }
+.footer-col a:hover { color: var(--white); }
+.footer-legal { margin-top: 2.5rem; padding-top: 1.25rem; border-top: 1px solid var(--panel-line); color: var(--text); font-size: 0.75rem; }
+.footer-legal p { margin: 0 0 0.375rem; max-width: 48rem; }
+.footer-legal a { color: inherit; }
+@media (min-width: 48rem) {
+  .footer-grid { grid-template-columns: 2fr 1fr 1fr 1fr; }
+  .footer-brand { grid-column: auto; }
+}
+
+.skip-link {
+  position: absolute;
+  top: -3rem;
+  left: var(--gutter);
+  z-index: 100;
+  padding: 0.5rem 0.875rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--white);
+  font-weight: 600;
+  text-decoration: none;
+}
+.skip-link:focus { top: 0.5rem; }
+
+/* 3. Shared pieces */
+
+.panel {
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.icon { flex: none; color: var(--text); }
+
+.poster {
+  position: relative;
+  display: block;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--raised);
+}
+
+.poster img {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* The frame's inner border sits on top of the image, as on Letterboxd. */
+.poster::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgba(221, 238, 255, 0.12);
+  pointer-events: none;
+}
+
+/* A film with no poster shows its title in the frame instead of an empty box. */
+/* A stand-in poster: a glow in the film's own colour, a strip of sprocket holes
+   down each side, and the title set like a title card. */
+.poster-fallback {
+  --hue: 270;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  padding: 0.75rem 0.875rem 0.875rem;
+  background:
+    repeating-linear-gradient(to bottom, transparent 0 6px, rgba(0, 0, 0, 0.45) 6px 10px) left / 5px 100% no-repeat,
+    repeating-linear-gradient(to bottom, transparent 0 6px, rgba(0, 0, 0, 0.45) 6px 10px) right / 5px 100% no-repeat,
+    radial-gradient(120% 70% at 25% 15%, hsl(var(--hue) 55% 34% / 0.9), transparent 65%),
+    linear-gradient(170deg, hsl(var(--hue) 30% 17%), #101317 80%);
+  color: #f1ecf7;
+  container-type: inline-size;
+}
+.poster-fallback-mark { width: 1.125rem; height: 1.125rem; opacity: 0.45; }
+.poster-fallback-title {
+  display: -webkit-box;
+  overflow: hidden;
+  font: 700 clamp(0.75rem, 13cqi, 1.5rem)/1.15 var(--serif);
+  text-wrap: balance;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.5);
+}
+
+/* Pills. Each family has its own look so they can be told apart at a glance:
+   rare showings filled purple, formats outlined purple, events quiet grey.
+   Personal pills (watchlist, watched) will be green. */
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin: 0.5rem 0 0;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+/* Same pill as on the cards: events are a purple wash, film formats a purple outline. */
+.tag .icon { color: inherit; }
+.tag-rare { background: var(--accent); color: var(--white); }
+.tag-format { border-color: var(--accent); color: var(--accent-text); }
+.tag-event { background: var(--accent-wash); color: var(--accent-text); }
+.tag-personal { border-color: #3fb27f; color: var(--mine); }
+.tag-personal.tag-planned { border-color: var(--accent-text); color: var(--accent-text); }
+
+/* Theatre pills: the theatre's own logo, sized so wide and tall logos read alike. */
+.venue-pill {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  min-height: 1.5rem;
+  vertical-align: middle;
+}
+
+.venue-pill img { display: block; }
+
+.monogram {
+  color: var(--bright);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* Ratings */
+.ratings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  margin: 0.25rem 0 0;
+  font-size: 0.8125rem;
+}
+
+.ratings b { color: var(--bright); font-weight: 600; }
+.ratings .card-rating { font-size: 0.8125rem; }
+.ratings .card-rating .source-logo { height: 0.875rem; }
+
+.rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3125rem;
+}
+
+.source-logo { width: auto; height: 0.875rem; }
+
+.source-label {
+  padding: 0 0.25rem;
+  border-radius: 3px;
+  background: var(--raised);
+  color: var(--text);
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+}
+
+/* Booking buttons. Each time is the link that books it, and they always sit
+   in their own row at the bottom of a block, from its left edge. */
+.times {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.time {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4375rem;
+  min-height: 2.375rem;
+  padding: 0.3125rem 0.75rem 0.3125rem 0.625rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--raised);
+  color: var(--white);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  text-decoration: none;
+}
+
+.time:hover { border-color: var(--accent); }
+.time .icon { color: var(--accent-text); }
+
+/* The only chance to see it: the booking button itself stands out. */
+.time-rare { border-color: var(--accent); background: var(--accent-fill); }
+/* No tickets online (sold out, standby): still a link to the theatre's page, but quieter. */
+.time-closed { border-style: dashed; color: var(--text); }
+.time-text { display: flex; flex-direction: column; }
+
+.time small {
+  color: var(--text);
+  font-size: 0.6875rem;
+  font-weight: 500;
+}
+
+/* 4. Filters and the date picker */
+
+.filters { margin-top: 1rem; }
+
+.filter-top {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.filter-top select {
+  flex: none;
+  padding: 0 0.625rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--raised);
+  color: var(--bright);
+  font: 500 0.875rem var(--sans);
+}
+
+.search {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-width: 0;
+}
+
+.search .icon {
+  position: absolute;
+  top: 50%;
+  left: 0.75rem;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.filters input {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  padding: 0.625rem 0.75rem 0.625rem 2.25rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--raised);
+  color: var(--white);
+  font: inherit;
+}
+
+.filters input::placeholder { color: var(--text); }
+
+.filters input:focus-visible,
+.filter-top select:focus-visible,
+.filter-menus summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* Menus open full-width under the filter bar, so they never run off a phone screen. */
+.filter-menus {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-top: 0.625rem;
+}
+
+.filter-menus summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--bright);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  list-style: none;
+  cursor: pointer;
+}
+
+.filter-menus summary::-webkit-details-marker { display: none; }
+
+.filter-menus summary::after {
+  content: "";
+  width: 0.375rem;
+  height: 0.375rem;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+}
+
+.filter-menus details[open] summary::after { transform: translateY(1px) rotate(-135deg); }
+.filter-menus details.active summary { border-color: var(--accent-text); color: var(--accent-text); }
+
+.count:empty { display: none; }
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-top: 0.625rem;
+}
+
+.filter-menus .chips {
+  position: absolute;
+  top: calc(100% + 0.375rem);
+  right: 0;
+  left: 0;
+  z-index: 5;
+  margin: 0;
+  padding: 0.625rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--raised);
+  box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.5);
+}
+
+.chip {
+  padding: 0.3125rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: none;
+  color: var(--bright);
+  font: 500 0.8125rem/1.3 var(--sans);
+  cursor: pointer;
+}
+
+.chip:hover { border-color: var(--text); }
+
+.chip[aria-pressed="true"] {
+  border-color: var(--accent-text);
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Theatre chips show the theatre's logo; unpicked ones are dimmed. */
+.chip-logo { display: inline-flex; align-items: center; padding: 0.375rem 0.875rem; }
+.chip-logo .venue-pill { min-height: 0; }
+.chip-logo img { opacity: 0.6; transition: opacity 120ms; }
+.chip-logo[aria-pressed="true"] img,
+.chip-logo:hover img { opacity: 1; }
+.chip-logo[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-fill); }
+
+.clear {
+  padding: 0.375rem 0.5rem;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: 500 0.8125rem var(--sans);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.filter-status {
+  margin: 0.625rem 0 0;
+  font-size: 0.8125rem;
+}
+.filters > .filter-status:empty { display: none; }
+
+/* Wide screens: search, menus and sort on one line; menus open under all of it. */
+@media (min-width: 64rem) {
+  .filters { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 0.5rem; }
+  .filter-menus { position: static; flex-wrap: nowrap; align-items: center; margin-top: 0; }
+  .filter-menus summary { height: 2.75rem; padding: 0 1rem; border-radius: 4px; background: var(--raised); }
+  .filters > .filter-status { grid-column: 1 / -1; }
+  .filter-top { display: contents; }
+  .filter-menus { grid-row: 1; grid-column: 2; }
+  .filter-top select { grid-row: 1; grid-column: 3; height: 2.75rem; }
+}
+
+/* The date picker: a calendar button with a month view, then a strip of day chips. */
+/* The day chips stick under the header while you scroll the listings, with
+   the day you're looking at lit up (calendar.js), so they're always in reach. */
+.date-tools {
+  position: sticky;
+  top: var(--header-h);
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.75rem calc(var(--gutter) * -1) 0;
+  padding: 0.5rem var(--gutter);
+  border-bottom: 1px solid var(--line);
+  background: rgba(20, 24, 28, 0.92);
+  backdrop-filter: blur(8px);
+}
+
+.date-strip {
+  display: flex;
+  flex: 1;
+  gap: 0.375rem;
+  margin-right: calc(var(--gutter) * -1);
+  padding-right: var(--gutter);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.date-strip::-webkit-scrollbar { display: none; }
+
+.date-strip a {
+  flex: none;
+  padding: 0.5rem 0.875rem;
+  border-radius: 999px;
+  background: var(--raised);
+  color: var(--bright);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.date-strip a:hover { background: var(--line); }
+/* The day you're looking at (calendar.js follows your scrolling). */
+.date-strip a[aria-current] { background: var(--accent); color: var(--white); }
+.date-strip a:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; }
+
+.cal-pop summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--accent-text);
+  list-style: none;
+  cursor: pointer;
+}
+
+.cal-pop summary::-webkit-details-marker { display: none; }
+.cal-pop[open] summary { border-color: var(--accent); background: var(--raised); }
+
+.cal-panel {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  z-index: 5;
+  display: grid;
+  gap: 1.25rem;
+  width: min(20rem, 100%);
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--raised);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+
+.cal-title { margin: 0 0 0.5rem; color: var(--white); font-weight: 600; }
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.25rem;
+  text-align: center;
+}
+
+.cal-dow { color: var(--text); font-size: 0.6875rem; font-weight: 600; }
+
+.cal-day {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  border-radius: 999px;
+  color: var(--line);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.cal-day.has-shows {
+  background: rgba(135, 57, 255, 0.22);
+  color: var(--white);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.cal-day.has-shows:hover { background: var(--accent); }
+.cal-day.today { box-shadow: inset 0 0 0 1.5px var(--accent-text); }
+
+/* 5. Day listings */
+
+/* Clear of the header and the sticky day chips (3.25rem tall). */
+.day { scroll-margin-top: calc(var(--header-h) + 3.75rem); }
+
+/* Each day's heading. The sticky chips above say which day you're in. */
+.day-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 2rem calc(var(--gutter) * -1) 0;
+  padding: 0.625rem var(--gutter);
+  border-bottom: 1px solid var(--line);
+  color: var(--white);
+  font: 600 1.0625rem/1.3 var(--sans);
+}
+
+.day-bar .icon { color: var(--accent-text); }
+
+/* Right under the date pills, the first day doesn't need the full gap. */
+.date-tools + .day .day-bar,
+.date-tools + script + .day .day-bar { margin-top: 0.75rem; }
+
+.venue-group { margin-top: 0.875rem; padding: 0 1.125rem 0.375rem; }
+.venue-group .row:last-child { padding-bottom: 0.875rem; }
+
+/* Each theatre's logo has a rule running out to the edge, marking where its
+   listings start. */
+.venue-heading {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 1.125rem 0 0.625rem;
+  font: 600 0.8125rem/1.3 var(--sans);
+  letter-spacing: 0.02em;
+}
+
+.venue-heading::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+.venue-heading a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+}
+
+.venue-heading a:hover { color: var(--white); }
+
+.rows { margin: 0; padding: 0; list-style: none; }
+
+/* A time row: small poster, the film, and its booking buttons down the right
+   edge, where a thumb reaches them. */
+.row {
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr) auto;
+  column-gap: 0.875rem;
+  align-items: start;
+  padding: 0.75rem 0;
+}
+
+.row + .row { border-top: 1px solid var(--panel-line); }
+.row .times { grid-column: 3; grid-row: 1; flex-direction: column; align-items: stretch; margin-top: 0; }
+
+.row-title {
+  margin: 0;
+  color: var(--white);
+  font: 600 1.125rem/1.25 var(--sans);
+}
+
+.row-title a { text-decoration: none; }
+.row-title a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* 6. Home */
+
+.home-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.tagline { margin: 0; white-space: nowrap; }
+
+/* How fresh the listings are, so nobody has to scroll to the footer to find out. */
+.freshness {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+.freshness .icon { flex: none; color: var(--accent-text); }
+
+/* Hero: a few highlights, each a full-width slide with its art fading into the
+   page. Without the script it's a sideways scroll; with it, a looping carousel. */
+.hero {
+  position: relative;
+  margin-top: 0.875rem;
+  overflow: hidden;
+}
+
+/* Each slide is a little narrower than the hero, so the next one peeks in. */
+.hero-track {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.hero-track::-webkit-scrollbar { display: none; }
+
+.hero.is-carousel .hero-track {
+  overflow: visible;
+  touch-action: pan-y;
+  transition: transform 320ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.spotlight {
+  position: relative;
+  display: block;
+  flex: 0 0 calc(100% - 1.75rem);
+  height: 15rem;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--white);
+  text-decoration: none;
+  scroll-snap-align: start;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.spotlight-art { pointer-events: none; }
+
+.hero-dots {
+  position: absolute;
+  top: 0.25rem;
+  right: 2.25rem;
+  z-index: 2;
+  display: flex;
+}
+
+/* Each dot is a 24px tap target with the small dot drawn in its middle. */
+.hero-dots button {
+  display: grid;
+  place-items: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.hero-dots button::before {
+  content: "";
+  width: 0.4375rem;
+  height: 0.4375rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.hero-dots button[aria-current="true"]::before { width: 1.125rem; background: var(--white); }
+.hero-dots button:focus-visible { outline: 2px solid var(--white); outline-offset: -2px; border-radius: 6px; }
+
+.hero-arrow {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin-top: -1.125rem;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(20, 24, 28, 0.7);
+  color: var(--white);
+  cursor: pointer;
+}
+
+.hero-arrow.prev { left: 0.75rem; }
+.hero-arrow.prev .icon { transform: scaleX(-1); }
+.hero-arrow.next { right: 2.5rem; }
+
+@media (hover: hover) {
+  .hero-arrow:not([hidden]) { display: flex; opacity: 0; transition: opacity 150ms; }
+  .hero:hover .hero-arrow,
+  .hero-arrow:focus-visible { opacity: 1; }
+}
+
+.spotlight-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 30%;
+}
+
+.spotlight::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(20, 24, 28, 0.95), rgba(20, 24, 28, 0.2) 65%),
+    linear-gradient(to right, rgba(20, 24, 28, 0.6), rgba(20, 24, 28, 0) 60%);
+}
+
+.spotlight-body {
+  position: absolute;
+  right: 1rem;
+  bottom: 1rem;
+  left: 1rem;
+  z-index: 1;
+  display: grid;
+  gap: 0.375rem;
+}
+
+.eyebrow {
+  display: inline-flex;
+  max-width: 100%;
+  padding: 0.0625rem 0.5rem;
+  overflow: hidden;
+  border: 1px solid rgba(185, 138, 240, 0.45);
+  border-radius: 999px;
+  background: rgba(20, 24, 28, 0.86);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  backdrop-filter: blur(4px);
+  align-items: center;
+  gap: 0.3125rem;
+  justify-self: start;
+  color: var(--accent-text);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.eyebrow .icon { flex: none; }
+
+.spotlight-title { font: 700 1.75rem/1.1 var(--serif); }
+.spotlight-title .year { font-family: var(--sans); font-size: 1rem; }
+.spotlight:hover .spotlight-title { text-decoration: underline; text-underline-offset: 4px; }
+
+.spotlight-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem 0.875rem;
+  color: var(--bright);
+  font-size: 0.8125rem;
+}
+
+.spotlight-meta > span:not(.venue-pill) { display: inline-flex; align-items: center; gap: 0.3125rem; }
+.spotlight .tags { margin-top: 0.125rem; }
+
+/* Shortcuts under the spotlight. */
+/* Three shortcuts under the hero, sharing the width evenly. */
+.quick-filters {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.quick-filters a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.25rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--raised);
+  color: var(--bright);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.quick-filters a:hover { border-color: var(--accent); color: var(--white); }
+.quick-filters .icon { color: var(--accent-text); }
+
+/* Shelves */
+.rail { margin-top: 1.5rem; }
+/* On a theatre's own page its logo on every poster would just repeat the header. */
+.theatre-rails { margin-top: 1rem; }
+
+.home-top + .rail,
+.quick-filters + .rail { margin-top: 0.75rem; }
+
+.rail-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.rail-head h2 {
+  margin: 0;
+  color: var(--white);
+  font: 700 1.125rem/1.3 var(--sans);
+}
+
+.rail-head h2 a { text-decoration: none; }
+.rail-head a:hover { color: var(--white); }
+
+.rail-head .see-all {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  margin-right: -0.5rem;
+  text-decoration: none;
+}
+
+.rail-cards {
+  display: grid;
+  grid-auto-flow: column;
+  /* Two and a bit cards on a phone, so it's clear the row scrolls. */
+  grid-auto-columns: 10.5rem;
+  gap: 0.75rem;
+  margin: 0 calc(var(--gutter) * -1);
+  padding: 0.5rem var(--gutter) 0.25rem;
+  list-style: none;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: var(--gutter);
+  scrollbar-width: none;
+}
+
+.rail-cards::-webkit-scrollbar { display: none; }
+
+.card { scroll-snap-align: start; }
+.card a { display: block; text-decoration: none; }
+
+/* Theatre logos straddle the poster's bottom right corner, so they cover as
+   little of the art as possible and never move with the title. A drop
+   shadow keeps white logos readable over a light poster. */
+.card-art { position: relative; display: block; }
+
+/* One badge on the poster's top-right corner for anything special, like a
+   label on the print. The watchlist mark takes the top-left. */
+.card-badge {
+  position: absolute;
+  top: 0.375rem;
+  right: 0.375rem;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1875rem;
+  max-width: calc(100% - 2.5rem);
+  padding: 0.0625rem 0.4375rem;
+  overflow: hidden;
+  border: 1px solid rgba(185, 138, 240, 0.45);
+  border-radius: 999px;
+  background: rgba(20, 24, 28, 0.86);
+  color: var(--accent-text);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  backdrop-filter: blur(4px);
+}
+
+.card-badge .icon { flex: none; }
+
+
+.card-title {
+  display: block;
+  margin-top: 0.5rem;
+  overflow: hidden;
+  color: var(--bright);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.card a:hover .card-title { color: var(--white); }
+
+/* Year on the left, score (or a tag when there's no score) pinned to the right,
+   so both sit in the same place on every card. */
+.card-sub {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.375rem;
+  min-height: 1.25rem;
+  font-size: 0.75rem;
+}
+
+.card-sub .year { font-size: 0.8125rem; }
+
+.card-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3125rem;
+  color: var(--bright);
+  font-size: 0.75rem;
+}
+
+.card-rating b { font-weight: 600; }
+.card-rating .source-logo { height: 0.6875rem; }
+
+
+.card-next {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.125rem;
+  overflow: hidden;
+  font-size: 0.6875rem;
+  line-height: 1.3;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* The only screening: a small filled purple star instead of a badge. */
+.card-next.rare .icon { color: var(--accent-text); fill: currentColor; }
+
+/* 7. Films list: the same poster cards as the home rails, in a grid. */
+
+.film-grid {
+  display: grid;
+  /* Two wide cards across a phone, more as the screen grows. */
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: 1rem 0.75rem;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* 8. Film page */
+
+.backdrop {
+  position: relative;
+  height: 14rem;
+  overflow: hidden;
+  background: var(--raised);
+}
+
+.backdrop img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 25%;
+  opacity: 0.7;
+}
+
+.backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(20, 24, 28, 0) 40%, var(--bg)),
+    linear-gradient(to right, var(--bg), rgba(20, 24, 28, 0) 15%, rgba(20, 24, 28, 0) 85%, var(--bg));
+}
+
+.film-head {
+  display: grid;
+  grid-template-columns: 7rem 1fr;
+  gap: 1.125rem;
+  align-items: end;
+  margin-top: 1.5rem;
+}
+
+.has-backdrop .film-head { position: relative; margin-top: -4.5rem; }
+
+/* On phones genres, pills and notes run full width under the poster and
+   title, so a long note can't push the poster down. */
+.film-details { grid-column: 1 / -1; }
+.film-details > :first-child { margin-top: 0; }
+.film-head .poster-fallback { padding: 0.875rem 1rem 1rem; }
+
+.film-title {
+  margin: 0;
+  color: var(--white);
+  font: 700 2.125rem/1.05 var(--serif);
+  letter-spacing: -0.01em;
+}
+
+.film-sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.875rem;
+  margin: 0.5rem 0 0;
+}
+
+.film-sub > span { display: inline-flex; align-items: center; gap: 0.3125rem; }
+.film-sub b { color: var(--bright); font-weight: 500; }
+
+.film-head .tags,
+.film-head .tags { margin-top: 0.75rem; }
+.film-head .tag,
+.film-head .genre { padding: 0.1875rem 0.625rem; font-size: 0.6875rem; }
+
+.genre {
+  padding: 0.1875rem 0.625rem;
+  border-radius: 999px;
+  background: var(--raised);
+  color: var(--bright);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* A note that applies to every showing, shown once. */
+.film-note {
+  margin: 0.75rem 0 0;
+  padding: 0.5rem 0.75rem;
+  border-left: 3px solid var(--accent);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--bright);
+  font-size: 0.875rem;
+}
+
+.scores {
+  display: flex;
+  gap: 0.5rem;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.scores li {
+  flex: 1;
+  min-width: 0;
+  max-width: 8rem;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--panel-line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.scores a { display: block; text-decoration: none; }
+
+.scores .source-logo {
+  display: block;
+  height: 1.125rem;
+  margin-bottom: 0.375rem;
+}
+
+.score-value {
+  display: block;
+  color: var(--white);
+  font: 700 1.375rem/1.1 var(--sans);
+  font-variant-numeric: tabular-nums;
+}
+
+.synopsis {
+  max-width: 38rem;
+  margin: 1.5rem 0 0;
+  color: var(--bright);
+  font: 400 1.0625rem/1.6 var(--serif);
+}
+
+/* Showtimes: a block per theatre (logo and rule), then each date and its
+   times. A new block starts only when the theatre changes. */
+.showing { padding: 0.75rem 0; }
+.showing + .showing { border-top: 1px solid var(--panel-line); }
+.showing:last-child { padding-bottom: 1rem; }
+
+.showing-when {
+  display: flex;
+  align-items: center;
+  gap: 0.4375rem;
+  margin: 0;
+  color: var(--white);
+  font-weight: 600;
+}
+
+.showing-when .icon { color: var(--accent-text); }
+.showing .times { margin-top: 0.5rem; }
+.showing .tags,
+.showing .showing-note { margin: 0.5rem 0 0; }
+
+/* The poster popup on a film page. */
+.poster-zoom { display: block; cursor: zoom-in; }
+.poster-zoom:hover .poster { border-color: var(--bright); }
+
+.poster-dialog {
+  max-width: none;
+  max-height: none;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-out;
+}
+
+.poster-dialog::backdrop {
+  background: rgba(10, 12, 14, 0.88);
+  backdrop-filter: blur(6px);
+}
+
+.poster-dialog img {
+  display: block;
+  width: auto;
+  max-width: 92vw;
+  height: auto;
+  max-height: 88vh;
+  border-radius: 8px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .poster-dialog[open] img { animation: poster-in 180ms ease-out; }
+  @keyframes poster-in { from { opacity: 0; transform: scale(0.94); } }
+}
+
+/* 9. Theatres list and theatre page */
+
+.theatre-name {
+  color: var(--white);
+  font: 700 1.25rem/1.2 var(--serif);
+}
+
+.theatre-blurb {
+  margin-top: 0.25rem;
+  color: var(--bright);
+  font-size: 0.875rem;
+}
+
+/* Theatres list: a card per theatre with its photo, logo and top three pills. */
+.theatre-cards {
+  display: grid;
+  gap: 0.875rem;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.theatre-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  text-decoration: none;
+}
+
+.theatre-card:hover .theatre-name { text-decoration: underline; text-underline-offset: 3px; }
+
+.theatre-card-art {
+  position: relative;
+  display: block;
+  height: 11rem;
+  overflow: hidden;
+  background: var(--raised);
+}
+
+.theatre-card-art img:first-child:not(.theatre-card-logo) {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  opacity: 0.8;
+}
+
+.theatre-card-art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(25, 30, 36, 0), var(--panel));
+}
+
+.theatre-card-logo {
+  position: absolute;
+  bottom: 0.75rem;
+  left: 1rem;
+  z-index: 1;
+  max-width: 70%;
+  height: auto;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.7));
+}
+
+.theatre-card-body {
+  display: grid;
+  gap: 0.375rem;
+  padding: 0.25rem 1rem 1rem;
+}
+
+.theatre-card-body .meta { display: flex; align-items: center; gap: 0.25rem; margin: 0; }
+.theatre-card-body .tags { margin-top: 0.25rem; }
+
+/* Theatre page: the outside photo across the top, fading into the page,
+   with the full logo over its lower edge. */
+.theatre-hero {
+  position: relative;
+  height: 17rem;
+  overflow: hidden;
+  background: var(--raised);
+}
+
+.theatre-hero img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.9;
+}
+
+.theatre-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(20, 24, 28, 0.15), rgba(20, 24, 28, 0) 30%, var(--bg));
+}
+
+.theatre-hero + .wrap { position: relative; }
+
+.theatre-head { margin-top: 2rem; }
+.theatre-head.over-hero { position: relative; margin-top: -6.5rem; }
+
+.theatre-head .meta {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.875rem;
+}
+
+.venue-title {
+  margin: 0;
+  color: var(--white);
+  font: 700 2rem/1.1 var(--serif);
+}
+
+.theatre-full-logo {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: 4rem;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.over-hero .theatre-full-logo {
+  width: var(--w);
+  height: auto;
+  filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.7));
+}
+
+/* One row that scrolls sideways, running off the screen's edge so it's clear there's more. */
+.theatre-offers .tags { margin-top: 0.75rem; }
+/* On a theatre page, filled pills are links to its films; hollow ones are room features. */
+.theatre-offers .tag-link { border-color: transparent; background: var(--accent-wash); color: var(--accent-text); }
+.theatre-offers span.tag,
+.theatre-card-body .tag { border-color: var(--line); background: none; color: var(--text); }
+.tag-link,
+a.genre { text-decoration: none; }
+a.genre:hover { background: var(--line); color: var(--white); }
+.tag-link:hover { border-color: var(--accent-text); color: var(--white); }
+
+.venue-blurb {
+  max-width: 36rem;
+  margin: 0.75rem 0 0;
+  color: var(--bright);
+}
+
+/* A multiplex's rooms swipe sideways like the hero, each card a bit narrower
+   than the screen so the next one shows at the edge. */
+.room-swipe {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 86%;
+  gap: 0.75rem;
+  margin: 0 calc(var(--gutter) * -1);
+  padding: 0 var(--gutter) 0.25rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: var(--gutter);
+  scrollbar-width: none;
+}
+
+.room-swipe::-webkit-scrollbar { display: none; }
+.room-swipe .room { scroll-snap-align: start; }
+
+.room-name {
+  margin: 1rem 0 0;
+  color: var(--bright);
+  font-size: 0.9375rem;
+}
+
+/* The room: a framed photo of the auditorium beside its specs. */
+.room-layout { display: grid; gap: 0.75rem; margin-top: 1rem; }
+
+.room-photo {
+  margin: 0;
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.room-photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+.specs {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.specs div {
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--panel-line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.specs dt {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+}
+
+.specs dd {
+  margin: 0.125rem 0 0;
+  color: var(--white);
+  font-weight: 600;
+}
+
+/* Letterboxd: personal pills are green, so they never read as a format or event. */
+.tags .personal { display: contents; }
+
+.card-mark {
+  position: absolute;
+  top: 0.375rem;
+  left: 0.375rem;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.625rem;
+  height: 1.625rem;
+  border-radius: 999px;
+  background: rgba(20, 24, 28, 0.85);
+  color: var(--mine);
+}
+
+.card-mark .icon { color: inherit; }
+.chip-personal { color: var(--mine); }
+.rail-personal .rail-head h2 a { color: var(--mine); }
+
+/* Theatre page folds: Tickets and Tech specs, closed until tapped. */
+.folds { display: grid; gap: 0.5rem; margin-top: 1.5rem; }
+/* Grid items default to their content's width; the room cards inside would push the page wide. */
+.folds > * { min-width: 0; }
+
+.fold {
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.fold summary {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.875rem 1rem;
+  color: var(--white);
+  font-weight: 600;
+  list-style: none;
+  cursor: pointer;
+}
+
+.fold summary::-webkit-details-marker { display: none; }
+.fold summary > .icon:first-child { color: var(--accent-text); }
+.fold-hint { margin-left: auto; color: var(--text); font-size: 0.8125rem; font-weight: 500; }
+.fold summary > .icon:last-child { color: var(--text); transition: transform 150ms; }
+.fold[open] summary > .icon:last-child { transform: rotate(90deg); }
+.fold-body { padding: 0 1rem 1rem; }
+.fold-subhead { margin: 0.5rem 0 0.25rem; color: var(--text); font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+.fold-note { margin-top: 0.75rem; }
+.fold-columns { margin: 0 0 0.25rem; text-align: right; }
+.fold .links { margin-top: 0.75rem; }
+.fold .room-swipe { margin-top: 0.25rem; }
+.fold .room-name:first-child, .fold .room-layout { margin-top: 0; }
+
+.price-list { margin: 0; }
+.price-list div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--panel-line);
+}
+.price-list div:last-child { border-bottom: 0; }
+.price-list dt { color: var(--bright); }
+.price-list dt small { display: block; color: var(--text); font-size: 0.75rem; }
+.price-list dd { margin: 0; color: var(--white); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* A film page's link to the theatre's own page for it, under that theatre's times. */
+.run-more { margin: 0.875rem 0 0; padding-top: 0.75rem; border-top: 1px solid var(--panel-line); }
+.run-more a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: var(--accent-text);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+.run-more a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* Your Letterboxd: one username box, then your films. */
+.me-form { display: flex; gap: 0.5rem; max-width: 30rem; margin-top: 1rem; }
+.me-form input {
+  width: 100%;
+  padding: 0.625rem 0.75rem 0.625rem 3rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--raised);
+  color: var(--white);
+  font: inherit;
+}
+.me-form input:focus { border-color: var(--accent); outline: none; }
+.me-form .source-logo { position: absolute; top: 50%; left: 0.75rem; height: 0.75rem; transform: translateY(-50%); }
+.me-form + .filter-status a { color: var(--accent-text); }
+
+.me-button {
+  padding: 0.5rem 1.125rem;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background: var(--accent);
+  color: var(--white);
+  font: 600 0.875rem var(--sans);
+  cursor: pointer;
+}
+
+.me-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.me-status { display: flex; align-items: center; gap: 0.5rem; margin: 0; color: var(--bright); }
+.me-status b { color: var(--white); }
+.me-status .source-logo { height: 0.75rem; }
+#me-disconnect { margin: 0; }
+.me-page .rail-head h2 a { display: inline-flex; align-items: center; gap: 0.5rem; }
+.me-page .rail-head .icon { color: var(--mine); }
+.me-page .film-grid { margin-top: 0.75rem; }
+
+/* 10. Wider screens */
+
+/* Tighter booking buttons on phones, so three fit across. */
+@media (max-width: 30rem) {
+  .times { gap: 0.375rem; }
+  .time { gap: 0.3125rem; padding: 0.25rem 0.625rem 0.25rem 0.5rem; font-size: 0.875rem; }
+}
+
+@media (min-width: 40rem) {
+  :root { --gutter: 1.5rem; }
+  .row { grid-template-columns: 5.5rem minmax(0, 1fr) auto; column-gap: 1.25rem; }
+  .spotlight { height: 20rem; }
+  .spotlight-body { right: 1.75rem; bottom: 1.5rem; left: 1.75rem; }
+  .spotlight-title { font-size: 2.5rem; }
+  .backdrop { height: 22rem; }
+  .film-head { grid-template-columns: 10rem 1fr; gap: 0.75rem 1.5rem; }
+  .film-head > .poster,
+  .film-head > .poster-zoom { grid-row: 1 / span 2; align-self: end; }
+  .film-details { grid-column: 2; align-self: start; }
+  .has-backdrop .film-head { margin-top: -7rem; }
+  .film-title { font-size: 3rem; }
+  .theatre-cards { grid-template-columns: repeat(2, 1fr); }
+  .theatre-hero { height: 26rem; }
+  .over-hero .theatre-full-logo { width: calc(var(--w) * 1.25); }
+  .specs { grid-template-columns: repeat(3, 1fr); }
+
+  /* Specs stretch to the room photo's height, so nothing floats. */
+  .room-swipe { grid-auto-columns: calc(50% - 0.375rem); }
+  .room-single .room-layout.has-photo { grid-template-columns: 3fr 2fr; align-items: stretch; }
+  .room-single .room-layout.has-photo .specs { grid-template-columns: repeat(2, 1fr); grid-auto-rows: 1fr; }
+  .room-single .room-layout.has-photo .specs div { display: flex; flex-direction: column; justify-content: center; }
+  .room-single .room-layout.has-photo .specs dd { font-size: 1.125rem; }
+}
+
+@media (min-width: 64rem) {
+  .spotlight { height: 24rem; }
+  .theatre-cards { grid-template-columns: repeat(3, 1fr); }
+  .day-bar,
+  .date-tools { margin-right: 0; margin-left: 0; padding-right: 0; padding-left: 0; }
+
+  /* The theatre photo fills the right side and fades left into the page, so
+     tall signs stay whole instead of being cropped to a strip. */
+  /* Kept to the page's width, so the photo lines up with the content on any
+     window size instead of running off to the screen's edge. */
+  .theatre-hero { max-width: calc(64rem + var(--gutter) * 2); margin: 0 auto; background: var(--bg); }
+  .theatre-hero img { display: block; width: 62%; margin-left: auto; }
+  .theatre-hero::after {
+    background: linear-gradient(to right, var(--bg) 38%, rgba(20, 24, 28, 0) 60%, rgba(20, 24, 28, 0) 92%, var(--bg)),
+      linear-gradient(to bottom, rgba(20, 24, 28, 0) 55%, var(--bg));
+  }
+  .theatre-head.over-hero { margin-top: -15rem; }
+
+  /* Wide screens: times sit beside the film instead of under its poster, and the
+     date strip stays inside the page, fading out where it scrolls. */
+  .row { grid-template-columns: 5.5rem minmax(0, 1fr) minmax(0, 24rem); align-items: start; gap: 1.25rem; }
+  .row .times { flex-direction: row; justify-content: flex-end; }
+  /* Film pages: each day's date on the left, its times beside it. */
+  .showing { display: grid; grid-template-columns: 13rem minmax(0, 1fr); column-gap: 1rem; align-items: start; }
+  .showing-when { grid-column: 1; grid-row: 1 / span 9; padding-top: 0.5rem; }
+  .showing > :not(.showing-when) { grid-column: 2; }
+  .showing .times { margin-top: 0; }
+  .showing .times + .times,
+  .showing .tags,
+  .showing .showing-note { margin-top: 0.5rem; }
+  .showing .tags:first-of-type,
+  .showing .showing-when + .showing-note { margin-top: 0.5rem; }
+
+  .date-strip {
+    margin-right: 0;
+    padding-right: 2rem;
+    mask-image: linear-gradient(to right, #000 calc(100% - 3rem), transparent);
+  }
+
+  /* Full width, the backdrop became an upscaled sliver of the image. Keep it at
+     the image's own width and shape, centred, with the sides fading out. */
+  .backdrop {
+    height: auto;
+    max-width: 80rem;
+    margin: 0 auto;
+    aspect-ratio: 16 / 7;
+    background: none;
+  }
+  .backdrop img { object-position: center 30%; }
+  .backdrop::after {
+    background: linear-gradient(to bottom, rgba(20, 24, 28, 0) 50%, var(--bg)),
+      linear-gradient(to right, var(--bg), rgba(20, 24, 28, 0) 20%, rgba(20, 24, 28, 0) 80%, var(--bg));
+  }
+  .has-backdrop .film-head { margin-top: -12rem; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .time,
+  .links a,
+  .date-strip a { transition: background-color 120ms, border-color 120ms, color 120ms; }
+}
+
+/* Photo credits: required by the photos' licences, kept small and next to the image. */
+.photo-credit {
+  margin: 0.25rem 0 0;
+  font-size: 0.75rem;
+  color: var(--text);
+}
+.photo-credit a { text-decoration: underline; text-underline-offset: 2px; }
+.room-photo figcaption { padding: 0.25rem 0 0; }
+.photo-credits { margin-top: 1.5rem; display: grid; gap: 0.25rem; }
+
+/* Save a film or theatre: outlined until saved, then filled green like the watchlist marks. */
+.save-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 0.75rem;
+  padding: 0.375rem 0.875rem 0.375rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: none;
+  color: var(--bright);
+  font: 600 0.8125rem var(--sans);
+  cursor: pointer;
+}
+.save-button:hover { border-color: var(--text); }
+.save-button[aria-pressed="true"] { border-color: var(--mine-line); background: rgba(47, 143, 99, 0.18); color: var(--mine); }
+.save-button[aria-pressed="true"] .icon { fill: currentColor; }
+.save-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.save-button:disabled { opacity: 0.6; }
+
+/* Your cineclock page: account, rating source, saved things, lists from elsewhere. */
+.me-section { margin-top: 2.5rem; }
+.me-section > h2,
+.me-section .me-subhead { margin: 0 0 0.75rem; font-size: 1.125rem; color: var(--bright); }
+.me-section .me-subhead { margin-top: 2rem; }
+.me-section .rail-head h2 { display: inline-flex; align-items: center; gap: 0.5rem; margin: 0; }
+.me-section .rail-head + .film-grid,
+.me-section .rail-head + .film-grid + .meta { margin-top: 0.75rem; }
+.me-section .page-intro + .me-button { display: inline-block; margin-top: 1rem; }
+.me-section .page-intro { margin-top: 0; }
+.source-picker { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0; padding: 0; border: 0; }
+.source-picker legend { margin-bottom: 0.5rem; color: var(--text); font-size: 0.875rem; }
+.source-picker label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--bright);
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+.source-picker input { position: absolute; opacity: 0; pointer-events: none; }
+.source-picker label:has(input:checked) { border-color: var(--accent); background: var(--accent-fill); }
+.source-picker label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.source-picker .source-logo { height: 0.75rem; }
+.me-theatres { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0; padding: 0; list-style: none; }
+.me-theatres a { display: inline-block; padding: 0.375rem 0.75rem; border: 1px solid var(--line); border-radius: 999px; color: var(--bright); font-size: 0.8125rem; text-decoration: none; }
+.me-danger { margin-top: 3rem; color: var(--text); font-size: 0.8125rem; }
+.me-file { color: var(--text); font-size: 0.8125rem; }
+
+/* Sign-in card on Your cineclock. */
+.signin-card {
+  max-width: 28rem;
+  margin: 1.5rem 0 0;
+  padding: 1.5rem;
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+.signin-title { margin: 0; color: var(--white); font-size: 1.25rem; }
+.signin-perks { display: grid; gap: 0.625rem; margin: 1.125rem 0 1.5rem; padding: 0; list-style: none; }
+.signin-perks li { display: flex; align-items: flex-start; gap: 0.625rem; color: var(--bright); font-size: 0.9375rem; line-height: 1.4; }
+.signin-perks .icon { flex: none; margin-top: 0.125rem; color: var(--accent-text); }
+.signin-button { min-height: 44px; }
+.signin-error { margin: 0.75rem 0 0; color: #f0a8a8; font-size: 0.875rem; }
+.signin-error:empty { display: none; }
+.signin-note { margin: 1.25rem 0 0; padding-top: 1rem; border-top: 1px solid var(--panel-line); color: var(--text); font-size: 0.8125rem; line-height: 1.5; }
+.signin-note a { color: var(--bright); text-decoration: underline; text-underline-offset: 2px; }
+
+/* A theatre with no free photo yet: a soft glow and marquee-bulb dots behind its logo,
+   so the card reads as designed rather than missing. */
+.theatre-card-art.no-photo {
+  background:
+    radial-gradient(ellipse at 30% 75%, var(--accent-wash), transparent 60%),
+    radial-gradient(circle, rgba(221, 229, 237, 0.07) 1.5px, transparent 2px) 0 0 / 14px 14px,
+    var(--raised);
+}
+
+/* Account in the header: "Sign in" when signed out, your initial when signed in. */
+.account-link {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 2.25rem;
+  padding: 0 0.75rem 0 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--bright);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+.account-link:hover,
+.account-link[aria-current="page"] { border-color: var(--text); color: var(--white); }
+.account-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.account-link.signed-in { padding: 0; border: 0; }
+.account-link.signed-in .account-icon,
+.account-link.signed-in .account-text { display: none; }
+.account-initial {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--white);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.account-link[aria-current="page"] .account-initial { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent-text); }
+
+/* Phones: the wordmark and your picture on top, the four links in a row under
+   them, spread across the width. The header is taller, so sticky things below
+   it move down too. */
+@media (max-width: 30rem) {
+  :root { --header-h: 5.75rem; }
+  .site-header .wrap { flex-wrap: wrap; gap: 0 0.625rem; padding-top: 0.5rem; }
+  .wordmark img { height: 1.0625rem; }
+  .account-link { margin-left: auto; }
+  .site-nav { order: 3; justify-content: space-between; width: 100%; margin: 0.25rem 0 0; padding-bottom: 0.25rem; gap: 0.5rem; font-size: 0.9375rem; }
+  .site-nav a { padding: 0.625rem 0; }
+  .account-link { padding: 0; width: 2rem; min-height: 2rem; justify-content: center; }
+  .account-link .account-text { display: none; }
+  .account-initial { width: 1.875rem; height: 1.875rem; font-size: 0.875rem; }
+}
+
+/* Your cineclock: account card, headings, and settings cards. */
+.account-card {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  max-width: 40rem;
+  margin-top: 1.5rem;
+  padding: 1rem 1.125rem;
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+.account-initial-lg { width: 2.75rem; height: 2.75rem; font-size: 1.125rem; flex: none; }
+.account-card-who { display: grid; flex: 1; min-width: 0; margin: 0; }
+.account-card-who b { overflow: hidden; color: var(--white); text-overflow: ellipsis; white-space: nowrap; }
+.account-card-who .meta { font-size: 0.8125rem; }
+
+.me-heading { display: flex; align-items: center; gap: 0.5rem; margin: 0 0 0.75rem; color: var(--bright); font-size: 1.125rem; }
+.me-heading .icon { color: var(--mine); }
+.me-heading.me-subhead { margin-top: 2rem; }
+.me-heading.me-subhead .icon { color: var(--accent-text); }
+.me-settings-title { margin: 3rem 0 0; color: var(--white); font: 700 1.5rem/1.2 var(--serif); }
+
+.settings-card {
+  max-width: 40rem;
+  margin-top: 1rem;
+  padding: 1.25rem;
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+.settings-card + .settings-card { margin-top: 0.75rem; }
+.me-settings-title + .settings-card { margin-top: 1rem; }
+.settings-card h3 { margin: 0; color: var(--white); font-size: 1.0625rem; }
+.settings-note { margin: 0.375rem 0 1rem; color: var(--text); font-size: 0.875rem; line-height: 1.5; }
+.settings-note b { color: var(--bright); font-weight: 600; }
+.settings-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.settings-head .settings-note { margin-bottom: 0; }
+.settings-card .me-form { margin-top: 0; }
+.settings-card .source-picker { margin-top: 0; }
+.settings-card .me-bar { margin: 0; }
+
+.settings-options { display: grid; gap: 0.25rem; margin: 1rem 0 0; padding: 1rem 0 0; border: 0; border-top: 1px solid var(--panel-line); }
+.settings-options.is-off { opacity: 0.5; }
+.check { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.5rem 0; cursor: pointer; }
+.check input { flex: none; width: 1.125rem; height: 1.125rem; margin: 0.125rem 0 0; accent-color: var(--accent); }
+.check span { display: grid; gap: 0.125rem; color: var(--text); font-size: 0.8125rem; line-height: 1.45; }
+.check b { color: var(--bright); font-size: 0.9375rem; font-weight: 600; }
+.settings-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin-top: 1rem; }
+.settings-foot .filter-status { margin: 0; }
+.me-button-quiet { border-color: var(--line); background: none; color: var(--bright); }
+.me-button-quiet:hover { border-color: var(--text); }
+
+/* A plain on/off switch. */
+.switch { position: relative; flex: none; width: 2.75rem; height: 1.625rem; cursor: pointer; }
+.switch input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.switch span { position: absolute; inset: 0; border-radius: 999px; background: var(--line); transition: background-color 150ms; }
+.switch span::after {
+  content: "";
+  position: absolute;
+  top: 0.1875rem;
+  left: 0.1875rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  background: var(--white);
+  transition: transform 150ms;
+}
+.switch input:checked + span { background: var(--accent); }
+.switch input:checked + span::after { transform: translateX(1.125rem); }
+.switch input:focus-visible + span { outline: 2px solid var(--accent-text); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .switch span, .switch span::after { transition: none; }
+}
+
+@media (max-width: 30rem) {
+  .freshness-day { display: none; }
+}
+
+/* Home: a quiet invitation to sign in and bring a watchlist along. */
+.signin-nudge {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  margin-top: 1rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius);
+  background: linear-gradient(100deg, var(--accent-wash), transparent 70%), var(--panel);
+  color: var(--text);
+  font-size: 0.875rem;
+  line-height: 1.4;
+  text-decoration: none;
+}
+.signin-nudge:hover { border-color: var(--accent); }
+.signin-nudge b { display: block; color: var(--white); font-size: 0.9375rem; }
+.signin-nudge-logos { display: grid; flex: none; gap: 0.375rem; justify-items: center; }
+.signin-nudge-logos img { width: auto; height: 0.75rem; }
+.signin-nudge-text { flex: 1; }
+.signin-nudge > .icon { flex: none; color: var(--text); }
+
+/* Your cineclock as a dashboard: who you are, four counts, rows of cards, then
+   settings in a grid. One column on phones. */
+.dash-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem 1.5rem; }
+.dash-head .page-title { margin-bottom: 0; }
+.dash-who { display: flex; align-items: center; gap: 0.625rem; min-width: 0; }
+.dash-email { overflow: hidden; color: var(--bright); font-size: 0.875rem; text-overflow: ellipsis; white-space: nowrap; }
+.dash-who .clear { margin: 0; }
+
+.dash-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.625rem; margin: 1.5rem 0 0; padding: 0; list-style: none; }
+.dash-stats a {
+  display: grid;
+  gap: 0.25rem;
+  height: 100%;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--text);
+  font-size: 0.8125rem;
+  text-decoration: none;
+}
+.dash-stats a:hover { border-color: var(--line); }
+.dash-stats b { color: var(--white); font: 700 1.75rem/1 var(--serif); }
+.dash-stats .is-urgent b { color: var(--warn); }
+.dash-stats .is-urgent.is-quiet b { color: var(--white); }
+@media (min-width: 48rem) {
+  .dash-stats { grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); }
+}
+
+.dash-rail { margin-top: 2.25rem; scroll-margin-top: 5rem; }
+.dash-rail .me-heading { margin-bottom: 0.25rem; }
+.dash-count { margin-left: 0.25rem; padding: 0.0625rem 0.5rem; border-radius: 999px; background: var(--raised); color: var(--text); font-size: 0.75rem; font-weight: 600; }
+.dash-count:empty { display: none; }
+#dash-ending .me-heading .icon { color: var(--warn); }
+.dash-empty { margin: 0.5rem 0 0; padding: 1rem; border: 1px dashed var(--line); border-radius: var(--radius); color: var(--text); font-size: 0.875rem; }
+
+.dash-theatres { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.75rem 0 0; padding: 0; list-style: none; }
+.dash-theatres a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0 1rem 0 0.75rem;
+  border: 1px solid var(--panel-line);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--bright);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+.dash-theatres a:hover { border-color: var(--line); }
+.dash-theatres .venue-pill { border: 0; background: none; padding: 0; }
+.dash-theatres + .dash-empty { margin-top: 0.75rem; }
+
+.dash-settings { display: grid; gap: 0.75rem; margin-top: 1rem; }
+.dash-settings .settings-card { max-width: none; margin: 0; }
+@media (min-width: 56rem) {
+  .dash-settings { grid-template-columns: 1fr 1fr; align-items: start; }
+}
+.settings-stack { display: grid; gap: 0.75rem; }
+.soon-badge { margin-left: 0.375rem; padding: 0.125rem 0.5rem; border-radius: 999px; background: var(--accent-wash); color: var(--accent-text); font-size: 0.6875rem; font-weight: 600; vertical-align: middle; }
+.dash-service { display: flex; gap: 0.875rem; padding: 1rem 0; border-top: 1px solid var(--panel-line); }
+.dash-service:last-child { padding-bottom: 0; }
+.dash-service-logo { flex: none; width: 2rem; height: 2rem; padding: 0.375rem; border-radius: 0.5rem; background: var(--raised); object-fit: contain; }
+.dash-service-body { display: grid; flex: 1; gap: 0.5rem; min-width: 0; }
+.dash-service-body > b { color: var(--white); font-size: 0.9375rem; }
+.dash-service-body .meta { margin: 0; font-size: 0.8125rem; line-height: 1.45; }
+.dash-service-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 0.75rem; }
+.dash-service-row .filter-status { margin: 0; }
+.dash-service .me-form { max-width: none; }
+.dash-service .me-form input { padding-left: 0.875rem; }
+.dash-service #me-disconnect { margin: 0; }
+.me-page .me-settings-title { margin-top: 3rem; }
+.me-page > .signin-card { margin-top: 1.5rem; }
+.dash-theatres a { padding: 0 1rem; }
+.me-danger .clear { margin: 0 0.25rem 0 0; padding-left: 0; }
+
+/* Watchlist connections, side by side on wider screens. */
+.dash-connect { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.75rem; margin-top: 1.5rem; }
+@media (min-width: 48rem) { .dash-connect { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.dash-help { margin-top: 0.5rem; color: var(--text); font-size: 0.8125rem; line-height: 1.5; }
+.dash-help summary { cursor: pointer; color: var(--bright); }
+.dash-help p { margin: 0.5rem 0 0; }
+.dash-help b { color: var(--bright); }
+.dash-link { color: var(--accent-text); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.dash-connect .filter-status:empty { display: none; }
+.dash-settings > :first-child { grid-row: auto; }
+
+/* The two-week calendar of saved films. */
+.dash-calendar { margin-top: 1.5rem; padding: 1.125rem; border: 1px solid var(--panel-line); border-radius: var(--radius); background: var(--panel); }
+.cal { display: grid; gap: 0.25rem; margin-top: 0.75rem; }
+.cal-row { display: grid; grid-template-columns: 1fr; gap: 0.25rem; padding: 0.375rem 0; color: var(--bright); text-decoration: none; }
+.cal-row + .cal-row { border-top: 1px solid var(--panel-line); }
+.cal-row:not(.cal-head):hover .cal-title { color: var(--white); text-decoration: underline; text-underline-offset: 2px; }
+.cal-head { padding-top: 0; }
+.cal-head .cal-title { display: none; }
+.cal-title { overflow: hidden; font-size: 0.875rem; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.cal-track { display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); align-items: center; }
+.cal-day { display: grid; justify-items: center; color: var(--text); font-size: 0.75rem; font-variant-numeric: tabular-nums; }
+.cal-day i { font-size: 0.625rem; font-style: normal; text-transform: uppercase; opacity: 0.7; }
+.cal-day.is-weekend { color: var(--bright); }
+.cal-day.is-today { color: var(--accent-text); font-weight: 700; }
+.cal-cell { position: relative; height: 1rem; }
+.cal-cell.in::before { content: ""; position: absolute; top: 50%; left: 0; right: 0; height: 0.25rem; transform: translateY(-50%); background: var(--accent-fill); }
+.cal-cell.first::before { left: 50%; }
+.cal-cell.last::before { right: 50%; }
+.cal-cell.on::after { content: ""; position: absolute; top: 50%; left: 50%; width: 0.625rem; height: 0.625rem; border-radius: 50%; transform: translate(-50%, -50%); background: var(--accent); box-shadow: 0 0 0 2px var(--panel); }
+@media (min-width: 48rem) {
+  .cal-row { grid-template-columns: 11rem 1fr; align-items: center; gap: 1rem; }
+  .cal-head .cal-title { display: block; }
+}
+.dash-help ol { margin: 0.5rem 0 0; padding-left: 1.25rem; display: grid; gap: 0.25rem; }
+
+.cal-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem; }
+.cal-top .me-heading { margin: 0; }
+.cal-chips { display: flex; flex-wrap: wrap; gap: 0.375rem; }
+.cal-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 2rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.cal-chip img { height: 0.625rem; }
+.cal-chip[aria-pressed="false"] { opacity: 0.45; text-decoration: line-through; }
+.cal-chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-wash); color: var(--white); }
+.cal-title { display: flex; align-items: center; gap: 0.375rem; min-width: 0; }
+.cal-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cal-from { display: inline-flex; flex: none; align-items: center; color: var(--accent-text); }
+.cal-from img { height: 0.625rem; }
+#dash-calendar-none { margin-top: 0.75rem; }
+
+/* Hero: when it's on, and the theatre's own logo on the right. */
+.spotlight-when { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; color: var(--white); font-size: 0.875rem; }
+.spotlight-when > span { display: inline-flex; align-items: center; gap: 0.375rem; }
+.spotlight-when .icon { color: var(--accent-text); }
+.spotlight-when b { font-weight: 600; }
+.spotlight-meta { color: var(--text); }
+.spotlight-venues {
+  position: absolute;
+  top: 0.875rem;
+  left: 1rem;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+  filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.75));
+}
+/* Every theatre's logo gets the same area (logo_size), so square and wide ones match. */
+.spotlight-venues img { width: calc(var(--w, 120px) * 0.5); height: auto; }
+.spotlight-venues { align-items: flex-start; }
+@media (min-width: 40rem) {
+  .spotlight-body { right: 15rem; }
+  .spotlight-venues { top: auto; right: 1.75rem; bottom: 1.5rem; left: auto; align-items: flex-end; gap: 0.75rem; }
+  .spotlight-venues img { width: var(--w, 200px); }
+  .spotlight-when { font-size: 0.9375rem; }
+}
+
+
+/* Letterboxd and IMDb: the same card, with a form until it's connected. */
+.dash-connect .dash-service {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.875rem;
+  padding: 1rem;
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+.dash-connect .dash-service.is-linked { gap: 0; }
+.dash-service-head { display: flex; align-items: center; gap: 0.75rem; min-height: 2.5rem; }
+.dash-connect .dash-service-logo { flex: none; width: 2.5rem; height: 2.5rem; padding: 0.5rem; border-radius: 0.625rem; background: var(--raised); object-fit: contain; }
+.dash-service-title { color: var(--white); font-size: 1rem; font-weight: 600; }
+.dash-linked { display: grid; flex: 1; min-width: 0; }
+.dash-linked[hidden] { display: none; }
+.dash-name { overflow: hidden; color: var(--white); font-size: 1rem; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.dash-state { display: inline-flex; align-items: center; gap: 0.375rem; color: var(--text); font-size: 0.8125rem; }
+.dash-state::before { content: ""; width: 0.4375rem; height: 0.4375rem; border-radius: 50%; background: var(--mine); }
+.dash-state.is-busy::before { background: var(--accent-text); animation: dash-pulse 1s ease-in-out infinite alternate; }
+.dash-state.is-problem::before { background: var(--warn); }
+@keyframes dash-pulse { to { opacity: 0.3; } }
+@media (prefers-reduced-motion: reduce) { .dash-state.is-busy::before { animation: none; } }
+.dash-actions { display: flex; flex: none; align-items: center; gap: 0.25rem; margin-left: auto; }
+.dash-actions[hidden] { display: none; }
+.dash-icon-button,
+.dash-text-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.25rem;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.dash-icon-button { width: 2.25rem; }
+.dash-text-button { padding: 0 0.75rem; }
+.dash-icon-button:hover,
+.dash-text-button:hover { background: var(--raised); color: var(--white); }
+.dash-icon-button:focus-visible,
+.dash-text-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.dash-icon-button[hidden] { display: none; }
+.dash-form { display: flex; gap: 0.5rem; }
+.dash-form input {
+  flex: 1;
+  min-width: 0;
+  height: 2.75rem;
+  padding: 0 0.875rem;
+  border: 1px solid var(--line);
+  border-radius: 0.625rem;
+  background: var(--bg);
+  color: var(--white);
+  font: inherit;
+  font-size: 1rem;
+}
+.dash-form input::placeholder { color: var(--text); opacity: 0.7; }
+.dash-form input:focus { border-color: var(--accent); outline: none; }
+.dash-form .me-button { height: 2.75rem; padding: 0 1.125rem; border-radius: 0.625rem; }
+.dash-hint, .dash-status { margin: 0.5rem 0 0; color: var(--text); font-size: 0.8125rem; line-height: 1.45; }
+.dash-status { color: var(--bright); }
+.dash-status:empty { display: none; }
+.dash-status:not(:empty) + .dash-hint { display: none; }
+.dash-service:has(.dash-state.is-busy) .dash-icon-button svg { animation: dash-spin 0.9s linear infinite; }
+@keyframes dash-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .dash-service:has(.dash-state.is-busy) .dash-icon-button svg { animation: none; } }
+
+/* The card: the poster (with one badge when something's special), then three
+   fixed lines floating under it: title and year, when, then where (in the
+   theatre's colour) with the score. A long title shortens; its year stays. */
+.card > a { display: flex; flex-direction: column; height: 100%; }
+.card .poster { border-radius: 6px; }
+.card-box { display: grid; flex: 1; align-content: start; gap: 0.125rem; padding: 0.5rem 0.125rem 0; }
+.card-box .card-title { display: flex; align-items: baseline; gap: 0.3125rem; margin: 0 0 0.0625rem; }
+.card-box .card-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card-box .card-title .year { flex: none; color: var(--text); font-size: 0.8125rem; font-weight: 400; }
+.card-box .card-mark-inline { display: inline-flex; flex: none; align-self: center; }
+.card-box .card-mark-inline .icon { color: var(--mine); }
+.card-box .card-mark-inline.is-plan .icon { color: var(--accent-text); }
+.card-box .card-mark-inline.is-seen .icon { color: var(--text); }
+.card-box .card-next { margin: 0; color: var(--text); font-size: 0.75rem; }
+.card-box .card-next.rare { color: var(--accent-text); }
+.card-box .card-sub { justify-content: space-between; gap: 0.5rem; min-height: 1.125rem; }
+.card-box .card-rating { flex: none; }
+.card-where {
+  display: flex;
+  gap: 0.375rem;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+.card-where > span { color: var(--bright); font-weight: 600; }
+.card-where > span + span::before { content: "·"; margin-right: 0.375rem; color: var(--text); font-weight: 400; }
+/* Calendar, star and pin lead the lines; the pin takes the first theatre's colour. */
+.card-where,
+.card-box .card-next { display: flex; align-items: center; gap: 0.3125rem; }
+.card-where .icon,
+.card-box .card-next .icon { flex: none; color: var(--text); }
+.card-box .card-next.rare .icon { color: var(--accent-text); fill: currentColor; }
+.where-first-rio .icon { color: #ff5a5f; }
+.where-first-park .icon { color: #4fb3ff; }
+.where-first-dunbar .icon { color: #ff5a5f; }
+.where-first-cinematheque .icon { color: #f4f4f4; }
+.where-first-viff-centre .icon { color: #f5c518; }
+
+/* A theatre named in small type, in its colour: on cards and in time rows.
+   Full logos are for headings with room for them. */
+.venue-name { color: var(--white); font-weight: 700; text-decoration: none; }
+a.venue-name:hover { text-decoration: underline; text-underline-offset: 3px; }
+.where-rio,
+.where-dunbar { color: #ff5a5f; }
+.where-park { color: #4fb3ff; }
+
+/* Film page: one block per theatre, under its logo. Each date sits on the
+   left with its booking buttons on the right, as in every time row. */
+.showing { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; }
+.showing .showing-when { margin: 0; padding: 0; }
+.showing .times { margin: 0 0 0 auto; justify-content: flex-end; }
+.showing .showing-note,
+.showing .tags { flex-basis: 100%; margin: 0; }
+.row-signals { display: flex; flex-wrap: wrap; align-items: center; gap: 0.375rem 0.625rem; margin-top: 0.25rem; }
+.row-signals:empty { display: none; }
+.row-signals .ratings,
+.row-signals .tags { margin: 0; }
+/* Signed out there are three counts; the last spans the row on phones. */
+@media (max-width: 47.99rem) { .dash-stats:has(#stat-alerts-tile[hidden]) .is-urgent { grid-column: span 2; } }
+
+/* Theatre page: a Showtimes row beside Tickets and Tech specs that jumps down
+   past the rails. Same look as the folds, with its chevron pointing down. */
+.fold-jump { display: flex; align-items: center; gap: 0.625rem; padding: 0.875rem 1rem; color: var(--white); font-weight: 600; text-decoration: none; }
+.fold-jump > .icon:first-child { color: var(--accent-text); }
+.fold-jump > .icon:last-child { color: var(--text); transform: rotate(90deg); }
+.fold-jump:hover { border-color: var(--line); }
+#showtimes { scroll-margin-top: 4.5rem; }
+
+/* The service you don't use folds to one line: its logo, name and Connect. */
+.dash-open { display: none; margin-left: auto; color: var(--accent-text); }
+.dash-service.is-tucked { gap: 0; padding-top: 0.625rem; padding-bottom: 0.625rem; }
+.dash-service.is-tucked > :not(.dash-service-head) { display: none; }
+.dash-service.is-tucked .dash-open { display: inline-flex; }
+.dash-service.is-tucked .dash-service-logo { width: 2rem; height: 2rem; padding: 0.375rem; }
+@media (min-width: 48rem) { .dash-connect:has(.is-tucked) { align-items: start; } }
+
+/* Hero, refined: a long title steps down a size and never takes more than two
+   lines, the synopsis shows where there's room, and phones get the height they
+   need instead of text spilling over the top. */
+.spotlight { height: 17rem; }
+.spotlight-title { display: -webkit-box; overflow: hidden; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.spotlight-title.is-long { font-size: 1.375rem; }
+.spotlight-synopsis { display: none; }
+@media (min-width: 40rem) {
+  .spotlight { height: 21rem; }
+  .spotlight-title.is-long { font-size: 2rem; }
+  .spotlight-synopsis {
+    display: -webkit-box;
+    max-width: 34rem;
+    overflow: hidden;
+    color: var(--bright);
+    font-size: 0.875rem;
+    line-height: 1.45;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+}
+@media (min-width: 64rem) { .spotlight { height: 25rem; } }
+
+/* On soon: spares past the first 15 wait hidden until a film drops out. */
+[data-live] > li:nth-child(n + 16) { display: none; }
+[data-live] > li[hidden] { display: none; }
+
+/* Festivals and series: the eyebrow on their page, and the link on a film's. */
+.series-eyebrow {
+  margin: 0 0 0.75rem;
+  padding: 0.3125rem 0.75rem;
+  border: 0;
+  background: var(--accent);
+  color: var(--white);
+  font-weight: 700;
+}
+.series-eyebrow .icon { color: var(--white); }
+.series-pill { display: inline-block; margin: 0 0 0.75rem; line-height: 0; }
+.series-eyebrow { text-decoration: none; }
+.has-backdrop .series-page { position: relative; margin-top: -5rem; }
+.series-blurb { max-width: 42rem; margin: 0.75rem 0 0; color: var(--bright); font-family: var(--serif); font-size: 1.0625rem; line-height: 1.55; }
+.series-source { margin: 0.75rem 0 1.25rem; font-size: 0.875rem; }
+.series-source a { display: inline-flex; align-items: center; gap: 0.375rem; color: var(--accent-text); font-weight: 600; }
+@media (min-width: 64rem) {
+  .has-backdrop .series-page { margin-top: -10rem; }
+}
+.film-series { display: flex; align-items: center; gap: 0.375rem; margin: 0.625rem 0 0; color: var(--text); font-size: 0.875rem; }
+.film-series .icon { color: var(--accent-text); }
+.film-event { align-items: flex-start; }
+.film-event .icon { flex: none; margin-top: 0.125rem; }
+.film-event b { color: var(--bright); font-weight: 600; }
+.screening-note { margin: 1.25rem 0 0; padding: 0.875rem 1rem; border-left: 3px solid var(--accent); border-radius: 6px; background: var(--panel); }
+.screening-note h2 { margin: 0 0 0.375rem; color: var(--white); font: 600 0.9375rem var(--sans); }
+.screening-note p { margin: 0; color: var(--text); line-height: 1.55; }
+.film-series a { color: var(--bright); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+
+/* Showtime rows: director and runtime on one quiet line. */
+.row-credits { display: flex; flex-wrap: wrap; gap: 0.25rem 0.75rem; }
+.row-credits > span { display: inline-flex; align-items: center; gap: 0.25rem; }
+@media (min-width: 64rem) { .row .times { flex-wrap: wrap; } }
+
+/* Page headers drawn as purple pills: one height everywhere. */
+.page-title-art { line-height: 0; }
+.page-title-art img { width: calc(var(--w) * 0.8); max-width: 100%; height: auto; }
+/* A shadow so the white letters read over a festival's banner. */
+.page-title-art img { filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 12px rgba(0, 0, 0, 0.5)); }
+@media (min-width: 40rem) { .page-title-art img { width: var(--w); } }
+
+/* Home hub: three tiles under the hero. A column on phones, a row on wider screens. */
+.hub { display: grid; gap: 0.5rem; margin-top: 0.75rem; }
+@media (min-width: 48rem) { .hub { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.hub-tile {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--text);
+  text-decoration: none;
+}
+.hub-tile:hover { border-color: var(--accent); }
+/* The leading icon or logos sit in one 2rem column, so every tile's text lines up. */
+.hub-tile > .icon:first-child { flex: none; width: 2rem; color: var(--accent-text); }
+.hub-tile > .icon:last-child { flex: none; margin-left: auto; color: var(--text); }
+.hub-text { display: grid; min-width: 0; gap: 0.0625rem; font-size: 0.8125rem; }
+.hub-text b { overflow: hidden; color: var(--white); font-size: 0.9375rem; text-overflow: ellipsis; white-space: nowrap; }
+.hub-text span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hub-logos { display: grid; flex: none; gap: 0.25rem; justify-items: center; width: 2rem; }
+.hub-logos img { width: auto; height: 0.625rem; }
+.hub-logos:has(img[hidden]) img { height: 0.75rem; }
+[data-hub-mine-icon] { display: flex; flex: none; justify-content: center; width: 2rem; color: var(--accent-text); }
+[data-hub-mine-icon][hidden], .hub-logos[hidden] { display: none; }
+.hub + .rail { margin-top: 0.75rem; }
+
+/* Email choices: one row each, the switch on the right. */
+#me-alerts-options { display: grid; gap: 0; margin-top: 0.75rem; padding-top: 0; border-top: 0; }
+.setting-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.75rem 0; border-top: 1px solid var(--panel-line); cursor: pointer; }
+.setting-row > span:first-child { display: grid; gap: 0.125rem; color: var(--text); font-size: 0.8125rem; line-height: 1.45; }
+.setting-row b { color: var(--bright); font-size: 0.9375rem; font-weight: 600; }
+
+/* Profile picture: the initial's circle, filled with a photo when picked. */
+.account-initial.has-avatar { background-size: cover; background-position: center; color: transparent; }
+.avatar-picker { display: flex; flex-wrap: wrap; gap: 0.625rem; border: 0; padding: 0; margin: 0.5rem 0 0; }
+.avatar-picker label { position: relative; cursor: pointer; }
+.avatar-picker input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.avatar-choice { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: 50%; object-fit: cover; font-size: 1.125rem; box-shadow: 0 0 0 2px var(--bg); }
+.avatar-picker input:checked + .avatar-choice { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent-text); }
+.avatar-picker input:focus-visible + .avatar-choice { outline: 2px solid var(--accent-text); outline-offset: 4px; }
+.settings-credit { margin: 0.875rem 0 0; font-size: 0.75rem; color: var(--text); opacity: 0.8; line-height: 1.5; }
+.settings-credit a { color: inherit; }
+
+/* Festivals and series index: a banner card for each. Until there's header art
+   for it, the title is drawn as the same purple pill. */
+.page-title-art:not(:has(img)) {
+  display: inline-block;
+  padding: 0.125rem 0.875rem 0.25rem;
+  border-radius: 0.75rem;
+  background: var(--accent);
+  color: var(--white);
+  font-family: var(--sans);
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1.25;
+  text-transform: lowercase;
+  letter-spacing: -0.02em;
+}
+.fest-cards { display: grid; gap: 1.25rem; margin: 1.25rem 0 0; padding: 0; list-style: none; }
+@media (min-width: 40rem) { .fest-cards { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 64rem) { .fest-cards { grid-template-columns: repeat(3, 1fr); } }
+.fest-card { display: grid; gap: 0.25rem; color: inherit; text-decoration: none; }
+.fest-art {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 9;
+  margin-bottom: 0.5rem;
+  overflow: hidden;
+  border-radius: 6px;
+  background: radial-gradient(circle at 30% 30%, rgba(135, 57, 255, 0.55), var(--raised) 70%);
+}
+.fest-art img { width: 100%; height: 100%; object-fit: cover; }
+.fest-now {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--white);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.fest-name { color: var(--white); font-size: 1.0625rem; font-weight: 600; line-height: 1.3; }
+.fest-card:hover .fest-name { text-decoration: underline; text-underline-offset: 3px; }
+.fest-meta { display: flex; align-items: center; gap: 0.375rem; color: var(--text); font-size: 0.8125rem; }
+.fest-meta .icon { flex: none; color: var(--accent-text); }
+
+/* Festival pages: the theatre's logo over the banner, as on its own page. */
+.series-logos { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 1rem 1.5rem; margin: 0 0 1rem; }
+.series-logos img { width: var(--w); height: auto; max-width: 100%; filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.7)); }
+@media (min-width: 40rem) { .series-logos img { width: calc(var(--w) * 1.25); } }
+
+/* Film page on wide screens: the film on the left, its showtimes beside it. */
+@media (min-width: 64rem) {
+  .film-body.has-main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 26rem); gap: 0 3rem; align-items: start; }
+  .film-body.has-main .film-times { position: sticky; top: calc(var(--header-h) + 1rem); }
+  .film-body.has-main .film-times > .section-heading { margin-top: 1.5rem; }
+}
+
+/* Filters that match nothing. */
+.no-results { display: grid; justify-items: center; gap: 0.5rem; margin: 2rem 0; padding: 2.5rem 1.5rem; border: 1px dashed var(--panel-line); border-radius: var(--radius); text-align: center; }
+.no-results b { color: var(--white); font-size: 1.0625rem; }
+.no-results button { margin-top: 0.75rem; }
+
+/* Started showings and what they leave empty (past.js). */
+.is-past:not(.cal-day) { display: none !important; }
+.cal-day.is-past { opacity: 0.35; pointer-events: none; }
+.rail:not(:has(.card:not(.is-past, [hidden]))) { display: none; }

@@ -1,0 +1,28 @@
+name: API check
+
+# Run by hand to see how api.cineclock.ca answers from outside: DNS, TLS and
+# the sign-in service's reply. Results are posted as annotations, which show
+# on the run's page.
+on:
+  workflow_dispatch:
+
+# Read-only: nothing here writes to the repo.
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check
+        run: |
+          note() { echo "::notice title=$1::$(echo "$2" | tr '\n' ' ' | cut -c1-900)"; }
+          note "NS" "$(dig +short NS cineclock.ca @1.1.1.1)"
+          note "api A (1.1.1.1)" "$(dig +short A api.cineclock.ca @1.1.1.1)"
+          note "api A (8.8.8.8)" "$(dig +short A api.cineclock.ca @8.8.8.8)"
+          note "api A (Cloudflare NS)" "$(dig +short A api.cineclock.ca @alexis.ns.cloudflare.com)"
+          note "api any (Cloudflare NS)" "$(dig api.cineclock.ca ANY @alexis.ns.cloudflare.com +noall +answer +authority)"
+          note "request" "$(curl -sS -m 20 -w ' HTTP %{http_code}' https://api.cineclock.ca/me 2>&1)"
+          note "preflight" "$(curl -sS -m 20 -o /dev/null -D - -X OPTIONS -H 'Origin: https://cineclock.ca' -H 'Access-Control-Request-Method: POST' -H 'Access-Control-Request-Headers: content-type' https://api.cineclock.ca/auth/google 2>&1 | grep -i -E '^HTTP|access-control')"
+          note "sign-in with a bad token" "$(curl -sS -m 20 -w ' HTTP %{http_code}' -X POST -H 'Origin: https://cineclock.ca' -H 'Content-Type: application/json' -d '{"credential":"x.y.z"}' https://api.cineclock.ca/auth/google 2>&1)"
+          note "workers.dev" "$(curl -sS -m 20 -w ' HTTP %{http_code}' https://cineclock-relay.cineclock-relay.workers.dev/me 2>&1)"

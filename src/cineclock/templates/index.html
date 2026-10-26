@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% from "_parts.html" import rail, icon, venue_badge, card_rating, TAG_ICONS %}
+
+{% block title %}cineclock: Support local cinemas{% endblock %}
+{% block og_title %}cineclock: Support local cinemas{% endblock %}
+
+{% block main %}
+<div class="wrap">
+  <h1 class="visually-hidden">Showtimes at Vancouver's independent cinemas</h1>
+  <div class="home-top">
+    <p class="tagline">Support local cinemas.</p>
+    <p class="freshness">{{ icon("clock", "xs") }}<span>Updated <span class="freshness-day">{{ updated_day }}, </span>{{ updated_time }}</span></p>
+  </div>
+  {% if slides %}
+  <section class="hero" aria-roledescription="carousel" aria-label="Highlights">
+    <div class="hero-track">
+      {% for sl in slides %}
+      {% set p = sl.page %}
+      <a class="spotlight{% if sl.until %} is-lead{% endif %}" data-film="{{ p.slug }}"{% if sl.until %} data-until="{{ sl.until.isoformat() }}"{% endif %} href="{{ root }}films/{{ p.slug }}/" aria-roledescription="slide" aria-label="{{ p.title }}">
+        <img class="spotlight-art" src="{{ p.film.backdrop_url }}" alt=""{% if not loop.first %} loading="lazy"{% endif %} onerror="this.hidden = true">
+        <span class="spotlight-body">
+          <span class="eyebrow">{% if sl.label in TAG_ICONS %}{{ icon(TAG_ICONS[sl.label], "xs") }}{% endif %}{{ sl.label }}</span>
+          <span class="spotlight-title{% if p.title | length > 22 %} is-long{% endif %}">{{ p.title }}{% if p.year %} <span class="year">{{ p.year }}</span>{% endif %}</span>
+          <span class="spotlight-when">
+            <span>{{ icon("calendar", "sm") }}<b>{{ sl.stamped }}</b></span>
+            {%- if not (sl.says_once and p.screenings | length == 1) %}<span>{{ icon("film", "sm") }}{{ sl.run }}</span>{% endif -%}
+          </span>
+          {%- if p.synopsis %}<span class="spotlight-synopsis">{{ p.synopsis }}</span>{% endif %}
+          <span class="spotlight-meta">
+            {%- if p.film.director %}<span>{{ icon("clapper", "sm") }}{{ p.film.director }}</span>{% endif -%}
+            {{- card_rating(p.film, root) -}}
+          </span>
+        </span>
+        {%- set v = sl.venue %}
+        {%- if v %}
+        <span class="spotlight-venues">
+          {%- if v.full_logo and has_asset("logos/" ~ v.full_logo) %}{% set w, h = full_logo_size(v, 13000, 40) %}<img src="{{ root }}static/logos/{{ v.full_logo }}" alt="{{ v.name }}" width="{{ w }}" height="{{ h }}" style="--w: {{ w }}px">{% else %}{{ venue_badge(v, root, scale=1.6) }}{% endif -%}
+        </span>
+        {%- endif %}
+      </a>
+      {% endfor %}
+    </div>
+    {% if slides | length > 1 %}
+    <button type="button" class="hero-arrow prev" aria-label="Previous" hidden>{{ icon("chevron", "lg") }}</button>
+    <button type="button" class="hero-arrow next" aria-label="Next" hidden>{{ icon("chevron", "lg") }}</button>
+    <div class="hero-dots" hidden></div>
+    {% endif %}
+  </section>
+  {% endif %}
+  {# Three ways in: what's on tonight, the festival of the moment, and your watchlist. #}
+  <nav class="hub" aria-label="Start here">
+    <a class="hub-tile" href="{{ root }}showtimes/">
+      {{ icon("ticket", "lg") }}
+      <span class="hub-text">
+        {%- if hub.tonight %}<b>{{ hub.tonight }} {{ "film" if hub.tonight == 1 else "films" }} on today</b><span>Next at {{ hub.first.starts_at | clock }}</span>
+        {%- else %}<b>All showtimes</b><span>Day by day, every theatre</span>{% endif -%}
+      </span>{{ icon("chevron", "md") }}
+    </a>
+    {# The middle tile: one festival on now or soon, or special screenings, picked
+       at random on each visit (hub.js). Without JavaScript, the biggest festival. #}
+    {% for f in hub.festivals %}
+    <a class="hub-tile" href="{{ root }}series/{{ f.slug }}/" data-hub-pick{% if not loop.first %} hidden{% endif %}>
+      {{ icon("film", "lg") }}
+      <span class="hub-text"><b>{{ f.name }}</b><span>{{ f.films | length }} {{ "film" if f.films | length == 1 else "films" }}, {{ f.dates }}</span></span>{{ icon("chevron", "md") }}
+    </a>
+    {% endfor %}
+    {% if hub.special or not hub.festivals %}
+    <a class="hub-tile" href="{{ root }}films/?tag=special" data-hub-pick{% if hub.festivals %} hidden{% endif %}>
+      {{ icon("star", "lg") }}
+      <span class="hub-text"><b>Special screenings</b><span>{{ hub.special }} prints and events this week</span></span>{{ icon("chevron", "md") }}
+    </a>
+    {% endif %}
+    <a class="hub-tile hub-mine" href="{{ root }}me/" data-hub-mine>
+      <span data-hub-mine-icon hidden>{{ icon("ticket", "lg") }}</span><span class="hub-logos"><img src="{{ root }}static/logos/letterboxd.png" alt="" width="32" height="12" data-logo="letterboxd"><img src="{{ root }}static/logos/imdb.png" alt="" height="12" data-logo="imdb"></span>
+      <span class="hub-text"><b data-hub-mine-title>Your watchlist, here</b><span data-hub-mine-sub>Sign in to connect Letterboxd or IMDb</span></span>{{ icon("chevron", "md") }}
+    </a>
+  </nav>
+  <div id="mine-rail"></div>
+  {% if rails %}
+    {% for r in rails %}{{ rail(r, root) }}{% endfor %}
+  {% else %}
+    <p class="empty">No showtimes saved yet. Run <code>python -m cineclock.scrape</code> to fetch them.</p>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}<script src="{{ root }}static/hero.js?v={{ asset_version('hero.js') }}"></script>
+<script src="{{ root }}static/onsoon.js?v={{ asset_version('onsoon.js') }}"></script>
+<script src="{{ root }}static/hub.js?v={{ asset_version('hub.js') }}"></script>{% endblock %}

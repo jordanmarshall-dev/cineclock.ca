@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% from "_parts.html" import film_card, icon %}
+
+{% block title %}{{ series.name }}{% endblock %}
+{% block description %}{{ series.blurb or (series.films | length ~ " films from " ~ series.name ~ ", " ~ series.dates ~ ", at " ~ series.venues | map(attribute="name") | join(" and ") ~ ".") }}{% endblock %}
+{% block og_image %}{% if series.art %}{{ series.art }}{% else %}{{ site_url }}static/brand/share.png{% endif %}{% endblock %}
+{% block body_class %}{% if series.art %}has-backdrop{% endif %}{% endblock %}
+
+{% block main %}
+{% if series.art %}
+<div class="backdrop" aria-hidden="true"><img src="{{ series.art }}" alt="" onerror="this.hidden = true"></div>
+{% endif %}
+
+<div class="wrap series-page">
+  <div class="series-logos">
+    {%- for v in series.venues %}
+    {%- if v.full_logo and has_asset("logos/" ~ v.full_logo) %}{% set w, h = full_logo_size(v, 16000 if series.venues | length == 1 else 6500, 52) %}<a href="{{ root }}theatres/{{ v.slug }}/"><img src="{{ root }}static/logos/{{ v.full_logo }}" alt="{{ v.name }}" width="{{ w }}" height="{{ h }}" style="--w: {{ w }}px"></a>{% endif %}
+    {%- endfor %}
+  </div>
+  <h1 class="page-title">{{ series.name }}</h1>
+  <p class="page-intro">{{ series.films | length }} {{ "film" if series.films | length == 1 else "films" }}, {{ series.dates }}, at {% for v in series.venues %}{% if not loop.first %} and {% endif %}<a href="{{ root }}theatres/{{ v.slug }}/">{{ v.name }}</a>{% endfor %}.</p>
+  {% if series.blurb %}<p class="series-blurb">{{ series.blurb }}</p>{% endif %}
+  {% if series.link %}<p class="series-source"><a href="{{ series.link }}">{{ icon("external", "xs") }}Full programme at {{ series.source.venue }}</a></p>{% endif %}
+  <ul class="film-grid">
+    {% for p in series.films %}{{ film_card(p, root, p.span(now)) }}{% endfor %}
+  </ul>
+</div>
+{% endblock %}

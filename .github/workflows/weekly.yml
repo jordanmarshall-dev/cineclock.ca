@@ -1,0 +1,70 @@
+name: Weekly report
+
+# Monday mornings: an AI-written note for Jordan on what's coming up, what's
+# new, what looks wrong, and a newsletter draft. Posted as an issue, so GitHub
+# emails it. Reads the database the Deploy workflow keeps in the Actions cache.
+on:
+  schedule:
+    - cron: "41 15 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  report:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e .
+      - uses: actions/cache/restore@v6
+        with:
+          path: cineclock.db
+          key: db-weekly-${{ github.run_id }}
+          restore-keys: db-
+      # A copy of the database, kept 90 days. Deploy restores the newest one if
+      # the Actions cache ever loses it (GitHub drops caches unused for a week).
+      - uses: actions/upload-artifact@v7
+        with:
+          name: cineclock-db
+          path: cineclock.db
+          retention-days: 90
+          if-no-files-found: ignore
+      - run: python -m cineclock.ai --report
+        env:
+          # Not a secret: it only names the Cloudflare account; the token is the key.
+          CLOUDFLARE_ACCOUNT_ID: 12da3cbd667bac7ac6ff1816640d4fcc
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      - name: Post it
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ ! -s report.md ]; then echo "No report written."; exit 0; fi
+          gh issue create --title "cineclock weekly: $(date +'%b %-d')" --body-file report.md --label weekly || \
+            gh issue create --title "cineclock weekly: $(date +'%b %-d')" --body-file report.md
+
+  # GitHub pauses scheduled workflows in a repo with no commits for 60 days,
+  # which would stop the site updating. If it's been quiet for 45, this makes
+  # an empty commit so the schedules keep running with nobody touching it.
+  keepalive:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - name: Commit if the repo has been quiet
+        run: |
+          last=$(git log -1 --format=%ct)
+          days=$(( ($(date +%s) - last) / 86400 ))
+          echo "Last commit $days days ago."
+          if [ "$days" -ge 45 ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit --allow-empty -m "Keep scheduled updates running"
+            git push
+          fi

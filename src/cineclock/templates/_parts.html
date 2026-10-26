@@ -1,0 +1,326 @@
+{% macro photo_credit(p, tag="p") -%}
+{%- if p.placeholder -%}
+<{{ tag }} class="photo-credit">Placeholder photo, source to be confirmed</{{ tag }}>
+{%- else -%}
+<{{ tag }} class="photo-credit">Photo: <a href="{{ p.page_url }}" target="_blank" rel="noopener">{{ p.author }}</a>, {% if p.licence_url %}<a href="{{ p.licence_url }}" target="_blank" rel="noopener">{{ p.licence }}</a>{% else %}{{ p.licence }}{% endif %}, toned</{{ tag }}>
+{%- endif -%}
+{%- endmacro %}
+
+{# Your cineclock plans: films you're trying to catch here, separate from a
+   Letterboxd or IMDb watchlist (films you want to see some day). Signed-out
+   visitors are sent to sign in. Shown by account.js. #}
+{% macro save_button(kind, ref, name) -%}
+<button type="button" class="save-button" data-save="{{ kind }}" data-ref="{{ ref }}" aria-pressed="false" aria-label="Save {{ name }}" hidden>{{ icon("ticket", "sm") }}<span data-save-label>Save</span></button>
+{%- endmacro %}
+
+{% macro poster(url, href=None, label="") -%}
+{% if href %}<a class="poster" href="{{ href }}" tabindex="-1" aria-hidden="true">{% else %}<div class="poster">{% endif %}
+  {# No poster yet: a made-up one in a colour of its own, picked from the title. #}
+  <span class="poster-fallback" aria-hidden="true" style="--hue: {{ label | hue }}"><svg class="poster-fallback-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M8 3v18M16 3v18M4 7.5h4M4 12h4M4 16.5h4M16 7.5h4M16 12h4M16 16.5h4"/></svg><span class="poster-fallback-title">{{ label }}</span></span>
+  {%- if url %}<img src="{{ url }}" alt="{{ label }}" loading="lazy" onerror="this.hidden = true">{% endif -%}
+{% if href %}</a>{% else %}</div>{% endif %}
+{%- endmacro %}
+
+{# A theatre pill: the theatre's own compact logo, or its initials if the file is missing. #}
+{% macro venue_badge(v, root, scale=1) -%}
+<span class="venue-pill" title="{{ v.name }}">
+  {%- if v.mark and has_asset("logos/" ~ v.mark) %}{% set w, h = logo_size("logos/" ~ v.mark, 900 * (v.mark_scale * scale) ** 2, 12 * v.mark_scale * scale) %}<img src="{{ root }}static/logos/{{ v.mark }}" alt="{{ v.name }}" width="{{ w }}" height="{{ h }}">{% else %}<span class="monogram" role="img" aria-label="{{ v.name }}">{{ v.monogram }}</span>{% endif -%}
+</span>
+{%- endmacro %}
+
+{# Theatre headings (Showtimes, film pages) use the theatre's full logo, as on its
+   own page, sized to a matching area so wide and tall logos read alike. #}
+{% macro venue_label(v, root) -%}
+{%- if v.full_logo and has_asset("logos/" ~ v.full_logo) -%}
+{% set w, h = full_logo_size(v, 3600, 22) %}<img class="venue-heading-logo" src="{{ root }}static/logos/{{ v.full_logo }}" alt="{{ v.name }}" width="{{ w }}" height="{{ h }}">
+{%- elif v.mark and has_asset("logos/" ~ v.mark) %}{{ venue_badge(v, root, scale=1.6) }}{% else %}<span>{{ v.name }}</span>{% endif -%}
+{%- endmacro %}
+
+{% macro source_mark(source, root) -%}
+{% set names = {"letterboxd": "Letterboxd", "imdb": "IMDb", "rt": "Rotten Tomatoes", "metacritic": "Metacritic"} %}
+{%- if has_asset("logos/" ~ source ~ ".png") -%}
+<img class="source-logo source-{{ source }}" src="{{ root }}static/logos/{{ source }}.png" alt="{{ names[source] }}">
+{%- else -%}
+<span class="source-label">{{ names[source] }}</span>
+{%- endif %}
+{%- endmacro %}
+
+{# One score for cards and rows: Letterboxd, or the first other source that has one.
+   The film page has the full spread. #}
+{# One source's score on a card, or nothing if the film has none from it. #}
+{% macro source_rating(film, source, root) -%}
+{%- set names = {"letterboxd": "Letterboxd", "imdb": "IMDb", "rt": "Rotten Tomatoes", "metacritic": "Metacritic"} -%}
+{%- set score = film | score_text(source) -%}
+{%- if score %}<span class="card-rating card-rating-{{ source }}" title="{{ score }} on {{ names[source] }}">{{ source_mark(source, root) }}<b>{{ score }}</b></span>{% endif -%}
+{%- endmacro %}
+
+{# Letterboxd, else the next source that has a score. Signed-in visitors can
+   pick another source; account.js swaps these in from films.json. #}
+{% macro card_rating(film, root) -%}
+{% if film %}
+{%- for source in ["letterboxd", "imdb", "rt", "metacritic"] if film | score_text(source) -%}
+{%- if loop.first %}{{ source_rating(film, source, root) }}{% endif -%}
+{%- endfor -%}
+{% endif %}
+{%- endmacro %}
+
+{# Every ratings source, for the film page. #}
+{% macro ratings(film, root) -%}
+{% if film and (film.letterboxd_rating or film.imdb_rating or film.rt_score is not none or film.metacritic is not none) %}
+<p class="ratings">
+  {% if film.letterboxd_rating %}<span class="rating rating-letterboxd">{{ source_mark("letterboxd", root) }}<b>{{ "%.1f" | format(film.letterboxd_rating) }}</b></span>{% endif %}
+  {% if film.imdb_rating %}<span class="rating rating-imdb">{{ source_mark("imdb", root) }}<b>{{ "%.1f" | format(film.imdb_rating) }}</b></span>{% endif %}
+  {% if film.rt_score is not none %}<span class="rating rating-rt">{{ source_mark("rt", root) }}<b>{{ film.rt_score }}%</b></span>{% endif %}
+  {% if film.metacritic is not none %}<span class="rating rating-metacritic">{{ source_mark("metacritic", root) }}<b>{{ film.metacritic }}</b></span>{% endif %}
+</p>
+{% endif %}
+{%- endmacro %}
+
+{# One set of line icons, drawn in the current text colour so they follow whatever they sit in. #}
+{% set ICONS = {
+  "calendar": '<rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
+  "ticket": '<path d="M4 7a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v3a2 2 0 0 0 0 4v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a2 2 0 0 0 0-4z"/><path d="M15 6.5v11" stroke-dasharray="1.5 2.5"/>',
+  "clock": '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  "info": '<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5M12 7.75v.01"/>',
+  "pin": '<path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>',
+  "external": '<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
+  "film": '<rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M8 3v18M16 3v18M4 7.5h4M4 12h4M4 16.5h4M16 7.5h4M16 12h4M16 16.5h4"/>',
+  "mic": '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M9 21h6"/>',
+  "eye": '<path d="M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.5"/>',
+  "star": '<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>',
+  "clapper": '<path d="M4 9.5h16V19a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 19zM4 9.5l-.6-2.9a1 1 0 0 1 .8-1.2l13.7-2.7a1 1 0 0 1 1.2.8l.5 2.6zM8.5 4.3l2 4.4M13.5 3.3l2 4.4"/>',
+  "seat": '<path d="M6 11V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v5M4 11h16v4H4zM6 15v5M18 15v5"/>',
+  "screen": '<rect x="3" y="5" width="18" height="11" rx="1"/><path d="M8 20h8M12 16v4"/>',
+  "projector": '<rect x="3" y="8" width="18" height="9" rx="2"/><circle cx="15" cy="12.5" r="2.5"/><path d="M6.5 12.5h3M7 17v2.5M17 17v2.5"/>',
+  "speaker": '<path d="M4 9.5h3.5L12 6v12l-4.5-3.5H4zM15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/>',
+  "search": '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>',
+  "chevron": '<path d="M9 5l7 7-7 7"/>',
+  "bookmark": '<path d="M6.5 3.5h11a1 1 0 0 1 1 1v16l-6.5-4.5-6.5 4.5v-16a1 1 0 0 1 1-1z"/>',
+  "music": '<path d="M9 18V5.5l11-2V16"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>',
+  "person": '<circle cx="12" cy="8" r="3.6"/><path d="M5 20.5a7 7 0 0 1 14 0"/>',
+  "people": '<circle cx="9" cy="8" r="3.2"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 4.8a3.2 3.2 0 0 1 0 6.4M18 14a6 6 0 0 1 3 6"/>',
+  "sync": '<path d="M19.5 12a7.5 7.5 0 0 1-13 5.1M4.5 12a7.5 7.5 0 0 1 13-5.1"/><path d="M17.5 3v4h-4M6.5 21v-4h4"/>',
+  "code": '<path d="M8.5 7L3.5 12l5 5M15.5 7l5 5-5 5"/>',
+  "github": '<path d="M9 19c-4.5 1.5-4.5-2.5-6.5-3m13 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/>',
+} %}
+{# One scale for every icon: xs in pills and badges, sm beside small text, md in
+   buttons and headings, lg for section and navigation icons. #}
+{% set ICON_SIZES = {"xs": 12, "sm": 14, "md": 16, "lg": 20} %}
+{% macro icon(name, size="sm") -%}
+{%- set px = ICON_SIZES[size] -%}
+<svg class="icon icon-{{ name }}" viewBox="0 0 24 24" width="{{ px }}" height="{{ px }}" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">{{ ICONS[name] | safe }}</svg>
+{%- endmacro %}
+
+{% set TAG_ICONS = {
+  "One screening": "star",
+  "70mm": "film", "35mm": "film", "16mm": "film", "IMAX": "screen", "4K": "screen", "Atmos": "speaker", "3D": "eye",
+  "Q&A": "mic", "Intro": "mic", "Music": "music", "Festival": "star",
+  "Shorts": "film", "Event": "star", "Guests": "people", "Preview": "eye",
+  "7.1": "speaker", "Curved": "screen",
+} %}
+
+{# One screening isn't drawn as a badge; the date or time it describes is highlighted instead. #}
+{% set RARE = ["One screening"] %}
+
+{# `links` maps a tag to where tapping it goes. With `root`, every other tag and
+   genre opens Films filtered to it. `labels` renames a tag ("Festival" becomes
+   the festival's name). #}
+{% macro tag_list(tags, links={}, genres=(), personal=False, root=None, labels={}) -%}
+{% set tags = tags | reject("in", RARE) | list %}
+{% if root %}{% set links = dict(links) %}{% for t in tags if t not in links %}{% set _ = links.update({t: root ~ "films/?tag=" ~ (t | tagslug)}) %}{% endfor %}{% endif %}
+{% if tags or genres or personal %}<p class="tags">{% if personal %}<span class="personal" hidden></span>{% endif %}{% for g in genres %}{% if root %}<a class="genre" href="{{ root }}films/?genre={{ g | tagslug }}">{{ g }}</a>{% else %}<span class="genre">{{ g }}</span>{% endif %}{% endfor %}{% for t in tags %}
+  {%- set inner %}{{ icon(TAG_ICONS.get(t, "screen"), "xs") }}{{ labels.get(t, t) }}{% endset -%}
+  {%- if t in links %}<a class="tag tag-link tag-{{ t | tagkind }} tag-{{ t | tagslug }}" href="{{ links[t] }}">{{ inner }}</a>
+  {%- else %}<span class="tag tag-{{ t | tagkind }} tag-{{ t | tagslug }}">{{ inner }}</span>{% endif -%}
+{% endfor %}</p>{% endif %}
+{%- endmacro %}
+
+{% macro showtime(s, label=None, rare=False) -%}
+{# Booking opens in a new tab: the theatres' ticket pages can't be shown inside
+   another site, and cineclock stays open for after checkout. #}
+{%- set when %}{{ s.local_start.strftime('%A %B') }} {{ s.local_start.day }} at {{ s.starts_at | clock }}{% if s | room_label %}, {{ s | room_label }}{% endif %}{% endset -%}
+{%- if s.status -%}
+{# No booking link: the theatre's page for it, labelled with what the theatre says. #}
+<a class="time time-closed" data-start="{{ s.local_start.strftime('%Y-%m-%dT%H:%M') }}" href="{{ s.url }}" target="_blank" rel="noopener" aria-label="{{ s.status }}: {{ label or s.title }}, {{ when }}. More info (opens in a new tab)">
+  {{- icon("info", "md") }}<span class="time-text">{{ s.starts_at | clock }}<small>{{ s.status }}{% if s | room_label %} · {{ s | room_label }}{% endif %}</small></span>
+</a>
+{%- else -%}
+<a class="time{% if rare %} time-rare{% endif %}" data-start="{{ s.local_start.strftime('%Y-%m-%dT%H:%M') }}" href="{{ s.url }}" target="_blank" rel="noopener" aria-label="Tickets for {{ label or s.title }}, {{ when }} (opens in a new tab)">
+  {{- icon("ticket", "md") }}<span class="time-text">{{ s.starts_at | clock }}{% if s | room_label %}<small>{{ s | room_label }}</small>{% endif %}</span>
+</a>
+{%- endif -%}
+{%- endmacro %}
+
+{% macro row(r, root, venue_slug="") -%}
+<li class="row" data-item data-film="{{ r.page.slug }}" data-venues="{{ venue_slug }}" data-tags="{{ r.tags | filter_slugs | join(' ') }}" data-genres="{{ r.page.genres | map('tagslug') | join(' ') }}" data-title="{{ r.title | lower }} {{ r.page.title | lower }}">
+  {{ poster(r.poster_url, root ~ "films/" ~ r.page.slug ~ "/", r.title) }}
+  <div class="row-body">
+    <p class="row-title">
+      <a href="{{ root }}films/{{ r.page.slug }}/">{{ r.title }}</a>
+      {% if r.year %}<span class="year">{{ r.year }}</span>{% endif %}
+    </p>
+    {% set film = r.page.film %}
+    {% if r.note and not (r.note | said_by_tags(r.tags)) %}<p class="meta">{{ r.note }}</p>{% endif %}
+    {% if film and (film.director or film.runtime) %}<p class="meta row-credits">
+      {%- if film.director %}<span>{{ film.director }}</span>{% endif -%}
+      {%- if film.runtime %}<span>{{ icon("clock", "xs") }}{{ film.runtime | runtime }}</span>{% endif -%}
+    </p>{% endif %}
+    {% set score = card_rating(r.page.film, root) %}
+    <div class="row-signals">{% if score | trim %}<p class="ratings">{{ score }}</p>{% endif %}{{ tag_list(r.tags, root=root) }}</div>
+    <p class="tags personal" hidden></p>
+  </div>
+  <div class="times">
+    {% set rare = r.page.tags | select("in", RARE) | list %}
+    {%- for s in r.showtimes %}{{ showtime(s, r.title, rare) }}{% endfor -%}
+  </div>
+</li>
+{%- endmacro %}
+
+{% macro day_sections(days, root, show_venues=True) -%}
+{% for day in days %}
+<section class="day" id="{{ day.anchor }}" data-group aria-labelledby="{{ day.anchor }}-h">
+  <h2 class="day-heading day-bar" id="{{ day.anchor }}-h">{{ icon("calendar", "md") }}{{ day.label | stamp(day.date, "day") }}</h2>
+  {% for group in day.groups %}
+    <div class="venue-group panel" data-group>
+    {% if show_venues %}<h3 class="venue-heading"><a href="{{ root }}theatres/{{ group.venue.slug }}/">{{ venue_label(group.venue, root) }}</a></h3>{% endif %}
+    <ul class="rows">
+      {% for r in group.rows %}{{ row(r, root, group.venue.slug) }}{% endfor %}
+    </ul>
+    </div>
+  {% endfor %}
+</section>
+{% endfor %}
+{%- endmacro %}
+
+{# Jump to a day: a calendar button with a month view, then a strip of day chips. #}
+{% macro date_tools(days, months, root) -%}
+{% if days %}
+<div class="date-tools">
+  {% if months %}
+  <details class="cal-pop">
+    <summary aria-label="Pick a date">{{ icon("calendar", "lg") }}</summary>
+    <div class="cal-panel">
+      {% for m in months %}
+      <div class="cal-month">
+        <p class="cal-title">{{ m.title }}</p>
+        <div class="cal-grid">
+          {% for d in ["S", "M", "T", "W", "T", "F", "S"] %}<span class="cal-dow">{{ d }}</span>{% endfor %}
+          {% for week in m.weeks %}{% for d in week %}
+            {%- if not d %}<span></span>
+            {%- elif d.anchor %}<a href="#{{ d.anchor }}" class="cal-day has-shows{% if d.today %} today{% endif %}" data-day="{{ d.date.isoformat() }}" aria-label="{{ d.date.strftime('%A %B') }} {{ d.date.day }}">{{ d.date.day }}</a>
+            {%- else %}<span class="cal-day{% if d.today %} today{% endif %}" data-day="{{ d.date.isoformat() }}">{{ d.date.day }}</span>{% endif %}
+          {%- endfor %}{% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </details>
+  {% endif %}
+  {{ date_strip(days) }}
+</div>
+<script src="{{ root }}static/calendar.js?v={{ asset_version('calendar.js') }}" defer></script>
+{% endif %}
+{%- endmacro %}
+
+{% macro date_strip(days) -%}
+{% if days | length > 1 %}
+<nav class="date-strip" aria-label="Jump to a day">
+  {% for day in days %}<a href="#{{ day.anchor }}">{{ day.short | stamp(day.date, "short") }}</a>{% endfor %}
+</nav>
+{% endif %}
+{%- endmacro %}
+
+{# The poster card: home rails, theatre rails, the Films grid and the watchlist shelf all use it.
+   The poster carries one badge for anything special (35mm, Q&A, Festival), and
+   every card has the same four lines, so each detail is always in the same spot:
+   title, year with the score at the right, when it's on, and where. #}
+{% macro film_card(p, root, when, attrs="") -%}
+{% set rare = p.tags | select("in", RARE) | list %}
+<li class="card" data-film="{{ p.slug }}" data-last="{{ p.last_showing.local_start.strftime('%Y-%m-%dT%H:%M') }}" {{ attrs | safe }}>
+  <a href="{{ root }}films/{{ p.slug }}/">
+    {% set badge = p.tags | reject("in", RARE) | first %}
+    {% set venues = p.venues %}
+    <span class="card-art">
+      {{ poster(p.poster_url, label=p.title) }}
+      {%- if badge %}<span class="card-badge" title="{{ badge }}">{{ icon(TAG_ICONS.get(badge, "screen"), "xs") }}{{ badge }}</span>{% endif -%}
+    </span>
+    <span class="card-box">
+      <span class="card-title" title="{{ p.title }}{% if p.year %} ({{ p.year }}){% endif %}"><span class="card-name">{{ p.title }}</span>{% if p.year %}<span class="year">{{ p.year }}</span>{% endif %}</span>
+      <span class="card-next{% if rare %} rare{% endif %}"{% if rare %} title="{{ rare[0] }}"{% endif %}>{{ icon("star" if rare else "calendar", "xs") }}{{ when }}</span>
+      <span class="card-sub">
+        <span class="card-where where-first-{{ venues[0].slug if venues else '' }}" title="{{ venues | map(attribute='name') | join(', ') }}">{{ icon("pin", "xs") }}
+          {%- for v in venues %}<span class="where-{{ v.slug }}">{{ v.short }}</span>{% endfor -%}
+        </span>
+        {{- card_rating(p.film, root) | trim -}}
+      </span>
+    </span>
+  </a>
+</li>
+{%- endmacro %}
+
+{% macro rail(r, root) -%}
+<section class="rail" aria-labelledby="rail-{{ r.title | tagslug }}">
+  <div class="rail-head">
+    <h2 id="rail-{{ r.title | tagslug }}"><a href="{{ root }}{{ r.more }}">{{ r.title }}</a></h2>
+    <a class="see-all" href="{{ root }}{{ r.more }}" aria-label="See all: {{ r.title }}">{{ icon("chevron", "lg") }}</a>
+  </div>
+  <ul class="rail-cards"{% if r.live %} data-live data-length="15"{% endif %}>
+    {% for c in r.cards %}{{ film_card(c.page, root, c.stamped, attrs=('data-times="' ~ (c.page | starts) ~ '"') if r.live else "") }}{% endfor %}
+  </ul>
+</section>
+{%- endmacro %}
+
+{# Search, plus dropdowns of filter chips. Hidden until the script turns it on. #}
+{% macro filter_bar(venues, filter_tags, genres, root, sorting=False) -%}
+<form class="filters" role="search" hidden>
+  <div class="filter-top">
+    <label class="search">{{ icon("search", "md") }}<input type="search" name="q" placeholder="Search films" aria-label="Search films" autocomplete="off"></label>
+    {% if sorting %}
+    <select name="sort" aria-label="Sort films">
+      <option value="next">Soonest</option>
+      <option value="leaving">Leaving soon</option>
+      <option value="added">Just added</option>
+      <option value="rated">Highest rated</option>
+      <option value="popular">Most popular</option>
+      <option value="screenings">Most screenings</option>
+    </select>
+    {% endif %}
+  </div>
+  <div class="filter-menus">
+    <details>
+      <summary>Theatre <span class="count"></span></summary>
+      <div class="chips">{% for v in venues %}<button type="button" class="chip chip-logo" data-filter="venue" data-value="{{ v.slug }}" aria-pressed="false" aria-label="{{ v.name }}">{{ venue_badge(v, root) }}</button>{% endfor %}</div>
+    </details>
+    <details>
+      <summary>Format and events <span class="count"></span></summary>
+      <div class="chips">
+        <button type="button" class="chip" data-filter="tag" data-value="special" aria-pressed="false">Special screenings</button>
+        <button type="button" class="chip" data-filter="tag" data-value="on-film" aria-pressed="false">On film</button>
+        <button type="button" class="chip" data-filter="tag" data-value="event" aria-pressed="false">Events</button>
+        <button type="button" class="chip chip-personal" data-filter="tag" data-value="watchlist" aria-pressed="false" data-needs-me hidden>On my watchlist</button>
+        <button type="button" class="chip chip-personal" data-filter="tag" data-value="seen" aria-pressed="false" data-needs-me hidden>Seen it</button>
+        {% for t in filter_tags %}<button type="button" class="chip" data-filter="tag" data-value="{{ t | tagslug }}" aria-pressed="false">{{ t }}</button>{% endfor %}
+      </div>
+    </details>
+    {% if genres %}
+    <details>
+      <summary>Genre <span class="count"></span></summary>
+      <div class="chips">{% for g in genres %}<button type="button" class="chip" data-filter="genre" data-value="{{ g | tagslug }}" aria-pressed="false">{{ g }}</button>{% endfor %}</div>
+    </details>
+    {% endif %}
+    <button type="button" class="clear" hidden>Clear</button>
+  </div>
+  <p class="filter-status" aria-live="polite"></p>
+</form>
+{%- endmacro %}
+
+
+{# Jordan's purple header art for the main pages, all drawn to one height. #}
+{% macro page_header(name, alt, root) -%}
+{%- set size = image_size("brand/header-" ~ name ~ ".png") if has_asset("brand/header-" ~ name ~ ".png") else None -%}
+{%- if size -%}
+{# Drawn at 2x, with the letters the same size in every one, so each shows at
+   half its pixel width; --w lets phones scale them all down together. #}
+<img src="{{ root }}static/brand/header-{{ name }}.png?v={{ asset_version('brand/header-' ~ name ~ '.png') }}" alt="{{ alt }}" width="{{ (size[0] / 2) | int }}" height="{{ (size[1] / 2) | int }}" style="--w: {{ (size[0] / 2) | int }}px">
+{%- else %}{{ alt }}{% endif -%}
+{%- endmacro %}

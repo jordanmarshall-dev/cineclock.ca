@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% from "_parts.html" import day_sections, date_tools, icon, tag_list, rail, photo_credit, save_button %}
+
+{% block title %}{{ venue.name }} showtimes{% endblock %}
+{% block description %}{{ venue.blurb }} Showtimes and what's on now.{% endblock %}
+{% block og_image %}{% if venue.photo and has_asset("theatres/" ~ venue.slug ~ ".jpg") %}{{ site_url }}static/theatres/{{ venue.slug }}.jpg{% else %}{{ site_url }}static/brand/share.png{% endif %}{% endblock %}
+
+{% block main %}
+{% set SPEC_ICONS = {"Seats": "seat", "Screen": "screen", "Projection": "projector", "Sound": "speaker"} %}
+{% set photo = "theatres/" ~ venue.slug ~ ".jpg" %}
+{% set has_photo = venue.photo and has_asset(photo) %}
+{% if has_photo %}
+<div class="theatre-hero" aria-hidden="true"><img src="{{ root }}static/{{ photo }}" alt="" style="object-position: {{ venue.photo_focus }}" onerror="this.hidden = true"></div>
+{% endif %}
+<div class="wrap">
+  <div class="theatre-head{% if has_photo %} over-hero{% endif %}">
+    {% if venue.full_logo and has_asset("logos/" ~ venue.full_logo) %}
+      {% set w, h = full_logo_size(venue, 22000, 64) %}
+      <img class="theatre-full-logo" src="{{ root }}static/logos/{{ venue.full_logo }}" alt="{{ venue.name }}" width="{{ w }}" height="{{ h }}" style="--w: {{ w }}px; --h: {{ h }}px">
+      <h1 class="visually-hidden">{{ venue.name }}</h1>
+    {% else %}
+      <h1 class="venue-title">{{ venue.name }}</h1>
+    {% endif %}
+    <p class="meta">{{ icon("pin", "xs") }}{{ venue.neighbourhood }}</p>
+    {# Tags on screenings here link to the Films page filtered to this theatre and tag;
+       room features (7.1, Curved) aren't on any screening, so they stay plain. #}
+    {% set links = {} %}
+    {% for t in listed %}{% set _ = links.update({t: root ~ "films/?venue=" ~ venue.slug ~ "&tag=" ~ ("event" if t == "Event" else t | tagslug)}) %}{% endfor %}
+    <div class="theatre-offers">{{ tag_list(venue.offers + (listed | reject("in", venue.offers) | list), links) }}</div>
+  </div>
+  <p class="venue-blurb">{{ venue.blurb }}</p>
+  {% if has_photo %}{{ photo_credit(venue.photo) }}{% endif %}
+
+  <ul class="links">
+    {% if venue.address %}<li><a href="{{ venue.map_url }}">{{ icon("pin") }}{{ venue.address.split(",")[0] }}</a></li>{% endif %}
+    {% if venue.website %}<li><a href="{{ venue.website }}">{{ icon("external") }}Website</a></li>{% endif %}
+  </ul>
+
+  {# Tickets and the rooms' specs fold away, so the films are a short scroll down;
+     Showtimes jumps straight past the rails to the day-by-day list. #}
+  <div class="folds">
+  <a class="fold fold-jump" href="#showtimes">{{ icon("calendar", "lg") }}<span class="fold-title">Showtimes</span>
+    <span class="fold-hint">{% if days %}Next: {{ days[0].short | stamp(days[0].date, "short") }}{% else %}Nothing listed{% endif %}</span>{{ icon("chevron", "md") }}</a>
+  {% set pr = prices.get(venue.name) %}
+  {% if pr and (pr.tickets or pr.deals) %}
+  <details class="fold">
+    <summary>{{ icon("ticket", "lg") }}<span class="fold-title">Tickets</span>
+      <span class="fold-hint">{% if pr.tickets %}{{ pr.tickets[0].label }} {{ pr.tickets[0].amount.split(" / ")[0] }}{% else %}{{ pr.deals[0].amount }}{% endif %}</span>{{ icon("chevron", "md") }}</summary>
+    <div class="fold-body">
+      {% for group, rows in [("Admission", pr.tickets), ("Memberships and packs", pr.deals)] if rows %}
+      <h3 class="fold-subhead">{{ group }}</h3>
+      {% if loop.first and pr.columns and rows is sameas pr.tickets %}<p class="meta fold-columns">{{ pr.columns }}</p>{% endif %}
+      <dl class="price-list">
+        {% for row in rows %}<div><dt>{{ row.label }}{% if row.detail %}<small>{{ row.detail }}</small>{% endif %}</dt><dd>{{ row.amount }}</dd></div>{% endfor %}
+      </dl>
+      {% endfor %}
+      {% if pr.note %}<p class="meta fold-note">{{ pr.note }}</p>{% endif %}
+      <p class="meta fold-note">{% if pr.origin %}{{ pr.origin }}{% if pr.checked and pr.checked[-4:] != "2024" %} Checked {{ pr.checked }}.{% endif %}{% else %}From {{ venue.name }}'s own website, checked {{ pr.checked }}. Prices change, so check before you go.{% endif %}</p>
+      <ul class="links">{% for text, url in pr.sources %}<li><a href="{{ url }}">{{ icon("external") }}{{ text }}</a></li>{% endfor %}</ul>
+    </div>
+  </details>
+  {% endif %}
+  {% if spec_fields %}
+  {% set multi = venue.rooms | length > 1 %}
+  <details class="fold rooms">
+    <summary>{{ icon("projector", "lg") }}<span class="fold-title">Tech specs</span>
+      <span class="fold-hint">{% if multi %}{{ venue.rooms | length }} rooms{% elif venue.rooms[0].specs.get("Seats") %}{{ venue.rooms[0].specs["Seats"] }} seats{% endif %}</span>{{ icon("chevron", "md") }}</summary>
+    <div class="fold-body">
+    {# Several rooms swipe sideways, with the next one peeking in so it's clear there's more. #}
+    <div class="{{ 'room-swipe' if multi else 'room-single' }}"{% if multi %} tabindex="0" role="region" aria-label="Rooms"{% endif %}>
+    {% for room in venue.rooms %}
+    {% set room_photo = "rooms/" ~ room.id ~ ".jpg" %}
+    {% set room_has_photo = room.photo and has_asset(room_photo) %}
+    <div class="room" data-room="{{ room.id }}">
+      {% if multi %}<h3 class="room-name">{{ room.name }}</h3>{% endif %}
+      <div class="room-layout{% if room_has_photo %} has-photo{% endif %}">
+        {% if room_has_photo %}<figure class="room-photo"><img src="{{ root }}static/{{ room_photo }}" alt="Inside {{ room.name if multi else venue.name }}" loading="lazy">{{ photo_credit(room.photo, "figcaption") }}</figure>{% endif %}
+        <dl class="specs">
+          {% for f in spec_fields %}<div><dt>{{ icon(SPEC_ICONS[f]) }}{{ f }}</dt><dd>{{ room.specs[f] }}</dd></div>{% endfor %}
+        </dl>
+      </div>
+    </div>
+    {% endfor %}
+    </div>
+    </div>
+  </details>
+  {% endif %}
+  </div>
+
+  {% if venue.about %}
+  <h2 class="section-heading">About</h2>
+  <div class="about">{% for para in venue.about %}<p>{{ para }}</p>{% endfor %}</div>
+  {% endif %}
+
+  {% if rails %}<div class="theatre-rails">{% for r in rails %}{{ rail(r, root) }}{% endfor %}</div>{% endif %}
+
+  <h2 class="section-heading" id="showtimes">Showtimes</h2>
+  {{ date_tools(days, months, root) }}
+  {% if days %}
+    {{ day_sections(days, root, show_venues=False) }}
+  {% else %}
+    <p class="empty">Nothing listed here right now. Check the <a href="{{ venue.website }}">theatre's website</a>.</p>
+  {% endif %}
+</div>
+{% endblock %}

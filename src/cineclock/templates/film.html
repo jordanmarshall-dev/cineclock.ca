@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% from "_parts.html" import poster, showtime, tag_list, venue_label, source_mark, icon, save_button, RARE %}
+
+{% block title %}{{ page.title }}{% if page.year %} ({{ page.year }}){% endif %} showtimes in Vancouver{% endblock %}
+{% block description %}{{ page.date_range }} at {% for v in page.venues %}{% if loop.last and not loop.first %} and {% elif not loop.first %}, {% endif %}{{ v.name }}{% endfor %}.{% if page.synopsis %} {{ page.synopsis | truncate(140) }}{% endif %}{% endblock %}
+{% block og_title %}{{ page.title }}{% if page.year %} ({{ page.year }}){% endif %}{% if film and film.letterboxd_rating %} · ★ {{ "%.1f" | format(film.letterboxd_rating) }}{% endif %}{% endblock %}
+{% block og_image %}{% if film and film.backdrop_url %}{{ film.backdrop_url }}{% elif page.poster_url and page.poster_url.startswith('http') %}{{ page.poster_url }}{% else %}{{ site_url }}static/brand/share.png{% endif %}{% endblock %}
+{% block head %}{{ page | film_events(site_url ~ path | replace('index.html', '')) }}{% endblock %}
+{% block body_class %}{% if film and film.backdrop_url %}has-backdrop{% endif %}{% endblock %}
+
+{% block main %}
+{% if film and film.backdrop_url %}
+<div class="backdrop" aria-hidden="true"><img src="{{ film.backdrop_url }}" alt="" onerror="this.hidden = true"></div>
+{% endif %}
+
+<div class="wrap">
+  <div class="film-head">
+    {% if page.poster_url %}
+    <a class="poster-zoom" href="{{ page.poster_url | large_poster }}" aria-label="View the poster for {{ page.title }} larger">{{ poster(page.poster_url, label=page.title) }}</a>
+    {% else %}{{ poster(None, label=page.title) }}{% endif %}
+    <div>
+      <h1 class="film-title">{{ page.title }}</h1>
+      <p class="film-sub">
+        {%- if page.year %}<span><b>{{ page.year }}</b></span>{% endif -%}
+        {%- if film and film.runtime %}<span>{{ icon("clock") }}{{ film.runtime | runtime }}</span>{% endif -%}
+        {%- if film and film.director %}<span class="film-director">{{ icon("clapper") }}<span class="visually-hidden">Directed by </span><b>{{ film.director }}</b></span>{% endif -%}
+      </p>
+      {{ save_button("film", page.slug, page.title) }}
+    </div>
+    <div class="film-details" data-film="{{ page.slug }}">
+      {# A festival with a page shows as its own name on the Festival tag, linking there. #}
+      {% set named_festival = series_slug and "Festival" in page.tags %}
+      {{ tag_list(page.tags, {"Festival": root ~ "series/" ~ series_slug ~ "/"} if series_slug else {}, page.genres, personal=True, root=root, labels={"Festival": page.series} if named_festival else {}) }}
+      {% if page.listed_as %}<p class="film-series film-event">{{ icon("ticket", "sm") }}<span>Listed as <b>{{ page.listed_as }}</b></span></p>{% endif %}
+      {% if page.series and not named_festival %}<p class="film-series">{{ icon("film", "sm") }}Part of {% if series_slug %}<a href="{{ root }}series/{{ series_slug }}/">{{ page.series }}</a>{% else %}{{ page.series }}{% endif %}</p>{% endif %}
+      {% if page.shared_note and not (page.shared_note | said_by_tags(page.tags)) %}<p class="film-note">{{ page.shared_note }}</p>{% endif %}
+    </div>
+  </div>
+
+  {% set has_scores = film and (film.letterboxd_rating or film.imdb_rating or film.rt_score is not none or film.metacritic is not none) %}
+  {# Wide screens: what the film is on the left, when it's on to the right. #}
+  <div class="film-body{% if has_scores or page.synopsis or page.screening_note %} has-main{% endif %}">
+  <div class="film-main">
+  {% if has_scores %}
+  <ul class="scores" aria-label="Ratings">
+    {% if film.letterboxd_rating %}<li class="rating-letterboxd"><a href="{{ film.letterboxd_link }}">{{ source_mark("letterboxd", root) }}<span class="score-value">{{ "%.1f" | format(film.letterboxd_rating) }}</span></a></li>{% endif %}
+    {% if film.imdb_rating %}<li class="rating-imdb"><a href="{{ film.imdb_link }}">{{ source_mark("imdb", root) }}<span class="score-value">{{ "%.1f" | format(film.imdb_rating) }}</span></a></li>{% endif %}
+    {% if film.rt_score is not none %}<li class="rating-rt"><a href="{{ film.rt_link }}">{{ source_mark("rt", root) }}<span class="score-value">{{ film.rt_score }}%</span></a></li>{% endif %}
+    {% if film.metacritic is not none %}<li class="rating-metacritic"><a href="{{ film.metacritic_link }}">{{ source_mark("metacritic", root) }}<span class="score-value">{{ film.metacritic }}</span></a></li>{% endif %}
+  </ul>
+  {% endif %}
+
+  {% if page.synopsis %}<p class="synopsis">{{ page.synopsis }}</p>{% endif %}
+  {% if page.screening_note %}<div class="screening-note"><h2>About this screening</h2><p>{{ page.screening_note }}</p></div>{% endif %}
+  </div>
+
+  <section class="film-times" aria-labelledby="showtimes-heading">
+  <h2 class="section-heading" id="showtimes-heading">Showtimes</h2>
+  {% for run in runs %}
+  <div class="venue-group panel">
+    <h3 class="venue-heading"><a href="{{ root }}theatres/{{ run.venue.slug }}/">{{ venue_label(run.venue, root) }}</a></h3>
+    {% for day, rows in run.days %}
+    <div class="showing">
+      <p class="showing-when">{{ day.label | stamp(day.date, "day") }}</p>
+      {% for r in rows %}
+        {% if r.note and not page.shared_note %}
+          {% if r.note | said_by_tags(r.tags) %}{{ tag_list(r.tags) }}{% else %}<p class="meta showing-note">{{ r.note }}</p>{% endif %}
+        {% endif %}
+        <div class="times">{% for s in r.showtimes %}{{ showtime(s, page.title, page.tags | select("in", RARE) | list) }}{% endfor %}</div>
+      {% endfor %}
+    </div>
+    {% endfor %}
+    {# The theatre's own page for this film: trailers, notes, guests, everything we don't copy. #}
+    {% set info = run.days | map(attribute=1) | sum(start=[]) | map(attribute="showtimes") | sum(start=[]) | map(attribute="info_url") | select | first %}
+    {% if info %}<p class="run-more"><a href="{{ info }}" target="_blank" rel="noopener">{{ icon("external") }}More about this screening at {{ run.venue.short }}</a></p>{% endif %}
+  </div>
+  {% endfor %}
+  </section>
+  </div>
+</div>
+<dialog class="poster-dialog" aria-label="Poster">
+  <img alt="Poster for {{ page.title }}">
+</dialog>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Tapping the poster opens it big, like Letterboxd. Without JavaScript the
+  // link still opens the image on its own. Any tap or Escape closes it.
+  (() => {
+    const link = document.querySelector(".poster-zoom");
+    const dialog = document.querySelector(".poster-dialog");
+    if (!link || !dialog.showModal) return;
+    const img = dialog.querySelector("img");
+    link.addEventListener("click", (e) => {
+      e.preventDefault();
+      img.src = link.href;
+      img.onerror = () => (img.src = link.querySelector("img")?.src || "");
+      dialog.showModal();
+    });
+    dialog.addEventListener("click", () => dialog.close());
+  })();
+</script>
+{% endblock %}

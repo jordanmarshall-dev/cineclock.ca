@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% from "_parts.html" import icon %}
+
+{% block title %}About{% endblock %}
+
+{% block main %}
+<div class="wrap about-page">
+  <h1 class="page-title">Hi, I'm Jordan.</h1>
+  <div class="about">
+    <p>I built cineclock because I was tired of opening five theatre websites every week to figure out what to see. Now it's one page, updated every few hours.</p>
+    <p>I'm a self-described gorehound and horror lover with a soft spot for the strange and the sensory. My Letterboxd top four right now: <i>Climax</i>, <i>Belladonna of Sadness</i>, <i>Valerie and Her Week of Wonders</i> and <i>House</i>.</p>
+    <p>Vancouver's independent and repertory theatres are a big part of why I love living here. If something on this site catches your eye, go see it on the big screen.</p>
+  </div>
+  <ul class="links about-links">
+    <li><a href="https://boxd.it/7T1D"><img class="source-logo" src="{{ root }}static/logos/letterboxd.png" alt="">Letterboxd</a></li>
+    <li><a href="https://github.com/jordanmarshall-dev">{{ icon("github", "md") }}GitHub</a></li>
+    <li><a href="https://github.com/jordanmarshall-dev/cineclock.ca">{{ icon("code", "md") }}How it's built</a></li>
+  </ul>
+</div>
+{% endblock %}

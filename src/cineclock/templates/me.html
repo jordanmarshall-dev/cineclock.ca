@@ -1,0 +1,576 @@
+{% extends "base.html" %}
+{% from "_parts.html" import icon, source_mark, page_header %}
+
+{% block title %}Your dashboard{% endblock %}
+{% block description %}Your saved films and theatres, and which films from your Letterboxd or IMDb watchlist are playing in Vancouver.{% endblock %}
+
+{% block main %}
+<div class="wrap me-page">
+  <div class="dash-head">
+    <h1 class="page-title page-title-art">{{ page_header("dash", "Dashboard", root) }}</h1>
+    <div class="dash-who" id="me-signed-in" hidden>
+      <span class="account-initial" id="me-initial" aria-hidden="true"></span>
+      <span class="dash-email" id="me-email"></span>
+      <button type="button" class="clear" id="me-signout">Sign out</button>
+    </div>
+  </div>
+
+  <section class="panel signin-card" id="me-signed-out" aria-label="Sign in">
+    <h2 class="signin-title">Sign in to cineclock</h2>
+    <ul class="signin-perks">
+      <li>{{ icon("ticket", "sm") }}<span>Save the showings you're aiming for, on every device</span></li>
+      <li>{{ icon("film", "sm") }}<span>Your Letterboxd and IMDb watchlists, marked across the site</span></li>
+      <li>{{ icon("calendar", "sm") }}<span>Emails when your films get showtimes, or are about to leave</span></li>
+      <li>{{ icon("star", "sm") }}<span>Scores from Letterboxd, IMDb, Rotten Tomatoes or Metacritic</span></li>
+    </ul>
+    <div class="signin-button" id="me-google"></div>
+    <p class="signin-error" id="me-account-message" role="status" aria-live="polite"></p>
+    <p class="signin-note">Browsing never needs an account. Google shares only your email address with cineclock. <a href="{{ root }}privacy/">Privacy</a></p>
+  </section>
+
+  <div id="me-members" hidden>
+  <section class="dash-connect" aria-label="Connect your watchlists">
+    <div class="panel dash-service" id="lb-card">
+      <div class="dash-service-head">
+        <img class="dash-service-logo" src="{{ root }}static/logos/letterboxd.png" alt="">
+        <div class="dash-linked" id="me-connected" hidden>
+          <b class="dash-name" id="me-name"></b>
+          <span class="dash-state" id="me-lb-state">Connected</span>
+        </div>
+        <span class="dash-service-title" id="me-lb-title">Letterboxd</span>
+        <button type="button" class="dash-text-button dash-open">Connect</button>
+        <div class="dash-actions" id="me-lb-actions" hidden>
+          <button type="button" class="dash-icon-button" id="me-lb-sync" aria-label="Sync Letterboxd now" title="Sync now">{{ icon("sync", "md") }}</button>
+          <button type="button" class="dash-text-button" id="me-disconnect">Disconnect</button>
+        </div>
+      </div>
+      <div id="me-connect">
+        <form id="me-user-form" class="dash-form">
+          <input name="user" placeholder="Username" aria-label="Letterboxd username" autocomplete="off" autocapitalize="none" spellcheck="false" required>
+          <button type="submit" class="me-button">Connect</button>
+        </form>
+        <p class="dash-status" id="me-message" aria-live="polite"></p>
+        <p class="dash-hint">Your Letterboxd username, as in letterboxd.com/username.</p>
+      </div>
+    </div>
+    <div class="panel dash-service" id="imdb-card">
+      <div class="dash-service-head">
+        <img class="dash-service-logo" src="{{ root }}static/logos/imdb.png" alt="">
+        <div class="dash-linked" id="me-imdb-connected" hidden>
+          <b class="dash-name" id="me-imdb-name"></b>
+          <span class="dash-state" id="me-imdb-state">Connected</span>
+        </div>
+        <span class="dash-service-title" id="me-imdb-title">IMDb</span>
+        <button type="button" class="dash-text-button dash-open">Connect</button>
+        <div class="dash-actions" id="me-imdb-actions" hidden>
+          <button type="button" class="dash-icon-button" id="me-imdb-sync" aria-label="Sync IMDb now" title="Sync now">{{ icon("sync", "md") }}</button>
+          <button type="button" class="dash-text-button" id="me-imdb-disconnect">Disconnect</button>
+        </div>
+      </div>
+      <div id="me-imdb-connect">
+        <form id="me-imdb-form" class="dash-form">
+          <input name="user" placeholder="Profile link" aria-label="IMDb profile link" autocomplete="off" autocapitalize="none" spellcheck="false" required>
+          <button type="submit" class="me-button">Connect</button>
+        </form>
+        <p class="dash-status" id="me-imdb-message" aria-live="polite"></p>
+        <p class="dash-hint">On IMDb, open your profile and copy its link. Or <label class="dash-link" for="me-imdb-file">upload a CSV</label>.</p>
+        <input type="file" id="me-imdb-file" accept=".csv,text/csv" class="visually-hidden">
+      </div>
+    </div>
+  </section>
+
+
+  <section class="panel dash-calendar" id="dash-calendar" hidden aria-labelledby="dash-calendar-title">
+    <div class="cal-top">
+      <h2 class="me-heading" id="dash-calendar-title">{{ icon("calendar", "md") }}Your next two weeks</h2>
+      <div class="cal-chips" id="dash-calendar-filters" aria-label="Show films from"></div>
+    </div>
+    <div class="cal" id="dash-calendar-grid"></div>
+    <p class="dash-empty" id="dash-calendar-none" hidden>Nothing from these lists plays in the next two weeks.</p>
+  </section>
+
+  {% for id, heading, ico, empty in [
+    ("ending", "Last chance this week", "clock", "Nothing you saved or want to see ends in the next seven days."),
+    ("saved", "Saved", "ticket", "Tap Save on any film and it shows up here."),
+    ("watchlist", "From your watchlist", "film", "Connect Letterboxd or IMDb above to see what's playing from your watchlist."),
+    ("seen", "Seen it, playing again", "eye", ""),
+  ] %}
+  <section class="dash-rail" id="dash-{{ id }}"{% if id in ("ending", "seen") %} hidden{% endif %} aria-labelledby="dash-{{ id }}-title">
+    <h2 class="me-heading" id="dash-{{ id }}-title">{{ icon(ico, "md") }}{{ heading }}<span class="dash-count" id="dash-{{ id }}-count"></span></h2>
+    <ul class="rail-cards" id="dash-{{ id }}-list"></ul>
+    {% if empty %}<p class="dash-empty" id="dash-{{ id }}-empty">{{ empty }}</p>{% endif %}
+  </section>
+  {% endfor %}
+
+  <h2 class="me-settings-title" id="me-settings-title" hidden>Settings</h2>
+  <div class="dash-settings">
+    <section class="panel settings-card" id="me-alerts" hidden aria-labelledby="me-alerts-title">
+      <h3 id="me-alerts-title">Email <span class="soon-badge" id="me-alerts-soon" hidden>Coming soon</span></h3>
+      <p class="settings-note">To <b id="me-alerts-email"></b>. Each one is off until you turn it on.</p>
+      <div class="settings-options" id="me-alerts-options">
+        {% for name, title, note in [
+          ("last", "Last chance", "A film you saved or have on a watchlist is about to have its last showing"),
+          ("added", "Your films, showing", "A film on your plans or watchlists gets showtimes"),
+          ("digest", "Weekly digest", "Everything new on cineclock this week, every Monday"),
+          ("newsletter", "Monthly newsletter", "What's happening across Vancouver's theatres"),
+        ] %}
+        <label class="setting-row"><span><b>{{ title }}</b>{{ note }}</span><span class="switch"><input type="checkbox" role="switch" name="{{ name }}"><span aria-hidden="true"></span></span></label>
+        {% endfor %}
+      </div>
+      <div class="settings-foot">
+        <button type="button" class="me-button me-button-quiet" id="me-alerts-test" hidden>Send me a test</button>
+        <p class="filter-status" id="me-alerts-message" role="status" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <div class="settings-stack">
+    <section class="panel settings-card" aria-labelledby="me-avatar-title">
+      <h3 id="me-avatar-title">Picture</h3>
+      <p class="settings-note">A little night at the movies, next to your name.</p>
+      <fieldset class="avatar-picker" id="me-avatar">
+        <legend class="visually-hidden">Profile picture</legend>
+        <label><input type="radio" name="avatar" value=""><span class="account-initial avatar-choice" id="me-avatar-letter"></span><span class="visually-hidden">Your initial</span></label>
+        {% for key, name in avatars %}
+        <label><input type="radio" name="avatar" value="{{ key }}"><img class="avatar-choice" src="{{ root }}static/avatars/{{ key }}.jpg" alt="{{ name }}" width="44" height="44"></label>
+        {% endfor %}
+      </fieldset>
+      <p class="settings-credit">Photos from Wikimedia Commons:
+        {% for key, name in avatars %}{% set c = avatar_credits[key] %}<a href="{{ c.page }}">{{ name | lower }}</a> by {{ c.author }} ({{ c.licence }}){{ "." if loop.last else ", " }}{% endfor %}</p>
+    </section>
+
+    <section class="panel settings-card" id="me-ratings" hidden aria-labelledby="me-ratings-title">
+      <h3 id="me-ratings-title">Ratings</h3>
+      <p class="settings-note">The score on every card, and what Highly rated ranks by.</p>
+      <fieldset class="source-picker">
+        <legend class="visually-hidden">Rating source</legend>
+        {% for source, name in [("letterboxd", "Letterboxd"), ("imdb", "IMDb"), ("rt", "Rotten Tomatoes"), ("metacritic", "Metacritic")] %}
+        <label><input type="radio" name="rating_source" value="{{ source }}">{{ source_mark(source, root) }}<span>{{ name }}</span></label>
+        {% endfor %}
+      </fieldset>
+    </section>
+    </div>
+  </div>
+
+  <p class="me-danger" id="me-delete-row" hidden><button type="button" class="clear" id="me-delete">Delete my account</button> removes your account and everything saved in it, right away.</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (() => {
+    // The build's fixed offset for Vancouver (render.fixed_zone), not the browser's rules.
+    const ZONE = document.body?.dataset.zone || "America/Vancouver";
+    const me = window.cineclockMe;
+    const account = window.cineclockAccount;
+    const $ = (id) => document.getElementById(id);
+    const say = (text) => ($("me-message").textContent = text);
+    let letterboxd = {};
+
+    // Every row on the dashboard comes from films.json, so the cards match the site.
+    async function drawDashboard() {
+      const index = await me.getJSON("films.json");
+      const saved = new Set(account.savedList("film"));
+      const imdb = new Set([...(account.current?.imdb || []), ...(me.imdbSaved()?.ids || [])]);
+      const week = new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10);
+      const rows = { ending: [], saved: [], watchlist: [], seen: [] };
+      const calendar = [];
+      for (const film of index) {
+        const from = [];
+        if (saved.has(film.slug)) from.push("saved");
+        if (letterboxd[film.slug]?.w) from.push("letterboxd");
+        if (film.imdb && imdb.has(film.imdb)) from.push("imdb");
+        if (from.length) calendar.push({ film, from });
+        const lb = letterboxd[film.slug] || {};
+        const onList = Boolean(lb.w) || Boolean(film.imdb && imdb.has(film.imdb));
+        if (saved.has(film.slug)) rows.saved.push(film);
+        if (onList) rows.watchlist.push(film);
+        if (lb.s && !onList && !saved.has(film.slug)) rows.seen.push(film);
+        if ((saved.has(film.slug) || onList) && film.last <= week) rows.ending.push(film);
+      }
+      rows.ending.sort((a, b) => a.last.localeCompare(b.last));
+      for (const [id, films] of Object.entries(rows)) {
+        $(`dash-${id}-list`).innerHTML = films.map((f) => f.card.replaceAll("@root@", me.root)).join("");
+        $(`dash-${id}-list`).hidden = !films.length;
+        $(`dash-${id}-count`).textContent = films.length || "";
+        const empty = $(`dash-${id}-empty`);
+        if (empty) empty.hidden = films.length > 0;
+      }
+      $("dash-ending").hidden = !rows.ending.length;
+      $("dash-seen").hidden = !rows.seen.length;
+      window.cineclockWhen?.();
+      me.mark({ ...letterboxd, ...Object.fromEntries([...saved].map((slug) => [slug, { ...letterboxd[slug], w: 1 }])) });
+
+      calendarFilms = calendar;
+      drawCalendar();
+    }
+
+    // Two weeks from today, a row per film you saved or have on a watchlist: a bar
+    // from its first to last showing in that time, a dot on each day it plays, and
+    // marks for where it came from. The chips above hide a source.
+    const DAYS = 14;
+    const SOURCES = {
+      saved: ["Saved", '<svg class="icon" viewBox="0 0 24 24" width="12" height="12" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v3a2 2 0 0 0 0 4v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a2 2 0 0 0 0-4z"/></svg>'],
+      letterboxd: ["Letterboxd", `<img src="${me.root}static/logos/letterboxd.png" alt="">`],
+      imdb: ["IMDb", `<img src="${me.root}static/logos/imdb.png" alt="">`],
+    };
+    const HIDDEN = "cineclock.calendar.hidden";
+    let calendarFilms = [];
+    let hidden = new Set();
+    try {
+      hidden = new Set(JSON.parse(localStorage.getItem(HIDDEN) || "[]"));
+    } catch (e) {}
+
+    $("dash-calendar-filters").addEventListener("click", (e) => {
+      const chip = e.target.closest("[data-source]");
+      if (!chip) return;
+      const source = chip.dataset.source;
+      hidden.has(source) ? hidden.delete(source) : hidden.add(source);
+      try {
+        localStorage.setItem(HIDDEN, JSON.stringify([...hidden]));
+      } catch (err) {}
+      drawCalendar();
+    });
+
+    const isoDay = (date) => date.toLocaleDateString("en-CA", { timeZone: ZONE });
+    function drawCalendar() {
+      const present = Object.keys(SOURCES).filter((s) => calendarFilms.some((c) => c.from.includes(s)));
+      $("dash-calendar-filters").innerHTML = present.length > 1
+        ? present
+            .map((s) => `<button type="button" class="cal-chip" data-source="${s}" aria-pressed="${!hidden.has(s)}">${SOURCES[s][1]}${SOURCES[s][0]}</button>`)
+            .join("")
+        : "";
+      const films = calendarFilms.filter((c) => c.from.some((s) => !hidden.has(s) || present.length < 2));
+      const days = [];
+      const start = new Date();
+      for (let i = 0; i < DAYS; i++) days.push(new Date(start.getTime() + i * 864e5));
+      const iso = days.map(isoDay);
+      const rows = films
+        .map(({ film, from }) => ({ film, from, on: iso.map((day) => film.days?.includes(day)) }))
+        .filter((row) => row.on.some(Boolean))
+        .sort((a, b) => a.on.indexOf(true) - b.on.indexOf(true));
+      $("dash-calendar").hidden = !calendarFilms.length;
+      $("dash-calendar-none").hidden = rows.length > 0;
+      const head = days
+        .map((day, i) => {
+          const weekday = day.toLocaleDateString("en-CA", { weekday: "narrow", timeZone: ZONE });
+          const weekend = [0, 6].includes(new Date(iso[i] + "T12:00").getDay());
+          return `<span class="cal-day${weekend ? " is-weekend" : ""}${i === 0 ? " is-today" : ""}"><i>${weekday}</i>${Number(iso[i].slice(8))}</span>`;
+        })
+        .join("");
+      const body = rows
+        .map(({ film, from, on }) => {
+          const first = on.indexOf(true);
+          const last = on.lastIndexOf(true);
+          const cells = on
+            .map((yes, i) => `<span class="cal-cell${i >= first && i <= last ? " in" : ""}${i === first ? " first" : ""}${i === last ? " last" : ""}${yes ? " on" : ""}"></span>`)
+            .join("");
+          const marks = from.map((s) => `<span class="cal-from" title="${SOURCES[s][0]}">${SOURCES[s][1]}</span>`).join("");
+          return `<a class="cal-row" href="${me.root}films/${film.slug}/"><span class="cal-title"><span class="cal-name">${film.title}</span>${marks}</span><span class="cal-track">${cells}</span></a>`;
+        })
+        .join("");
+      $("dash-calendar-grid").innerHTML = rows.length
+        ? `<div class="cal-row cal-head"><span class="cal-title"></span><span class="cal-track">${head}</span></div>${body}`
+        : "";
+    }
+
+    // One look for both cards: the form until connected, then the name, a quiet
+    // state line, Sync and Disconnect.
+    function linked(card, name, state, { canSync = true } = {}) {
+      const on = Boolean(name);
+      $(`${card}-card`).classList.toggle("is-linked", on);
+      for (const el of $(`${card}-card`).querySelectorAll(".dash-linked, .dash-actions")) el.hidden = !on;
+      $(`${card}-card`).querySelector(".dash-service-title").hidden = on;
+      $(card === "lb" ? "me-connect" : "me-imdb-connect").hidden = on;
+      $(`${card}-card`).querySelector(".dash-name").textContent = name || "";
+      const line = $(`${card}-card`).querySelector(".dash-state");
+      line.textContent = state;
+      line.classList.toggle("is-busy", /ing\b/.test(state));
+      line.classList.toggle("is-problem", /private|couldn/i.test(state));
+      $(`${card}-card`).querySelector(".dash-icon-button").hidden = !canSync;
+      tuck();
+    }
+
+    // Once one service is connected, the other folds down to a single line with
+    // a Connect button, there if needed.
+    function tuck() {
+      const lb = $("lb-card").classList.contains("is-linked");
+      const im = $("imdb-card").classList.contains("is-linked");
+      $("lb-card").classList.toggle("is-tucked", !lb && im && !$("lb-card").dataset.opened);
+      $("imdb-card").classList.toggle("is-tucked", !im && lb && !$("imdb-card").dataset.opened);
+    }
+    for (const card of ["lb-card", "imdb-card"]) {
+      $(card).querySelector(".dash-open").addEventListener("click", () => {
+        $(card).dataset.opened = "1";
+        tuck();
+        $(card).querySelector("input[name=user]")?.focus();
+      });
+    }
+
+    let imdbTimer = null;
+    function drawImdb() {
+      const value = me.imdbSaved();
+      if (!value) return linked("imdb", null, "");
+      if (value.user === "file") return linked("imdb", "Uploaded list", "Connected", { canSync: false });
+      const name = value.name || (value.user.startsWith("ur") ? value.user : "Your IMDb");
+      const state =
+        value.error === "private" ? "Watchlist is private on IMDb"
+        : !value.ready ? "Connecting..."
+        : value.syncing ? "Syncing..."
+        : "Connected";
+      linked("imdb", name, state);
+      if ((!value.ready || value.syncing) && !imdbTimer) {
+        imdbTimer = setTimeout(() => {
+          imdbTimer = null;
+          checkImdb();
+        }, 15 * 1000);
+      }
+    }
+
+    async function checkImdb() {
+      const before = me.imdbSaved();
+      const after = await me.imdbFresh();
+      if (after && (after.ready !== before?.ready || after.error !== before?.error || after.updated !== before?.updated)) {
+        await keepImdb(after);
+      } else drawImdb();
+    }
+
+    $("me-imdb-sync").addEventListener("click", async () => {
+      const value = me.imdbSaved();
+      if (!value) return;
+      me.imdbSave({ ...value, syncing: Date.now(), at: 0 });
+      drawImdb();
+      await me.imdbSync(value.user).catch(() => {});
+    });
+
+    // Signed in: the account keeps the list too, so alerts can use it.
+    async function keepImdb(value) {
+      me.imdbSave(value);
+      if (account.current) {
+        await account.setImdb(value ? value.ids : []).catch(() => {});
+        const user = value && value.user !== "file" ? value.user : null;
+        if (user !== (account.current.imdb_user || null)) await account.settings({ imdb_user: user || "" }).catch(() => {});
+      }
+      drawImdb();
+      await drawDashboard();
+    }
+
+    async function refresh({ fresh = false } = {}) {
+      const value = me.saved();
+      linked("lb", value?.user, fresh ? "Syncing..." : "Connected");
+      letterboxd = {};
+      if (value) {
+        try {
+          const data = await me.load(value, { fresh });
+          linked("lb", data.user, "Connected");
+          letterboxd = data.films;
+        } catch (e) {
+          if (fresh) {
+            linked("lb", value.user, "Couldn't sync just now");
+          } else {
+            me.save(null);
+            linked("lb", null, "");
+            say("Couldn't load that profile. Try connecting again.");
+          }
+        }
+      }
+      await drawDashboard();
+    }
+
+    $("me-lb-sync").addEventListener("click", () => refresh({ fresh: true }));
+
+    // The signed-in parts: who you are, alerts, ratings, IMDb.
+    async function drawAccount() {
+      const signedIn = Boolean(account.current);
+      $("me-signed-out").hidden = signedIn;
+      $("me-signed-in").hidden = !signedIn;
+      $("me-members").hidden = !signedIn;
+      for (const id of ["me-ratings", "me-delete-row", "me-alerts", "me-settings-title"]) $(id).hidden = !signedIn;
+      if (signedIn) {
+        if (await planFromLink()) return;
+        const email = account.current.email || "your Google account";
+        $("me-email").textContent = email;
+        $("me-alerts-email").textContent = email;
+        account.drawAvatar($("me-initial"), account.current);
+        $("me-avatar-letter").textContent = email.slice(0, 1);
+        const picked = document.querySelector(`input[name=avatar][value="${account.current.avatar || ""}"]`);
+        if (picked) picked.checked = true;
+        drawAlerts();
+        const radio = document.querySelector(`input[name=rating_source][value=${account.source()}]`);
+        if (radio) radio.checked = true;
+        me.restore();
+        drawImdb();
+        checkImdb();
+      }
+      await drawDashboard();
+    }
+
+    // Save while signed out comes here as ?plan=<film>; once signed in,
+    // plan it and go back to the film.
+    async function planFromLink() {
+      const ref = new URLSearchParams(location.search).get("plan");
+      if (!ref || !/^[a-z0-9-]{1,120}$/.test(ref)) return false;
+      history.replaceState(null, "", location.pathname);
+      try {
+        if (!account.savedList("film").includes(ref)) await account.toggle("film", ref);
+        location.href = `${me.root}films/${ref}/`;
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    for (const radio of document.querySelectorAll("input[name=avatar]")) {
+      radio.addEventListener("change", () => account.settings({ avatar: radio.value || null }).catch(drawAccount));
+    }
+
+    // Email: four separate switches. Any one on means emails are on.
+    const KINDS = ["last", "added", "digest", "newsletter"];
+    const options = () => [...$("me-alerts-options").querySelectorAll("input")];
+    function drawAlerts() {
+      const alerts = account.current?.alerts;
+      if (!alerts) return;
+      for (const box of options()) box.checked = alerts.enabled && alerts[box.name];
+      // Until mail sending is set up, choices are kept for when it is.
+      const ready = account.current.email_ready !== false;
+      $("me-alerts-soon").hidden = ready;
+      $("me-alerts-test").hidden = !alerts.enabled || !ready;
+    }
+
+    async function saveAlerts() {
+      const change = Object.fromEntries(options().map((box) => [box.name, box.checked]));
+      change.enabled = KINDS.some((k) => change[k]);
+      change.imdb = true;
+      try {
+        await account.setAlerts(change);
+      } catch (e) {
+        $("me-alerts-message").textContent = "That didn't save. Try again in a minute.";
+      }
+      drawAlerts();
+    }
+
+    for (const box of options()) box.addEventListener("change", saveAlerts);
+
+    $("me-alerts-test").addEventListener("click", async () => {
+      const message = $("me-alerts-message");
+      message.textContent = "Sending...";
+      try {
+        const sent = await account.testAlert();
+        message.textContent = `Sent to ${sent.to}. Check your inbox (and spam, the first time).`;
+      } catch (e) {
+        message.textContent = e.message.charAt(0).toUpperCase() + e.message.slice(1) + ".";
+      }
+    });
+
+    function googleButton() {
+      if (!account.enabled || account.current || !window.google?.accounts?.id) return;
+      google.accounts.id.initialize({
+        client_id: "{{ google_client_id }}",
+        callback: async ({ credential }) => {
+          $("me-account-message").textContent = "Signing in...";
+          try {
+            await account.signIn(credential);
+            $("me-account-message").textContent = "";
+            me.restore();
+            refresh();
+          } catch (e) {
+            console.error("cineclock sign-in:", e);
+            $("me-account-message").textContent = e instanceof TypeError
+              ? "Couldn't reach cineclock's sign-in service. Check your connection and try again."
+              : `${e.message}. Try again in a minute.`;
+          }
+        },
+      });
+      google.accounts.id.renderButton($("me-google"), { theme: "outline", size: "large", shape: "pill", text: "continue_with", logo_alignment: "left", width: Math.min(320, $("me-google").clientWidth || 320) });
+    }
+
+    document.querySelectorAll("input[name=rating_source]").forEach((radio) =>
+      radio.addEventListener("change", () => account.settings({ rating_source: radio.value }).catch(drawAccount)),
+    );
+
+    $("me-signout").addEventListener("click", async () => {
+      await account.signOut();
+      location.reload();
+    });
+
+    $("me-delete").addEventListener("click", async () => {
+      if (!confirm("Delete your cineclock account and everything saved in it? This can't be undone.")) return;
+      try {
+        await account.deleteAccount();
+        location.reload();
+      } catch (e) {
+        alert("That didn't work. Try again, or email hello@cineclock.ca and I'll delete it for you.");
+      }
+    });
+
+    $("me-imdb-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const user = (e.target.user.value.match(/\b(ur\d{4,12}|p\.[a-z0-9]{8,40})\b/i) || [])[0]?.toLowerCase();
+      const message = $("me-imdb-message");
+      if (!user) {
+        message.textContent = "Paste the link to your IMDb profile or watchlist.";
+        return;
+      }
+      message.textContent = "Connecting...";
+      try {
+        const list = await me.imdbConnect(user);
+        message.textContent = "";
+        await keepImdb(list);
+      } catch (err) {
+        message.textContent = "Couldn't connect just now. Try again in a minute.";
+      }
+    });
+
+    $("me-imdb-file").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const ids = account.imdbIds(await file.text());
+      e.target.value = "";
+      if (!ids.length) {
+        $("me-imdb-message").textContent = "That file has no IMDb films in it. It should be the CSV export of your watchlist.";
+        return;
+      }
+      $("me-imdb-message").textContent = "";
+      await keepImdb({ user: "file", ids, at: Date.now() });
+    });
+
+    $("me-imdb-disconnect").addEventListener("click", () => keepImdb(null));
+
+    $("me-user-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const user = e.target.user.value.trim().toLowerCase().replace(/^@/, "").replace(/^.*letterboxd\.com\//, "").replace(/\/.*$/, "");
+      if (!user) return;
+      say("Connecting...");
+      try {
+        await me.load({ user });
+      } catch (err) {
+        say(err.message === "missing"
+          ? `There's no public Letterboxd profile called ${user}.`
+          : "Letterboxd didn't answer. Try again in a minute.");
+        return;
+      }
+      say("");
+      if (!me.save({ user })) return say("Your browser blocked saving this.");
+      if (account.current) account.settings({ letterboxd: user }).catch(() => {});
+      refresh();
+    });
+
+    $("me-disconnect").addEventListener("click", async () => {
+      me.save(null);
+      if (account.current) await account.settings({ letterboxd: "" }).catch(() => {});
+      location.reload();
+    });
+
+    document.addEventListener("cineclock:account", drawAccount);
+    window.addEventListener("load", googleButton);
+    account.ready.then(() => {
+      drawAccount();
+      googleButton();
+    });
+    drawImdb();
+    drawAccount();
+    refresh();
+  })();
+</script>
+<script src="https://accounts.google.com/gsi/client" async></script>
+{% endblock %}
