@@ -45,6 +45,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           if [ ! -s report.md ]; then echo "No report written."; exit 0; fi
+          # Only the latest report stays open.
+          gh issue list --search 'in:title "cineclock weekly:"' --state open --json number --jq '.[].number' |
+            xargs -r -n1 gh issue close --reason "not planned"
           gh issue create --title "cineclock weekly: $(date +'%b %-d')" --body-file report.md --label weekly || \
             gh issue create --title "cineclock weekly: $(date +'%b %-d')" --body-file report.md
 
