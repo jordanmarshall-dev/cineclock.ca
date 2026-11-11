@@ -61,6 +61,20 @@ def test_each_film_at_a_theatre_is_read_once(tmp_path):
     assert first.ai_tags == ("Q&A",) and first.series == "Shark Week"
 
 
+def test_a_theatre_is_never_its_own_festival(tmp_path):
+    from cineclock import db
+
+    conn = db.connect(str(tmp_path / "c.db"))
+    later = datetime(2026, 10, 20, 3, 0, tzinfo=UTC)
+    db.sync_venue(
+        conn, "VIFF Centre", [Screening("VIFF Centre", "Akashi", later, "https://x")], NOW
+    )
+    db.save_ai_note(conn, "VIFF Centre", "Akashi", [], "VIFF", NOW)
+    assert db.upcoming(conn, NOW)[0].series is None
+    db.save_ai_note(conn, "VIFF Centre", "Akashi", ["Festival"], "VIFF 2026", NOW)
+    assert db.upcoming(conn, NOW)[0].series == "VIFF 2026"
+
+
 def test_listing_text_carries_what_the_theatre_said():
     s = Screening(
         "The Cinematheque", "Choosing Selfhood", NOW, "https://x", synopsis="Three short films."

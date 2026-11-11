@@ -42,7 +42,8 @@ from this list and spelled exactly so: {allowed}.
 - "Festival": part of a named film festival, including a film fest or
   competition whose screenings are listed separately ("Shits n Giggles 2026:
   Opening Night", "the best of the fest"). Put its full name in "festival"
-  (for example "European Union Film Festival 2026"), else null.
+  (for example "European Union Film Festival 2026"), else null. The theatre
+  itself is never the festival: a film at the VIFF Centre isn't part of "VIFF".
 - "35mm", "70mm" and other formats only when the listing names the format;
   "35th anniversary" is not 35mm.
 - "film": when the listing's title wraps a feature film in an event name

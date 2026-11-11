@@ -14,6 +14,7 @@ from datetime import UTC, date, datetime
 from cineclock.films import Film
 from cineclock.models import Screening
 from cineclock.profiles import Profile
+from cineclock.venues import is_theatre
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS screenings (
@@ -301,6 +302,8 @@ def upcoming(conn: sqlite3.Connection, now: datetime) -> list[Screening]:
         note = notes.get((s.venue, s.title))
         if note:
             tags, festival = note
+            if festival and is_theatre(festival, s.venue):
+                festival = None
             s = replace(s, ai_tags=tuple(tags), series=s.series or festival)
         found.append(s)
     return found

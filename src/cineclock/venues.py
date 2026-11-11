@@ -470,6 +470,14 @@ VENUES = [
 BY_NAME = {v.name: v for v in VENUES}
 
 
+def is_theatre(name: str, venue: str) -> bool:
+    """True when a "festival" is only the theatre's own name. The AI pass
+    once filed ordinary VIFF Centre listings under a festival called "VIFF"."""
+    known = BY_NAME.get(venue)
+    names = {venue, known.short} if known else {venue}
+    return name.strip().casefold() in {n.casefold() for n in names}
+
+
 def order(name: str) -> int:
     """Sort key that puts venues in the order above; unknown ones go last."""
     names = [v.name for v in VENUES]
