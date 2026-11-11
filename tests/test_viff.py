@@ -106,6 +106,17 @@ def test_parse_film_page(fixture_text):
     assert details.poster_url.startswith("https://images.viff.org/uploads/2025/12/DayOfWrath.jpg")
 
 
+def test_parse_film_page_reads_a_format_from_the_subtitle():
+    subtitle = "Remembrance Day Screening | New 4K Restoration"
+    page = f'<h3 class="c-col-subtitle">{subtitle}</h3>'
+    assert viff.parse_film_page(page).film_format == subtitle
+
+
+def test_parse_film_page_ignores_a_subtitle_with_no_format():
+    page = '<h3 class="c-col-subtitle">Filmmakers in Attendance for Q&A</h3>'
+    assert viff.parse_film_page(page).film_format is None
+
+
 def test_parse_film_page_without_details():
     assert viff.parse_film_page("<html></html>") == viff.FilmDetails()
 

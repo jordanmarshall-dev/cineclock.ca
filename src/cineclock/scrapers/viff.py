@@ -15,6 +15,7 @@ from bs4 import BeautifulSoup
 
 from cineclock.models import VANCOUVER, Screening
 from cineclock.scrapers import FilmDetails, add_details, make_client, page_summary
+from cineclock.tags import FORMATS
 from cineclock.titles import clean_title, split_year
 
 VENUE = "VIFF Centre"
@@ -102,10 +103,17 @@ def parse_film_page(page: str) -> FilmDetails:
             match = re.search(r"\b(18|19|20)\d{2}\b", value.get_text()) if value else None
             year = int(match.group(0)) if match else None
             break
+    # The subtitle ("Remembrance Day Screening | New 4K Restoration") is where VIFF
+    # says how a film is shown. Kept only when it names a format, so an event
+    # subtitle can't add tags the calendar didn't.
+    subtitle = soup.select_one(".c-col-subtitle")
+    said = subtitle.get_text(" ", strip=True) if subtitle else ""
+    names_format = any(re.search(p, said.lower()) for p in FORMATS.values())
     # VIFF's share image is a wide film still, not a poster.
     og_image = soup.find("meta", property="og:image")
     return FilmDetails(
         year=year,
+        film_format=said if names_format else None,
         poster_url=(og_image.get("content") if og_image else None) or None,
         synopsis=page_summary(soup),
     )
