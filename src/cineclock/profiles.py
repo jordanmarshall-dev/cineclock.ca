@@ -25,7 +25,7 @@ from bs4 import BeautifulSoup
 BASE = "https://letterboxd.com"
 # Members whose lists the site reads on each update. Letterboxd won't let a
 # browser read profiles from another site, so these are the usernames that work.
-SYNCED = ["yogzoth"]
+SYNCED = ["jordan_marshall"]
 MAX_PAGES = 60  # 60 pages of watched films is over 4,000; a safety stop, not a limit we expect
 LB_NS = "{https://letterboxd.com}"
 
