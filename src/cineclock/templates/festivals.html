@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% from "_parts.html" import icon, page_header %}
 
-{% block title %}Film festivals and series in Vancouver{% endblock %}
-{% block description %}Every film festival and series on at Vancouver's independent cinemas, with dates and films.{% endblock %}
+{% block title %}Film festivals in Vancouver{% endblock %}
+{% block description %}Every film festival on at Vancouver's independent cinemas, with dates and films.{% endblock %}
 
 {% block main %}
 <div class="wrap">
-  <h1 class="page-title page-title-art">{{ page_header("festivals", "Festivals and series", root) }}</h1>
+  <h1 class="page-title page-title-art">{{ page_header("festivals", "Festivals", root) }}</h1>
   {% if series_list %}
   <ul class="fest-cards">
     {% for s in series_list %}
@@ -21,7 +21,7 @@
     {% endfor %}
   </ul>
   {% else %}
-  <p class="empty">No festivals or series listed right now.</p>
+  <p class="empty">No festivals on right now. Check back soon.</p>
   {% endif %}
 </div>
 {% endblock %}

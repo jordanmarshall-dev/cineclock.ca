@@ -50,6 +50,7 @@ AVATARS = (
 
 
 FESTIVAL_NAME = re.compile(r"\bfest(ival)?s?\b", re.IGNORECASE)
+EDITION_YEAR = re.compile(r"\b20\d{2}\b")
 
 
 def avatar_credits() -> dict:
@@ -159,7 +160,7 @@ def pages(conn: Connection, now: datetime) -> dict[str, str]:
     # The Events chip already covers the plain Event tag, so it isn't listed twice.
     filter_tags = sort_tags({t for p in film_list for t in p.tags} - {"Event"})
     by_next = sorted(film_list, key=lambda p: p.next_showing.starts_at)
-    # A page for each festival, or a series packed into a few weeks (see Series.worth_a_page).
+    # A page for each festival (see Series.worth_a_page). Other series are named on film pages.
     by_series: dict[str, list] = {}
     for page in by_next:
         if page.series:
@@ -318,18 +319,22 @@ class Series:
 
     @property
     def worth_a_page(self) -> bool:
-        """A festival, or a series with three or more films inside a month. The
-        Cinematheque files everything under some programme, and an ongoing one
-        (a monthly film club, two talks a month apart) isn't an event to browse."""
+        """Festivals only. The Cinematheque files nearly everything under some
+        programme, and a page for each one buried the real festivals, so a
+        series is just named on its films' pages."""
         # A festival can be a single listing: an afternoon of shorts, a ski night.
         if FESTIVAL_NAME.search(self.name):
             return True
-        # Nights of one event, named for it ("Shits n Giggles 2026: Opening Night").
-        if len(self.films) >= 2 and all(
-            normalize(p.title).startswith(normalize(self.name)) for p in self.films
-        ):
-            return (self.last - self.first).days <= 31
-        return len(self.films) >= 3 and (self.last - self.first).days <= 31
+        if any("Festival" in p.tags for p in self.films):
+            return True
+        # Nights of one yearly event ("Shits n Giggles 2026: Opening Night"),
+        # but not a running series named the same way ("Kevin Smith's ...: Clerks").
+        return (
+            len(self.films) >= 2
+            and EDITION_YEAR.search(self.name) is not None
+            and all(normalize(p.title).startswith(normalize(self.name)) for p in self.films)
+            and (self.last - self.first).days <= 31
+        )
 
     @property
     def headline(self):
@@ -363,7 +368,18 @@ class Series:
             return theatre_art[0]
         known = [p for p in self.films if p.film and p.film.backdrop_url]
         best = max(known, key=lambda p: p.film.letterboxd_count or 0, default=None)
-        return best.film.backdrop_url if best else None
+        if best:
+            return best.film.backdrop_url
+        # Short films and comedy nights have no TMDB entry: use a theatre's poster.
+        return next(
+            (
+                s.poster_url
+                for p in self.films
+                for s in p.screenings
+                if s.poster_url and s.poster_url.startswith("https://")
+            ),
+            None,
+        )
 
     @property
     def blurb(self) -> str | None:

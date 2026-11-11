@@ -1320,21 +1320,21 @@ def test_festivals_page_lists_each_series_running_ones_first(conn):
 
     save(
         conn,
-        cin("Kwaidan", 18, "Forbidden Rooms"),
-        cin("Onibaba", 25, "Forbidden Rooms"),
-        cin("Matango", 27, "Forbidden Rooms"),
+        cin("Kwaidan", 18, "Forbidden Rooms Fest"),
+        cin("Onibaba", 25, "Forbidden Rooms Fest"),
+        cin("Matango", 27, "Forbidden Rooms Fest"),
         cin("Traces", 21, "EU Film Festival"),
         cin("Our Girls", 22, "EU Film Festival"),
     )
     built = pages(conn, NOW)
     index = plain(built["series/index.html"])
     assert index.index("Forbidden Rooms") < index.index("EU Film Festival")
-    assert index.count("On now") == 1 and 'href="../series/forbidden-rooms/"' in index
+    assert index.count("On now") == 1 and 'href="../series/forbidden-rooms-fest/"' in index
     assert 'href="series/"' in built["index.html"]
-    assert 'href="../../series/"' in built["series/forbidden-rooms/index.html"]
+    assert 'href="../../series/"' in built["series/forbidden-rooms-fest/index.html"]
 
 
-def test_only_festivals_and_packed_series_get_pages(conn):
+def test_only_festivals_get_pages(conn):
     def cin(title, day, series, month=10):
         when = datetime(2026, month, day, 19, tzinfo=VANCOUVER)
         return Screening("The Cinematheque", title, when, f"https://x/{title}", series=series)
@@ -1348,6 +1348,10 @@ def test_only_festivals_and_packed_series_get_pages(conn):
         cin("Talk One", 21, "Cinema Thinks"),
         cin("Talk Two", 20, "Cinema Thinks", month=11),
         cin("Talk Three", 15, "Cinema Thinks", month=12),
+        # A retrospective packed into two weeks is still just a programme.
+        cin("Dekalog", 22, "Wheel of Fortune"),
+        cin("Blind Chance", 24, "Wheel of Fortune"),
+        cin("Camera Buff", 26, "Wheel of Fortune"),
         # Named a festival: a page even with two.
         cin("Ski Night", 25, "Coast Mountain Film Fest"),
         cin("Snowboard Night", 25, "Coast Mountain Film Fest"),
@@ -1356,6 +1360,8 @@ def test_only_festivals_and_packed_series_get_pages(conn):
     assert "series/coast-mountain-film-fest/index.html" in built
     assert "series/film-club/index.html" not in built
     assert "series/cinema-thinks/index.html" not in built
+    assert "series/wheel-of-fortune/index.html" not in built
+    assert "Part of Wheel of Fortune" in plain(built["films/dekalog/index.html"])
     assert "Part of Film Club" in plain(built["films/brazil/index.html"])
 
 
@@ -1436,9 +1442,13 @@ def test_nights_of_one_event_become_a_series_with_a_page(conn):
         ),
         show("Shits n Giggles 2026: Finals and Awards", at(26, 19), "The Rio"),
         show("Dune: Part Three", at(25, 20), "The Rio"),
+        # A running series named the same way, with no year, isn't a festival.
+        show("Kevin Smith's Side Hustle: Clerks", at(27, 19), "The Rio"),
+        show("Kevin Smith's Side Hustle: Mallrats", at(28, 19), "The Rio"),
     )
     built = pages(conn, NOW)
     assert "series/shits-n-giggles-2026/index.html" in built
+    assert "series/kevin-smith-s-side-hustle/index.html" not in built
     assert "series/dune/index.html" not in built
     night = plain(built["films/shits-n-giggles-2026-opening-night/index.html"])
     assert 'href="../../series/shits-n-giggles-2026/">Shits n Giggles 2026<' in night
