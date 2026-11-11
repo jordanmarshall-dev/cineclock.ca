@@ -1,7 +1,7 @@
 name: Fixtures
 
-# Run by hand. Saves real responses from theatre feeds that Claude's workspace
-# can't reach (the Park's) into tests/fixtures, and commits them.
+# Run by hand. Saves real responses from theatre feeds that can't be reached
+# locally (the Park's) into tests/fixtures, and commits them.
 on:
   workflow_dispatch:
 
