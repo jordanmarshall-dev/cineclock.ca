@@ -16,7 +16,7 @@ from bs4 import BeautifulSoup
 from cineclock.dates import hour_24, month_number, resolve
 from cineclock.models import Screening
 from cineclock.scrapers import make_client
-from cineclock.titles import clean_title, split_year
+from cineclock.titles import clean_title, split_3d, split_year
 
 VENUE = "The Dunbar"
 VENUES = (VENUE,)
@@ -38,6 +38,7 @@ def parse_sessions(page: str, now: datetime) -> list[Screening]:
         if not heading:
             continue
         title, note = clean_title(heading.get_text(" ", strip=True))
+        title, film_format = split_3d(title)
         title, year = split_year(title)
         poster = film.select_one("img.poster")
         poster_url = urljoin(SESSIONS_URL, poster["src"]) if poster and poster.get("src") else None
@@ -72,6 +73,7 @@ def parse_sessions(page: str, now: datetime) -> list[Screening]:
                         starts_at=start,
                         url=urljoin(SESSIONS_URL, link["href"]),
                         poster_url=poster_url,
+                        film_format=film_format,
                     )
                 )
     return screenings

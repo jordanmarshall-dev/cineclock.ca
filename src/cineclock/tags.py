@@ -19,7 +19,7 @@ FORMATS = {
     # an explicit 4K presentation counts.
     "4K": r"\b(presented|projected|screening|screened|shown) in 4k\b",
     "Atmos": r"\bdolby atmos\b",
-    "3D": r"\bin 3-?d\b|\b3-?d (screening|presentation)\b",
+    "3D": r"\bin 3-?d\b|\bdigital 3-?d\b|\b3-?d (screening|presentation)\b",
 }
 
 # What makes the showing more than a screening. Checked in this order.

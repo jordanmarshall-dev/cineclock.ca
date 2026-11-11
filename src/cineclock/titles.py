@@ -13,6 +13,9 @@ TRAILING_YEAR = re.compile(r"^(.*\S)\s*\(((?:18|19|20)\d{2})\)$")
 # any order, so match only up to the slash after the year.
 CREDITS_YEAR = re.compile(r"\([^()]+?,?\s+((?:18|19|20)\d{2})\s*/")
 
+# "Avengers: Doomsday in Digital 3D": the 3D showing listed as its own film.
+TRAILING_3D = re.compile(r"\s+(?:in\s+(?:digital\s+)?|digital\s+)3-?d$", re.IGNORECASE)
+
 
 def clean_title(raw: str) -> tuple[str, str | None]:
     """Split a venue's listing title into the film title and an optional note."""
@@ -33,3 +36,12 @@ def split_year(title: str) -> tuple[str, int | None]:
     if not match:
         return title, None
     return match.group(1), int(match.group(2))
+
+
+def split_3d(title: str) -> tuple[str, str | None]:
+    """Take a trailing "in Digital 3D" off a title, so the 3D showings join the
+    film's page (with its TMDB poster) instead of getting a page of their own."""
+    match = TRAILING_3D.search(title)
+    if not match or not title[: match.start()].strip():
+        return title, None
+    return title[: match.start()].strip(), "Digital 3D"

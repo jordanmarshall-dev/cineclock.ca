@@ -1,6 +1,6 @@
 import pytest
 
-from cineclock.titles import clean_title, credits_year, split_year
+from cineclock.titles import clean_title, credits_year, split_3d, split_year
 
 
 @pytest.mark.parametrize(
@@ -68,3 +68,22 @@ def test_credits_year(text, year):
 )
 def test_split_year(title, expected):
     assert split_year(title) == expected
+
+
+@pytest.mark.parametrize(
+    "title, expected",
+    [
+        ("Avengers: Doomsday in Digital 3D", ("Avengers: Doomsday", "Digital 3D")),
+        ("Avatar in 3D", ("Avatar", "Digital 3D")),
+        ("Jaws 3-D", ("Jaws 3-D", None)),
+        ("Digital 3D", ("Digital 3D", None)),
+    ],
+)
+def test_split_3d(title, expected):
+    assert split_3d(title) == expected
+
+
+def test_digital_3d_gets_the_3d_tag():
+    from cineclock.tags import screening_tags
+
+    assert "3D" in screening_tags("Avengers: Doomsday", None, "Digital 3D")
