@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.5.1 (November 11, 2026)
+
+Ready for launch.
+
+- The Festivals page lists festivals only. Series like the Cinematheque's programmes are still named on each film's page, but no longer crowd out the real festivals.
+- A festival with no art of its own shows a theatre's poster instead of a blank card.
+- Films at the VIFF Centre are no longer filed under a festival called "VIFF".
+- The Dunbar's "in Digital 3D" showings join the film's own page, with its poster and a 3D tag, instead of getting a page of their own.
+- The site is always served over HTTPS.
+- The footer's version number links to this changelog.
+
 ## 2.5.0 (October 23, 2026)
 
 A polish release: every page gone over on phone and desktop as if for a public launch, plus everything since 2.2.
