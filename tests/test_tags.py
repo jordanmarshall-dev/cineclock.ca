@@ -13,8 +13,8 @@ from cineclock.tags import filter_slugs, kind, said_by_tags, screening_tags, slu
         ("Avatar", "Presented in 3D", None, ["3D"]),
         ("Dune", "Dolby Atmos", None, ["Atmos"]),
         ("Ran", "Projected in 4K", None, ["4K"]),
-        # A 4K restoration is about the restoration, not this screening
-        ("Ran", "4K Restoration", None, []),
+        # A 4K restoration is the 4K print
+        ("Ran", "4K Restoration", None, ["4K"]),
         (
             "Traces of Home",
             "With Filmmakers Dr. Gabor Maté & Colette Ghunim Q&A",

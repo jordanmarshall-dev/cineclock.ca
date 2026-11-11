@@ -15,9 +15,9 @@ FORMATS = {
     "35mm": r"\b35\s?mm\b",
     "16mm": r"\b16\s?mm\b",
     "IMAX": r"\bimax\b",
-    # "4K restoration" describes the restoration, not the projection, so only
-    # an explicit 4K presentation counts.
-    "4K": r"\b(presented|projected|screening|screened|shown) in 4k\b",
+    # A new 4K restoration is the 4K print, so it counts along with an explicit
+    # 4K presentation.
+    "4K": r"\b(presented|projected|screening|screened|shown) in 4k\b|\b4k restoration\b",
     "Atmos": r"\bdolby atmos\b",
     "3D": r"\bin 3-?d\b|\bdigital 3-?d\b|\b3-?d (screening|presentation)\b",
 }
